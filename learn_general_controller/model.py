@@ -5,7 +5,7 @@ import torch.nn as nn
 def mlp(input_dim, mlp_dims, last_relu=False, dropout=0):
     layers = []
     mlp_dims = [input_dim] + mlp_dims
-    print("mlp_dims", mlp_dims)
+    # print("mlp_dims", mlp_dims)
     for i in range(len(mlp_dims) - 1):
         layers.append(nn.Linear(mlp_dims[i], mlp_dims[i + 1]))
         if i != len(mlp_dims) - 2 or last_relu:
@@ -55,7 +55,9 @@ class Controller(nn.Module):
         :return:
         """
         size = state.shape
-        self_state = state[:, 0, :self.self_state_dim] # what does self state store ??
+        self_state = state[:, 0, :self.self_state_dim]
+        # print("state.view((-1, size[2])).shape", state.view((-1, size[2])).shape)
+        # print("size[2]", size[2])
         mlp1_output = self.mlp1(state.view((-1, size[2])))
         mlp2_output = self.mlp2(mlp1_output)
         

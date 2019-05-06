@@ -57,7 +57,15 @@ Roadmap: Roadmap.o
 Crossing: Crossing.o
 	$(RM) Crossing
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -o $@ Crossing.o $(LIBS)
-	
+
+Barge_in: Barge_in.o
+	$(RM) Barge_in
+	$(CXX) $(INCLUDES) $(CXXFLAGS) -o $@ Barge_in.o $(LIBS)
+
+Barge_in_vertical: Barge_in_vertical.o
+	$(RM) Barge_in_vertical
+	$(CXX) $(INCLUDES) $(CXXFLAGS) -o $@ Barge_in_vertical.o $(LIBS)
+
 .cpp.o:
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -c -o $@ $<
 

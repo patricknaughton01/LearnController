@@ -115,7 +115,9 @@ def ensemble(preds, pred_xs):
     data_uncertainty = 0
     for pred, pred_x in zip(preds, pred_xs):
         _, _, sigma_x, sigma_y, corr = get_coefs(pred)
-        sigma = torch.cat((sigma_x, sigma_y), dim=-1)
+        sigma = torch.cat((sigma_x, sigma_y), dim=-1) # concatenation - (-1) is same as 1
+        # old shape = [17,16]
+        # new shape = [136, 2, 1] (using the operation sigma.view(-1, 2, 1))
         sigma = torch.bmm(sigma.view(-1, 2, 1), sigma.view(-1, 1, 2)).view(seq_len, batch_size, 2, 2)
         sigma[:, :, 0, 1] *= corr 
         sigma[:, :, 1, 0] *= corr
@@ -130,6 +132,7 @@ def ensemble(preds, pred_xs):
     data_uncertainty = data_uncertainty.detach().cpu().numpy()
     model_uncertainty = np.maximum(0, var_pred_x - data_uncertainty)
     mean_pred_x = mean_pred_x.detach().cpu().numpy()
+    # print("mean_pred_x", mean_pred_x)
     return mean_pred_x, var_pred_x, data_uncertainty, model_uncertainty
 
 
@@ -139,15 +142,17 @@ def dataloader(data, config, is_train=True, shuffle=True):
     bootstrap = config.get('bootstrap', False)
     states, seq_lengths, num_humans = data 
 
-    print('batch size: %d' % batch_size)
-    print('data size: %d' % len(seq_lengths))
-    print('unique num of humans: ', np.unique(num_humans)) # 2.0, 3.0, 4.0
-    print('bootstrap', bootstrap)
+    # print('batch size: %d' % batch_size)
+    # print('data size: %d' % len(seq_lengths))
+    # print('unique num of humans: ', np.unique(num_humans)) # 2.0, 3.0, 4.0
+    # print('bootstrap', bootstrap)
     for num_human in np.unique(num_humans):
         filt_indices = num_humans == num_human # selects all the matching number of humans
         filt_states = states[filt_indices] # only sucks out the required states (using above condition)
         filt_seq_lengths = seq_lengths[filt_indices] #same as above
         
+        # print("filt_states[20]",filt_states[20])
+        # print("seq_lengths[20]", seq_lengths[20])
         # the value of n is only the number of valid human states
         # so if there are 200/400 states with 2 humans, n = 200 
         n = len(filt_seq_lengths)
@@ -160,8 +165,12 @@ def dataloader(data, config, is_train=True, shuffle=True):
                 selected_indices = np.random.choice(indices, size=batch_size, replace=True)
             else:
                 selected_indices = indices[idx : idx + batch_size]
-            cur_states = filt_states[selected_indices]
-            # print("cur_states", cur_states)
+            # print("selected_indices", selected_indices)
+
+            # if i manually count it, it is = seq_lengths,
+            # but if i print the size, it is = 8
+            cur_states = filt_states[selected_indices] 
+            # print("cur_states", cur_states.size)
             cur_size = cur_states.shape[0]
             if cur_size > 0:
                 # print("selected_indices", selected_indices)
@@ -169,6 +178,8 @@ def dataloader(data, config, is_train=True, shuffle=True):
                 # print("batch_seq_lengths", batch_seq_lengths)
                 dim = cur_states[0].shape[-1]
                 # print("dim", dim)
+                # print("cur_states[0].shape", cur_states[0].shape)
+                # print("cur_states[0].shape[-1]", cur_states[0].shape[-1])
                 batch_states = np.zeros((max(batch_seq_lengths), cur_size, dim))
                 batch_future_states = np.zeros((max(batch_seq_lengths), cur_size, dim))
                 batch_targets = np.zeros((batch_states.shape[0], cur_size, 2))
@@ -176,7 +187,9 @@ def dataloader(data, config, is_train=True, shuffle=True):
                 for i, state in enumerate(cur_states):
                     seq_len = batch_seq_lengths[i]
                     batch_states[0:seq_len, i, :] = state[0:-1, :] 
-                    batch_future_states[0:seq_len, i, :] = state[1:, :]
+
+                    batch_future_states[0:seq_len, i, :] = state[1:, :] 
+                    #notice that here we are not giving
                     target = state[1:, 0:2] - state[0:-1, 0:2]
                     # print("state[1:, 0:2]", state[1:, 0:2].shape)
                     # print("state[0:-1, 0:2]", state[0:-1, 0:2].shape)

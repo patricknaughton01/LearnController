@@ -66,6 +66,7 @@ class Trainer(object):
         
         # print('finished init parts 2')
         # train_loader is the loaded training data
+        # batch_states, batch_seq_lengths, batch_targets
         for states, seq_lengths, targets, _ in self.train_loader():
             
             # print(states.shape)
@@ -85,19 +86,19 @@ class Trainer(object):
             # print('second for loop')
             for i in range(seq_len):
                 cur_states = states[i]
+                # print("cur_states in for loop", cur_states)
                 cur_rotated_states = transform_and_rotate(cur_states)
                 # now state_t is of size: batch_size x num_human x dim
                 batch_size = cur_states.shape[0]
 
                 batch_occupancy_map = []
-                # print('third for loop')
+
                 for b in range(batch_size):
                     occupancy_map = build_occupancy_maps(build_humans(cur_states[b]))
                     batch_occupancy_map.append(occupancy_map)
-                # print('just after for loop')
+
                 batch_occupancy_map = torch.stack(batch_occupancy_map)[:, 1:, :]
                 state_t = torch.cat([cur_rotated_states, batch_occupancy_map], dim=-1)
-                # print('after cat')
 
                 #############################################
                 # this function calls forward from model.py #

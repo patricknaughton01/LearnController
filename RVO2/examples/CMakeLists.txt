@@ -48,4 +48,12 @@ add_executable(Crossing Crossing.cpp)
 target_link_libraries(Crossing RVO)
 add_test(Crossing Crossing)
 
-install(TARGETS Blocks Circle Roadmap DESTINATION bin)
+add_executable(Barge_in_vertical Barge_in_vertical.cpp)
+target_link_libraries(Barge_in_vertical RVO)
+add_test(Barge_in_vertical Barge_in_vertical)
+
+add_executable(Barge_in Barge_in.cpp)
+target_link_libraries(Barge_in RVO)
+add_test(Barge_in Barge_in)
+
+install(TARGETS Blocks Circle Roadmap Barge_in_vertical Barge_in DESTINATION bin)

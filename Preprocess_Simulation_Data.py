@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[54]:
+# In[1]:
 
 
 import matplotlib.pyplot as plt
@@ -14,15 +14,15 @@ warnings.filterwarnings("ignore")
 import os
 
 
-# In[55]:
+# In[2]:
 
 
-data_type = 'Crossing_two_people_test'
+data_type = 'Barge_in'
 directory = '/home/yashoza/Downloads/LearnControllers/RVO2/examples/data/'
 parent_path = directory  + data_type + '_*.txt'
 
 
-# In[56]:
+# In[3]:
 
 
 states = []
@@ -33,7 +33,7 @@ for path in files:
     # print(path)
     if 'obstacles' in path:
         continue
-    print('preprocessing %s' % path)
+    # print('preprocessing %s' % path)
     with open(path, 'r') as file:
         cur_states = []
         for i, line in enumerate(file):
@@ -68,16 +68,18 @@ for path in files:
             # print(len(state)) = 14 constantly
             # print('state')
             # print(state)
+            # print('len(cur_states)')
             # print(len(cur_states))
             # print(cur_states)
         seq_lengths.append(len(cur_states))
         # this is append the total num of lines that were present in the data file
+        # print('seq_lengths')
         # print(seq_lengths)
         states.append(cur_states)
         # print(len(states))
 
 
-# In[57]:
+# In[4]:
 
 
 n = len(seq_lengths) #will store the number of files 
@@ -92,11 +94,12 @@ for i, state in enumerate(states):
     # this in a diff loop
     # print(states_array[i])
     # print('\n')
+    # print(len(state[0]))
     num_humans[i] = (len(state[0]) - 4) / 5
     # print(num_humans[i])
 
 
-# In[58]:
+# In[5]:
 
 
 save_path = '/home/yashoza/Downloads/LearnControllers/learn_general_controller/data/simulate_' + data_type.lower()
@@ -105,7 +108,7 @@ if not os.path.exists(save_path):
 print('save path is: %s' % save_path)
 
 
-# In[59]:
+# In[7]:
 
 
 # obstacle_files = glob(directory  + data_type + "_obstacles_*.txt")
@@ -140,7 +143,7 @@ states_array = states_array[filt]
 #     os.remove(directory  + data_type + "_obstacles_%d.txt" % i)
 
 
-# In[60]:
+# In[8]:
 
 
 np.save(save_path + '/seq_lengths.npy', seq_lengths)
@@ -151,7 +154,7 @@ np.save(save_path + '/num_humans.npy', num_humans)
 # print(num_humans)
 
 
-# In[61]:
+# In[9]:
 
 
 seq_lengths = np.load(save_path + '/seq_lengths.npy',allow_pickle=True)
@@ -159,7 +162,7 @@ states_array = np.load(save_path + '/states.npy',allow_pickle=True)
 num_humans = np.load(save_path + '/num_humans.npy',allow_pickle=True)
 
 
-# In[62]:
+# In[20]:
 
 
 # visualization of the data 
@@ -169,6 +172,8 @@ episode = states_array[idx]
 n = int((episode.shape[1] - 4) / 5)
 print(n)
 colors = [np.random.rand(3) for _ in range(n)]
+# colors = [np.random.rand(3)]
+print(colors)
 
 fig = plt.figure(figsize=(15, 10))
 ax = fig.add_subplot(111)
@@ -196,7 +201,7 @@ for t in range(T):
         else:
             x_idx, y_idx = 9 + (i-1) * 5, 9 + (i-1) * 5 + 1
             radius = episode[0, 13 + (i-1) * 5]
-#         print('radius is %.4f' % radius)
+        # print('radius is %.4f' % radius)
         plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])  
     
         e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2, radius * 2, linewidth=2, fill=False, zorder=2, color=colors[i])

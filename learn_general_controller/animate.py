@@ -4,7 +4,7 @@ from matplotlib import patches
 from matplotlib import animation 
 from utils import parse_args, covariance_to_std
 
-def play(ground_truth, seq_lengths, pred=None, var=None, model_uncertainty=None, data_uncertainty=None, num=0, video_name=""):
+def play(ground_truth, seq_lengths, pred=None, var=None, model_uncertainty=None, data_uncertainty=None, num=0, video_name="yash_train"):
     print("Current sequence length: ", seq_lengths[num])
     # create figure object
     fig = plt.figure(figsize=(10, 7))
@@ -105,7 +105,7 @@ def main():
                 args.dropout, 
                 args.exp) 
     parent_path = parent_path + "/test/%s" % args.test_data_name
-    
+    parent_path = "/home/yashoza/Downloads/LearnControllers/learn_general_controller/log/simulate_barge_in/seed_1234_bootstrap_False_M_5" + "/test/%s" % args.test_data_name
     print("Data path: %s" % parent_path)
     
     val_states = np.load(parent_path + '/val_states.npy', allow_pickle=True)
