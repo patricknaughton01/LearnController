@@ -55,10 +55,15 @@ class Controller(nn.Module):
         :return:
         """
         size = state.shape
+
+        # print("size", size) # [8, 6, 61]
+        # print("self.self_state_dim", self.self_state_dim)
         self_state = state[:, 0, :self.self_state_dim]
-        # print("state.view((-1, size[2])).shape", state.view((-1, size[2])).shape)
+        # print("self_state.shape", self_state.shape) # [8,6]
+
+        # print("state.view((-1, size[2])).shape", state.view((-1, size[2])).shape) # [48,61]
         # print("size[2]", size[2])
-        mlp1_output = self.mlp1(state.view((-1, size[2])))
+        mlp1_output = self.mlp1(state.view((-1, size[2]))) # [48,61]
         mlp2_output = self.mlp2(mlp1_output)
         
         # print("size", size)

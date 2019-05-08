@@ -93,6 +93,12 @@ def covariance_to_std(var):
 def get_coefs(preds):
     mu_x, mu_y, sigma_x, sigma_y, corr = preds[:, :, 0], preds[:, :, 1], preds[:, :, 2], preds[:, :, 3], preds[:, :, 4]
 
+    # print("mu_x.shape", mu_x.shape)
+    # print("mu_y.shape", mu_y.shape)
+    # print("sigma_x.shape", sigma_x.shape)
+    # print("sigma_y.shape", sigma_y.shape)
+    # print("mu_x.shape", mu_x.shape)
+
     # print("mu_x", mu_x)
     # print("mu_y", mu_y)
     # print("sigma_x", sigma_x)
@@ -146,16 +152,25 @@ def dataloader(data, config, is_train=True, shuffle=True):
     # print('data size: %d' % len(seq_lengths))
     # print('unique num of humans: ', np.unique(num_humans)) # 2.0, 3.0, 4.0
     # print('bootstrap', bootstrap)
+    # print("states", states.shape)
+    # print("seq_lengths", seq_lengths.shape)
+    # print("num_humans", type(num_humans))
+    # print("--------")
     for num_human in np.unique(num_humans):
         filt_indices = num_humans == num_human # selects all the matching number of humans
+
         filt_states = states[filt_indices] # only sucks out the required states (using above condition)
+    
         filt_seq_lengths = seq_lengths[filt_indices] #same as above
         
-        # print("filt_states[20]",filt_states[20])
+        # print("filt_indices",filt_indices.shape)
+        # print("filt_states",filt_states.shape)
+        # print("filt_seq_lengths",filt_seq_lengths.shape)
         # print("seq_lengths[20]", seq_lengths[20])
         # the value of n is only the number of valid human states
         # so if there are 200/400 states with 2 humans, n = 200 
         n = len(filt_seq_lengths)
+
         indices = np.arange(n) # generates an array with values from 0 to n
         if shuffle:
             np.random.shuffle(indices)
@@ -165,28 +180,32 @@ def dataloader(data, config, is_train=True, shuffle=True):
                 selected_indices = np.random.choice(indices, size=batch_size, replace=True)
             else:
                 selected_indices = indices[idx : idx + batch_size]
-            # print("selected_indices", selected_indices)
+            # print("selected_indices shape", selected_indices.shape)
 
             # if i manually count it, it is = seq_lengths,
             # but if i print the size, it is = 8
             cur_states = filt_states[selected_indices] 
-            # print("cur_states", cur_states.size)
+            # print("cur_states", cur_states.shape)
             cur_size = cur_states.shape[0]
+            # print("cur_size", cur_size)
             if cur_size > 0:
                 # print("selected_indices", selected_indices)
                 batch_seq_lengths = filt_seq_lengths[selected_indices] - 1
                 # print("batch_seq_lengths", batch_seq_lengths)
+                # print("filt_seq_lengths[selected_indices]", filt_seq_lengths[selected_indices])
+                
                 dim = cur_states[0].shape[-1]
                 # print("dim", dim)
                 # print("cur_states[0].shape", cur_states[0].shape)
                 # print("cur_states[0].shape[-1]", cur_states[0].shape[-1])
                 batch_states = np.zeros((max(batch_seq_lengths), cur_size, dim))
+                # print("batch_states", batch_states)
                 batch_future_states = np.zeros((max(batch_seq_lengths), cur_size, dim))
                 batch_targets = np.zeros((batch_states.shape[0], cur_size, 2))
 
                 for i, state in enumerate(cur_states):
                     seq_len = batch_seq_lengths[i]
-                    batch_states[0:seq_len, i, :] = state[0:-1, :] 
+                    batch_states[0:seq_len, i, :] = state[0:-1, :]
 
                     batch_future_states[0:seq_len, i, :] = state[1:, :] 
                     #notice that here we are not giving
@@ -195,6 +214,7 @@ def dataloader(data, config, is_train=True, shuffle=True):
                     # print("state[0:-1, 0:2]", state[0:-1, 0:2].shape)
 
                     batch_targets[0:seq_len, i, :] = target
+
                 yield batch_states, batch_seq_lengths, batch_targets, batch_future_states
                 idx += cur_size
             else:
@@ -242,16 +262,22 @@ def transform_and_rotate(raw_states):
     #  0     1      2     3      4        5     6      7         8       9     10      11     12       13 , ...,
     num_human = int((raw_states.shape[1] - 9) / 5)
     self_state = raw_states[:, 0:9]
+    # print("self_state.shape", self_state.shape)
     human_states = [raw_states[:, 9 + i * 5 : 9 + (i + 1) * 5] for i in range(num_human)]
-    
+    # print("human_states.shape", len(human_states))
+    # print("human_states[0]",human_states[0].shape)
+
     cur_states = torch.stack([torch.Tensor(np.concatenate((self_state, human_state), axis=1)) for human_state in human_states])
+    # print("cur_states.shape", cur_states.shape)
     cur_states = cur_states.transpose(0, 1).contiguous()
+    # print("cur_states.shape new", cur_states.shape)
     # now states size is: batch_size x num_human x dim
 
     batch_size, dim = cur_states.size(0), cur_states.size(2)
 
     rotated_states = rotate(cur_states.view(-1, dim)).view(batch_size, num_human, -1)
-    return rotated_states    
+    # print("cur_states.view(-1, dim).shape", cur_states.view(-1, dim).shape)
+    return rotated_states # [8, 6, 13]    
 
 def build_humans(states):
     #state shape: dim 

@@ -215,4 +215,3 @@ legends = ['agent %d' % i for i in range(n)]
 # plt.ylim((min_lim, max_lim))
 plt.legend(legends)
 plt.show()
-

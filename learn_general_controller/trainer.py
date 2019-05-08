@@ -82,11 +82,18 @@ class Trainer(object):
             # print(states.shape)
             outputs = []
             h_t = None
+
+            # flag_new_pred = 0
             # s = time()
             # print('second for loop')
             for i in range(seq_len):
                 cur_states = states[i]
-                # print("cur_states in for loop", cur_states)
+
+                # if flag_new_pred is 1:
+                    
+                    # cur_states[:, 0:2] = (new_pred.data).cpu().numpy() # (Variable(x).data).cpu().numpy()
+                    
+                    # print("cur_states in for loop", cur_states)
                 cur_rotated_states = transform_and_rotate(cur_states)
                 # now state_t is of size: batch_size x num_human x dim
                 batch_size = cur_states.shape[0]
@@ -105,6 +112,9 @@ class Trainer(object):
                 #############################################
 
                 pred_t, h_t = self.model(state_t, h_t)
+
+                # new_pred = torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2]
+                # flag_new_pred = 1
                 # print('pred_t')
                 # print(pred_t)
                 # print('done iwith for loops')

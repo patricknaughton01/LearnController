@@ -63,26 +63,49 @@ def main():
     final_model_uncertainty = np.zeros((max_seq_len, total_size, 2, 2))
     start_idx = 0
     for batch_idx, (states, seq_lengths, targets, future_states) in enumerate(val_loader(), 1):
+        # print("states shape", states.shape)
         val_preds = []
         val_pred_xs = []
         seq_lengths = torch.from_numpy(seq_lengths).long()
         targets = torch.from_numpy(targets).float()
         model_num = 0
+
+        flag_new_pred = 0
+
         for model in models:
-            # states: seq_len x batch_size x dim
+            # states: seq_len x batch_size x dim # for the first state - (29, 8, 39)
+            # seq_len = no of points in the path 
+            # batch_size = just batch size
+            # dim = number of "types" of data
+
             # print("eval model", model_num )
             # model_num+=1
 
             seq_len = states.shape[0]
+            # print("states.shape", states.shape) # (29, 8, 39)
             outputs = []
             pred_xs = []
             h_t = None
             for i in range(seq_len):
-                cur_states = states[i]
-                # print("cur_states is ", cur_states)
-                cur_rotated_states = transform_and_rotate(cur_states)
+                # print("i is ", i)
+                cur_states = states[i] # size (8,39)
+                    
+                # if flag_new_pred is 1:
+                if i > 0:
+                    print("adding new data now ")
+                    cur_states[:, 0:2] = (new_pred.data).cpu().numpy() # (Variable(x).data).cpu().numpy()
+                
+                # if batch_idx > 1:
+                #     # take the prev state and add the new predicted state to the last element 
+
+                # print("cur_states shape is ", cur_states) # (8,39)
+                cur_rotated_states = transform_and_rotate(cur_states) # Size([8, 6, 13])
+                # print("cur_rotated_states", cur_rotated_states)
+ 
                 # now state_t is of size: batch_size x num_human x dim
                 batch_size = cur_states.shape[0]
+                # print("batch_size", batch_size)
+
                 batch_occupancy_map = []
                 
                 start_time = time()
@@ -91,13 +114,23 @@ def main():
                     batch_occupancy_map.append(occupancy_map)
                 
                 batch_occupancy_map = torch.stack(batch_occupancy_map)[:, 1:, :]
-                state_t = torch.cat([cur_rotated_states, batch_occupancy_map], dim=-1)
-                pred_t, h_t = model(state_t, h_t)
-                outputs.append(pred_t)
-                pred_xs.append(torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2])
+                state_t = torch.cat([cur_rotated_states, batch_occupancy_map], dim=-1) # Size([8, 6, 61])
+                # print("state_t.shape", state_t.shape)
+                # print("cur_rotated_states.shape", cur_rotated_states.shape)
+                # print("batch_occupancy_map.shape", batch_occupancy_map.shape)
 
+                pred_t, h_t = model(state_t, h_t)
+                # print("the pred_t coming out of the network is ", pred_t)
+                outputs.append(pred_t)
+                new_pred = torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2]
+                flag_new_pred = 1
+                pred_xs.append(torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2])
+                # print("the pred_xs coming out of the network is ", (torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2]))
+                # print("pred_t.shape", (pred_t[:, 0:2])) # constant 8 
+                # print("pred_xs.shape", len(pred_xs)) # inc with i
                 end_time = time()
                 # print('Average prediction time for this batch is : %.4f seconds' % ((end_time - start_time) / batch_size))
+            
             outputs = torch.stack(outputs)            
             pred_xs = torch.stack(pred_xs)
 
@@ -114,6 +147,7 @@ def main():
         for i, seq_len in enumerate(seq_lengths):
             final_states[start_idx + i] = future_states[0:seq_len, i, :]
         final_pred_xs[0:cur_max_seq_len, start_idx:end_idx, :] = val_pred_x
+        # print("val_pred_x is", val_pred_x)
         final_var_xs[0:cur_max_seq_len, start_idx:end_idx, :] = val_var_x
         final_data_uncertainty[0:cur_max_seq_len, start_idx:end_idx, :] = val_data_uncertainty
         final_model_uncertainty[0:cur_max_seq_len, start_idx:end_idx, :] = val_model_uncertainty
