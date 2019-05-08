@@ -92,7 +92,7 @@ def main():
                     
                 # if flag_new_pred is 1:
                 if i > 0:
-                    print("adding new data now ")
+                    # print("adding new data now ")
                     cur_states[:, 0:2] = (new_pred.data).cpu().numpy() # (Variable(x).data).cpu().numpy()
                 
                 # if batch_idx > 1:

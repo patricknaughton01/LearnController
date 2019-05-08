@@ -96,6 +96,11 @@ def callback():
 
     for i in range(seq_len):
         cur_states = states[i]
+
+        if i > 0:
+          # print("adding new data now ")
+          cur_states[:, 0:2] = (new_pred.data).cpu().numpy() # (Variable(x).data).cpu().numpy()
+                
         cur_rotated_states = transform_and_rotate(cur_states)
         # now state_t is of size: batch_size x num_human x dim
         batch_size = cur_states.shape[0]
@@ -108,6 +113,7 @@ def callback():
         batch_occupancy_map = torch.stack(batch_occupancy_map)[:, 1:, :]
         state_t = torch.cat([cur_rotated_states, batch_occupancy_map], dim=-1)
         pred_t, h_t = model(state_t, h_t)
+        new_pred = torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2]
         outputs.append(pred_t)
         pred_xs.append(torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2])
 
