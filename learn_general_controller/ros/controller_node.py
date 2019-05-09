@@ -117,6 +117,8 @@ def callback():
         outputs.append(pred_t)
         pred_xs.append(torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2])
 
+        # a, b, c, d = ensemble(val_preds, val_pred_xs)
+
     h_ts[i] = h_t
     outputs = torch.stack(outputs)  
           
@@ -126,7 +128,7 @@ def callback():
     val_pred_xs.append(pred_xs)
 
   val_pred_x, _, val_data_uncertainty, val_model_uncertainty = ensemble(val_preds, val_pred_xs)
-    
+  # whenver ensemble is called, the length of the list val_preds and val_pred_xs is 5  
   print(val_pred_x[0][0][0])
   print(val_pred_x[0][0][1])
   print(val_pred_x.shape)
@@ -164,8 +166,6 @@ def main():
         model.eval()
 
   print("Number of loaded models: %d" % (len(models)))
-
-
 
   callback()
   # rospy.init_node(args.controller + '_controler', anonymous=True)
