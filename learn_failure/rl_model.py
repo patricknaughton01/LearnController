@@ -133,6 +133,6 @@ class Controller(nn.Module):
                 #
                 # i.e., pick greedily
                 q, h_t = self.forward(state, h_t)
-                return q.max(1)[1].view(1, 1)
+                return q.max(1)[1].view(1, 1), h_t
         else:
-            return torch.tensor([[random.randrange(self.action_dim)]])
+            return torch.tensor([[random.randrange(self.action_dim)]]), None    #????????

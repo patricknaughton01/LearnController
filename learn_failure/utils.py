@@ -1,5 +1,5 @@
-import numpy as np 
-import torch 
+import numpy as np
+import torch
 import argparse
 from functools import reduce
 from operator import mul
@@ -55,7 +55,7 @@ def estimate_uncertainty(model, x, tao, T=100):
     mean_moment2 = torch.mean(moment2, dim=0)
 
     mean_term = torch.bmm(mean_pred_x.view(-1, D).unsqueeze(-1), mean_pred_x.view(-1, D).unsqueeze(1)).view(seq_len, batch_size, D, D)
-    
+
     # var_pred_x = mean_moment2 + 1.0 / tao * torch.eye(D).expand(seq_len, batch_size, D, D) - mean_term
     var_pred_x = mean_moment2 - mean_term
 
@@ -74,7 +74,7 @@ def partition(states, seq_lengths, num_humans, config):
     np.random.shuffle(indices)
     test_percent = config.get('test_percent', 0.1)
     end = int(n * test_percent)
-    
+
     val_states = states[0:end]
     val_seq_lengths = seq_lengths[0:end]
     val_num_humans = num_humans[0:end]
@@ -125,15 +125,15 @@ def ensemble(preds, pred_xs):
         # old shape = [17,16]
         # new shape = [136, 2, 1] (using the operation sigma.view(-1, 2, 1))
         sigma = torch.bmm(sigma.view(-1, 2, 1), sigma.view(-1, 1, 2)).view(seq_len, batch_size, 2, 2)
-        sigma[:, :, 0, 1] *= corr 
+        sigma[:, :, 0, 1] *= corr
         sigma[:, :, 1, 0] *= corr
         data_uncertainty += sigma
         var_pred_x += sigma + torch.bmm(pred_x.view(-1, 2, 1), pred_x.view(-1, 1, 2)).view(seq_len, batch_size, 2, 2)
-    
+
     data_uncertainty /= len(preds)
     var_pred_x /= len(preds)
     var_pred_x -= torch.bmm(mean_pred_x.view(-1, 2, 1), mean_pred_x.view(-1, 1, 2)).view(seq_len, batch_size, 2, 2)
-    
+
     var_pred_x = var_pred_x.detach().cpu().numpy()
     data_uncertainty = data_uncertainty.detach().cpu().numpy()
     model_uncertainty = np.maximum(0, var_pred_x - data_uncertainty)
@@ -146,7 +146,7 @@ def dataloader(data, config, is_train=True, shuffle=True):
     assert len(data) == 3, 'You should provide states, sequence lengths, and number of humans!'
     batch_size = config.get('batch_size', 16)
     bootstrap = config.get('bootstrap', False)
-    states, seq_lengths, num_humans = data 
+    states, seq_lengths, num_humans = data
 
     # print('batch size: %d' % batch_size)
     # print('data size: %d' % len(seq_lengths))
@@ -160,21 +160,21 @@ def dataloader(data, config, is_train=True, shuffle=True):
         filt_indices = num_humans == num_human # selects all the matching number of humans
 
         filt_states = states[filt_indices] # only sucks out the required states (using above condition)
-    
+
         filt_seq_lengths = seq_lengths[filt_indices] #same as above
-        
+
         # print("filt_indices",filt_indices.shape)
         # print("filt_states",filt_states.shape)
         # print("filt_seq_lengths",filt_seq_lengths.shape)
         # print("seq_lengths[20]", seq_lengths[20])
         # the value of n is only the number of valid human states
-        # so if there are 200/400 states with 2 humans, n = 200 
+        # so if there are 200/400 states with 2 humans, n = 200
         n = len(filt_seq_lengths)
 
         indices = np.arange(n) # generates an array with values from 0 to n
         if shuffle:
             np.random.shuffle(indices)
-        idx = 0 
+        idx = 0
         while idx < n:
             if bootstrap and is_train:
                 selected_indices = np.random.choice(indices, size=batch_size, replace=True)
@@ -184,7 +184,7 @@ def dataloader(data, config, is_train=True, shuffle=True):
 
             # if i manually count it, it is = seq_lengths,
             # but if i print the size, it is = 8
-            cur_states = filt_states[selected_indices] 
+            cur_states = filt_states[selected_indices]
             # print("cur_states", cur_states.shape)
             cur_size = cur_states.shape[0]
             # print("cur_size", cur_size)
@@ -193,7 +193,7 @@ def dataloader(data, config, is_train=True, shuffle=True):
                 batch_seq_lengths = filt_seq_lengths[selected_indices] - 1
                 # print("batch_seq_lengths", batch_seq_lengths)
                 # print("filt_seq_lengths[selected_indices]", filt_seq_lengths[selected_indices])
-                
+
                 dim = cur_states[0].shape[-1]
                 # print("dim", dim)
                 # print("cur_states[0].shape", cur_states[0].shape)
@@ -207,7 +207,7 @@ def dataloader(data, config, is_train=True, shuffle=True):
                     seq_len = batch_seq_lengths[i]
                     batch_states[0:seq_len, i, :] = state[0:-1, :]
 
-                    batch_future_states[0:seq_len, i, :] = state[1:, :] 
+                    batch_future_states[0:seq_len, i, :] = state[1:, :]
                     #notice that here we are not giving
                     target = state[1:, 0:2] - state[0:-1, 0:2]
                     # print("state[1:, 0:2]", state[1:, 0:2].shape)
@@ -218,7 +218,7 @@ def dataloader(data, config, is_train=True, shuffle=True):
                 yield batch_states, batch_seq_lengths, batch_targets, batch_future_states
                 idx += cur_size
             else:
-                break  
+                break
 
 def rotate(state, kinematics='unicycle'):
     """
@@ -255,7 +255,7 @@ def rotate(state, kinematics='unicycle'):
                                 reshape((batch, -1))], dim=1), 2, dim=1, keepdim=True)
     new_state = torch.cat([dg, v_pref, theta, radius, vx, vy, px1, py1, vx1, vy1, radius1, da, radius_sum], dim=1)
     return new_state
-    
+
 def transform_and_rotate(raw_states):
     # states shape: batch_size x dim
     # 'px', 'py', 'vx', 'vy', 'radius', 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1', ..., 'radiusN'
@@ -277,10 +277,10 @@ def transform_and_rotate(raw_states):
 
     rotated_states = rotate(cur_states.view(-1, dim)).view(batch_size, num_human, -1)
     # print("cur_states.view(-1, dim).shape", cur_states.view(-1, dim).shape)
-    return rotated_states # [8, 6, 13]    
+    return rotated_states # [8, 6, 13]
 
 def build_humans(states):
-    #state shape: dim 
+    #state shape: dim
     num_human = int((states.shape[0] - 4) / 5)
     human_states = []
     for i in range(num_human):

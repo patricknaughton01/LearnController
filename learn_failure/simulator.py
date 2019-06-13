@@ -6,6 +6,10 @@ RISS 2019
 
 import pyrvo2.rvo2 as rvo2
 import math
+import utils
+# Used to convieniently find the nearest point on a polygon to the robot
+from shapely.geometry import Point, Polygon
+from shapely.ops import nearest_points
 
 
 class Simulator(object):
@@ -15,6 +19,8 @@ class Simulator(object):
         self.obstacles = []
         self.robot_num = None
         self.agents = []
+        self.scene = scene
+        self.obs_width = 0.3
         self.build_scene(scene)
 
     def do_step(self, action_ind):
@@ -46,6 +52,44 @@ class Simulator(object):
             )
         self.sim.setAgentVelocity(self.robot_num, vel)
         self.sim.doStep()
+
+    def state(self):
+        """Compute the state that will be fed to the DQN. This is composed
+        of the robot's rotated and transformed state (see utils.py / ask
+        Yash for what that does) and the occupancy map (same advice for how
+        this is built).
+
+        :return: The tensor that can be given to the DQN's value estimation
+            network.
+            :rtype: tensor
+
+        """
+        rpos = self.sim.getAgentPosition(self.robot_num)
+        rvel = self.sim.getAgentVelocity(self.robot_num)
+        rrad = self.sim.getAgentRadius(self.robot_num)
+        v_pref = self.sim.getAgentMaxSpeed(self.robot_num)
+        theta = math.atan2(rvel[1], rvel[0])
+        # Robot's state entry. Note that goal is listed as the robot's current
+        # position because we aren't using that goal as such, we are just
+        # exploring.
+        state = [
+            rpos[0], rpos[1], rvel[0], rvel[1], rrad, rpos[0], rpos[1],
+            v_pref, theta
+        ]
+        for obs in self.obstacles:
+            if(len(obs) > 1):
+                # Polygonal obstacle
+                o = Polygon(obs)
+                p = Point(rpos)
+                p1, p2 = nearest_points(o, p)
+                state.extend([p1.x, p2.y, 0, 0, self.obs_width])
+            else:
+                # Point obstacle
+                state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width])
+        om = utils.build_occupancy_maps(utils.build_humans(state))
+        #??????????????????????????????????????????
+        state = utils.transform_and_rotate(state)
+        return torch.cat([state, om], dim=-1)
 
     def reward(self):
         """Calculate the reward the robot receives.
@@ -102,7 +146,7 @@ class Simulator(object):
         if scene == "barge_in":
             num_people = 4
             # Walls
-            wall_width = 0.3
+            wall_width = self.obs_width
             wall_length = 2.0
             wall_dist = 1.5
             up_wall_vertices = []

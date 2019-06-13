@@ -42,8 +42,14 @@ class Trainer(object):
     def run_episode(self):
         sim = simulator.Simulator(scene="barge_in")
         h_t = None
+        curr_state = sim.state()
         for i in range(self.max_timesteps):
-            action = self.policy_model.select_action()
+            action, h_t = self.policy_model.select_action(sim.state(), h_t)
+            sim.do_step(action)
+            reward, _ = sim.reward()
+            next_state = sim.state()
+            self.memory.push(curr_state, h_t, action, next_state, reward)
+            curr_state = next_state
 
     def optimize_model(self):
         """Does one step of the optimization of the policy_model by sampling
