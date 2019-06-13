@@ -66,10 +66,6 @@ Barge_in_vertical: Barge_in_vertical.o
 	$(RM) Barge_in_vertical
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -o $@ Barge_in_vertical.o $(LIBS)
 
-Barge_in_fail: Barge_in_fail.o
-	$(RM) Barge_in_fail
-	$(CXX) $(INCLUDES) $(CXXFLAGS) -o $@ Barge_in_fail.o $(LIBS)
-
 .cpp.o:
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -c -o $@ $<
 
