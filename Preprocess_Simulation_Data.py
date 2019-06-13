@@ -18,7 +18,7 @@ import os
 
 
 data_type = 'Barge_in'
-directory = '/home/yashoza/Downloads/LearnControllers/RVO2/examples/data/'
+directory = '/home/patricknaughton01/Downloads/LearnControllers/RVO2/examples/data/'
 parent_path = directory  + data_type + '_*.txt'
 
 
@@ -102,7 +102,7 @@ for i, state in enumerate(states):
 # In[5]:
 
 
-save_path = '/home/yashoza/Downloads/LearnControllers/learn_general_controller/data/simulate_' + data_type.lower()
+save_path = '/home/patricknaughton01/Downloads/LearnControllers/learn_general_controller/data/simulate_' + data_type.lower()
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 print('save path is: %s' % save_path)
