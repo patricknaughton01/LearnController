@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import copy
+import simulator
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from time import time
@@ -39,7 +40,10 @@ class Trainer(object):
             print("Ran episode {}".format(episode))
 
     def run_episode(self):
-        #TODO: run one of the episodes, this requires the simulator
+        sim = simulator.Simulator(scene="barge_in")
+        h_t = None
+        for i in range(self.max_timesteps):
+            action = self.policy_model.select_action()
 
     def optimize_model(self):
         """Does one step of the optimization of the policy_model by sampling
@@ -49,7 +53,7 @@ class Trainer(object):
 
         :return:
             :rtype: None
-            
+
         """
         if len(self.memory) < self.batch_size:
             return
