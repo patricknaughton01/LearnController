@@ -34,6 +34,13 @@ class Trainer(object):
         self.max_timesteps = 128
 
     def run(self):
+        """Run the trainer to train the policy_model such that it learns
+        an optimal policy with respect to the reward given by the simulator.
+
+        :return:
+            :rtype: None
+
+        """
         # print('in run')
         num_episodes = self.config.get('num_episodes', 100)
         print_every = self.config.get('print_every', 10)
@@ -43,6 +50,14 @@ class Trainer(object):
             print("Ran episode {}".format(episode))
 
     def run_episode(self):
+        """Run one episode of training by creating a simulation using
+        RVO2 (specifically the `Simulator` class in the `simulator` module.
+        Episodes are limited to `self.max_timesteps` timesteps.
+
+        :return:
+            :rtype: None
+
+        """
         sim = simulator.Simulator(scene="barge_in")
         h_t = None
         curr_state = sim.state()
