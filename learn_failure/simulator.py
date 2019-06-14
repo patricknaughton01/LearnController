@@ -7,7 +7,9 @@ RISS 2019
 import pyrvo2.rvo2 as rvo2
 import math
 import utils
-# Used to convieniently find the nearest point on a polygon to the robot
+import torch
+import numpy as np
+# Used to conveniently find the nearest point on a polygon to the robot
 from shapely.geometry import Point, Polygon
 from shapely.ops import nearest_points
 
@@ -15,7 +17,7 @@ from shapely.ops import nearest_points
 class Simulator(object):
 
     def __init__(self, scene=None):
-        self.sim = rvo2.PyRVOSimulator()
+        self.sim = rvo2.PyRVOSimulator(0.1, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
         self.robot_num = None
         self.agents = []
@@ -26,11 +28,12 @@ class Simulator(object):
     def do_step(self, action_ind):
         """Run a step of the simulation.
 
-        :param int action_ind: The index of the action to take.
+        :param tensor action_ind: The index of the action to take.
         :return:
             :rtype: None
 
         """
+        action_ind = action_ind[0][0]
         robot_max_vel = self.sim.getAgentMaxSpeed(self.robot_num)
         # Decode the action selection:
         #   0 => do nothing
@@ -40,12 +43,12 @@ class Simulator(object):
         #       `(action_ind-17) * 2pi/16`
         #   else => do nothing
         vel = (0, 0)
-        if action_ind >= 1 and action_ind <= 16:
+        if 1 <= action_ind <= 16:
             vel = (
                 (robot_max_vel/2) * math.cos((action_ind - 1)*(math.pi / 8)),
                 (robot_max_vel/2) * math.sin((action_ind - 1)*(math.pi / 8))
             )
-        elif action_ind >= 17 and action_ind <= 33:
+        elif 17 <= action_ind <= 33:
             vel = (
                 robot_max_vel * math.cos((action_ind - 17)*(math.pi / 8)),
                 robot_max_vel * math.sin((action_ind - 17)*(math.pi / 8))
@@ -77,7 +80,7 @@ class Simulator(object):
             v_pref, theta
         ]
         for obs in self.obstacles:
-            if(len(obs) > 1):
+            if len(obs) > 1:
                 # Polygonal obstacle
                 o = Polygon(obs)
                 p = Point(rpos)
@@ -86,9 +89,11 @@ class Simulator(object):
             else:
                 # Point obstacle
                 state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width])
-        om = utils.build_occupancy_maps(utils.build_humans(state))
-        #??????????????????????????????????????????
-        state = utils.transform_and_rotate(state)
+        state = np.array(state)
+        # This dimensionally works, see lines 90 - 123 in
+        # `learn_general_controller` to see why / ask Yash.
+        om = utils.build_occupancy_maps(utils.build_humans(state))[1:]
+        state = utils.transform_and_rotate(state.reshape((1, -1)))[0]
         return torch.cat([state, om], dim=-1)
 
     def reward(self):
@@ -142,40 +147,66 @@ class Simulator(object):
             :rtype: None
 
         """
-        self.sim.setTimeStep(0.1)
         if scene == "barge_in":
             num_people = 4
             # Walls
             wall_width = self.obs_width
             wall_length = 2.0
             wall_dist = 1.5
-            up_wall_vertices = []
-            down_wall_vertices = []
-            up_wall_vertices.append((wall_length, 2 * wall_width + wall_dist))
-            up_wall_vertices.append((0, 2 * wall_width + wall_dist))
-            up_wall_vertices.append((0, wall_dist + wall_width))
-            up_wall_vertices.append((wall_length, wall_dist + wall_width))
-
-            down_wall_vertices.append((wall_length, wall_width))
-            down_wall_vertices.append((0, wall_width))
-            down_wall_vertices.append((0, 0))
-            down_wall_vertices.append((wall_length, 0))
+            up_wall_vertices = [
+                (wall_length, 2 * wall_width + wall_dist),
+                (0, 2 * wall_width + wall_dist),
+                (0, wall_dist + wall_width),
+                (wall_length, wall_dist + wall_width)
+            ]
+            down_wall_vertices = [
+                (wall_length, wall_width),
+                (0, wall_width),
+                (0, 0),
+                (wall_length, 0)
+            ]
 
             self.sim.addObstacle(up_wall_vertices)
             self.sim.addObstacle(down_wall_vertices)
 
-            self.obstacles.(up_wall_vertices)
-            self.obstacles.(down_wall_vertices)
+            self.obstacles.append(up_wall_vertices)
+            self.obstacles.append(down_wall_vertices)
 
             # "Humans," really just stationary obstacles that fill the corridor
+            # Note that they are just the same vertex thrice because RVO2
+            # didn't like one vertex obstacles and shapely requires 3 verticies
+            # to treat them like a polygon (used to find distance from robot
+            # to obstacles).
             hums = [
-                [(wall_length + 0.2, wall_width + 0.1)],
-                [(wall_length + 0.2,
-                    wall_width + wall_dist / NUM_PEOPLE + 0.1)],
-                [(wall_length + 0.2,
-                    wall_width + wall_dist / NUM_PEOPLE * 2 + 0.1)],
-                [(wall_length + 0.2,
-                    wall_width + wall_dist / NUM_PEOPLE * 3 + 0.1f)]
+                [
+                    (wall_length + 0.2, wall_width + 0.1),
+                    (wall_length + 0.2, wall_width + 0.1),
+                    (wall_length + 0.2, wall_width + 0.1)
+                ],
+                [
+                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people + 0.1),
+                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people + 0.1),
+                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people + 0.1)
+                ],
+                [
+                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people * 2 + 0.1),
+                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people * 2 + 0.1),
+                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people * 2 + 0.1)
+                ],
+                [
+                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people * 3 + 0.1),
+                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people * 3 + 0.1),
+                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people * 3 + 0.1)
+                ]
             ]
             for hum in hums:
                 self.sim.addObstacle(hum)
@@ -184,7 +215,7 @@ class Simulator(object):
             # Add the robot
             self.robot_num = self.sim.addAgent(
                 (1.0, -0.15 + wall_width + wall_dist / 2.0),
-                1.0, 10, 5.0, 5.0, 0.22, 1.5
+                1.0, 10, 5.0, 5.0, 0.22, 1.5, (0, 0)
             )
         else:       # Build a random scene
             pass

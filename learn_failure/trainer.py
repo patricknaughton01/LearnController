@@ -4,9 +4,12 @@ import torch.nn as nn
 import torch.optim as optim
 import copy
 import simulator
+import random
 from torch.autograd import Variable
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from time import time
+from collections import namedtuple
 from utils import neg_2d_gaussian_likelihood, transform_and_rotate, build_occupancy_maps, build_humans
 
 class Trainer(object):
@@ -36,7 +39,7 @@ class Trainer(object):
         print_every = self.config.get('print_every', 10)
         log_path = self.config.get('log_path', 'log')
         for episode in range(1, num_episodes + 1):
-            run_episode()
+            self.run_episode()
             print("Ran episode {}".format(episode))
 
     def run_episode(self):
@@ -63,7 +66,7 @@ class Trainer(object):
         """
         if len(self.memory) < self.batch_size:
             return
-        transitions = memory.sample(self.batch_size)
+        transitions = self.memory.sample(self.batch_size)
         # Transpose the batch i.e. turn a batch of transitions into a
         # transition of batch arrays
         batch = Transition(*zip(*transitions))
@@ -74,10 +77,10 @@ class Trainer(object):
         reward_batch = torch.cat(batch.reward)
 
         # Compute the Q values we expected
-        state_action_values = policy_model(state_batch, h_t_batch).gather(1,
+        state_action_values = self.policy_model(state_batch, h_t_batch).gather(1,
             action_batch)
         # Compute expected Q values based on Bellman equation
-        next_state_values = target_model(next_state_batch,
+        next_state_values = self.target_model(next_state_batch,
             h_t_batch).max(1)[0].detach()
         expected_state_action_vals = ((next_state_values * self.gamma)
             + reward_batch)

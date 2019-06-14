@@ -5,16 +5,16 @@ from model import *
 import os
 from utils import *
 import configparser
-from time import time 
+from time import time
 
 def main():
     args = parse_args()
     config = vars(args)
     parent_path = "log/%s/seed_%d_bootstrap_%s_M_%d" % (
                 args.train_data_name,
-                args.seed, 
-                str(args.bootstrap), 
-                args.M) 
+                args.seed,
+                str(args.bootstrap),
+                args.M)
     print('parent path is %s' % parent_path)
     save_path = parent_path + "/test/%s" % args.test_data_name
     if args.show_mc:
@@ -26,6 +26,7 @@ def main():
 
     data_path = args.data_path + '/' + args.test_data_name
     all_states = np.load(data_path + '/states.npy', allow_pickle=True)
+    #print(all_states)
     all_seq_lengths = np.load(data_path+ '/seq_lengths.npy', allow_pickle=True)
     all_num_humans = np.load(data_path + '/num_humans.npy', allow_pickle=True)
     val_loader = lambda: dataloader((all_states, all_seq_lengths, all_num_humans), config, is_train=False, shuffle=False)
@@ -74,7 +75,7 @@ def main():
 
         for model in models:
             # states: seq_len x batch_size x dim # for the first state - (29, 8, 39)
-            # seq_len = no of points in the path 
+            # seq_len = no of points in the path
             # batch_size = just batch size
             # dim = number of "types" of data
 
@@ -89,30 +90,30 @@ def main():
             for i in range(seq_len):
                 # print("i is ", i)
                 cur_states = states[i] # size (8,39)
-                    
+
                 # if flag_new_pred is 1:
                 if i > 0:
                     # print("adding new data now ")
                     cur_states[:, 0:2] = (new_pred.data).cpu().numpy() # (Variable(x).data).cpu().numpy()
-                
+
                 # if batch_idx > 1:
-                #     # take the prev state and add the new predicted state to the last element 
+                #     # take the prev state and add the new predicted state to the last element
 
                 # print("cur_states shape is ", cur_states) # (8,39)
                 cur_rotated_states = transform_and_rotate(cur_states) # Size([8, 6, 13])
                 # print("cur_rotated_states", cur_rotated_states)
- 
+
                 # now state_t is of size: batch_size x num_human x dim
                 batch_size = cur_states.shape[0]
                 # print("batch_size", batch_size)
 
                 batch_occupancy_map = []
-                
+
                 start_time = time()
                 for b in range(batch_size):
                     occupancy_map = build_occupancy_maps(build_humans(cur_states[b]))
                     batch_occupancy_map.append(occupancy_map)
-                
+
                 batch_occupancy_map = torch.stack(batch_occupancy_map)[:, 1:, :]
                 state_t = torch.cat([cur_rotated_states, batch_occupancy_map], dim=-1) # Size([8, 6, 61])
                 # print("state_t.shape", state_t.shape)
@@ -126,12 +127,12 @@ def main():
                 flag_new_pred = 1
                 pred_xs.append(torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2])
                 # print("the pred_xs coming out of the network is ", (torch.from_numpy(cur_states[:, 0:2]).float() + pred_t[:, 0:2]))
-                # print("pred_t.shape", (pred_t[:, 0:2])) # constant 8 
+                # print("pred_t.shape", (pred_t[:, 0:2])) # constant 8
                 # print("pred_xs.shape", len(pred_xs)) # inc with i
                 end_time = time()
                 # print('Average prediction time for this batch is : %.4f seconds' % ((end_time - start_time) / batch_size))
-            
-            outputs = torch.stack(outputs)            
+
+            outputs = torch.stack(outputs)
             pred_xs = torch.stack(pred_xs)
 
             loss, l2_error = criterion(outputs, targets, seq_lengths)
@@ -162,6 +163,6 @@ def main():
     np.save(save_path + "/val_model_uncertainty.npy", final_model_uncertainty)
     print("avg loss: %.4f" % np.mean(val_loss))
     print("avg l2 error: %.4f" % np.mean(val_l2_error))
-            
+
 if __name__ == "__main__":
     main()
