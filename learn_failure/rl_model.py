@@ -59,11 +59,12 @@ class Controller(nn.Module):
         :param tensor state: tensor of shape (batch_size, # of humans,
             length of a rotated state)
         :param tensor h_t: Hidden state of rnn
-        :return: The q values for each of the 80 possible actions, the hidden
+        :return: The q values for each of the 33 possible actions, the hidden
             state values for the rnn.
             :rtype: tensor, tensor
 
         """
+        state = state.reshape((1, *state.shape))
         size = state.shape
 
         # print("size", size) # [8, 6, 61]
