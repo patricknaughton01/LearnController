@@ -23,8 +23,9 @@ class Simulator(object):
         self.agents = []
         self.scene = scene
         self.obs_width = 0.3
-        self.build_scene(scene)
         self.file = file
+        self.time = 0.0
+        self.build_scene(scene)
 
     def do_step(self, action_ind):
         """Run a step of the simulation.
@@ -34,7 +35,7 @@ class Simulator(object):
             :rtype: None
 
         """
-        action_ind = action_ind[0][0]
+        action_ind = action_ind.item()
         robot_max_vel = self.sim.getAgentMaxSpeed(self.robot_num)
         # Decode the action selection:
         #   0 => do nothing
@@ -55,7 +56,13 @@ class Simulator(object):
                 robot_max_vel * math.sin((action_ind - 17)*(math.pi / 8))
             )
         self.sim.setAgentVelocity(self.robot_num, vel)
-        self.sim.doStep()
+        ts = self.sim.getTimeStep()
+        pos = self.sim.getAgentPosition(self.robot_num)
+        self.sim.setAgentPosition(
+            self.robot_num,
+            (pos[0] + vel[0] * ts, pos[1] + vel[1] * ts)
+        )
+        self.time += ts
         if self.file is not None:
             self.update_visualization()
 
@@ -123,7 +130,7 @@ class Simulator(object):
         rrad = self.sim.getAgentRadius(self.robot_num)
         v_pref = self.sim.getAgentMaxSpeed(self.robot_num)
         theta = math.atan2(rvel[1], rvel[0])
-        self.file.write(str(self.sim.getGlobalTime()) + " ")
+        self.file.write(str(self.time) + " ")
         self.file.write(str(rpos) + " ")
         self.file.write(str(rvel) + " ")
         self.file.write(str(rrad) + " ")
@@ -265,10 +272,23 @@ class Simulator(object):
 
             # Add the robot
             self.robot_num = self.sim.addAgent(
-                (wall_length, -0.15 + wall_width + wall_dist / 2.0),
+                (wall_length - 0.2, -0.15 + wall_width + wall_dist / 2.0),
                 1.0, 10, 5.0, 5.0, 0.22, 1.5, (0, 0)
             )
         else:       # Build a random scene
             pass
-
+        if self.file is not None:
+            self.file.write("timestamp position0 velocity0 radius0 goal ")
+            self.file.write("pref_speed theta ")
+            num = 1
+            for _ in self.agents:
+                self.file.write("position" + str(num) + " ")
+                self.file.write("velocity" + str(num) + " ")
+                self.file.write("radius" + str(num) + " ")
+                num += 1
+            for _ in self.obstacles:
+                self.file.write("position" + str(num) + " ")
+                self.file.write("velocity" + str(num) + " ")
+                self.file.write("radius" + str(num) + " ")
+                num += 1
         self.sim.processObstacles()
