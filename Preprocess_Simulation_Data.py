@@ -17,8 +17,8 @@ import os
 # In[2]:
 
 
-data_type = 'Barge_in'
-directory = '/home/patricknaughton01/Downloads/LearnControllers/RVO2/examples/data/'
+data_type = 'barge'
+directory = '/home/patricknaughton01/Downloads/LearnControllers/learn_failure/'
 parent_path = directory  + data_type + '_*.txt'
 
 
@@ -81,7 +81,6 @@ for path in files:
 
 # In[4]:
 
-
 n = len(seq_lengths) #will store the number of files 
 # print(n)
 seq_lengths = np.array(seq_lengths)
@@ -102,7 +101,7 @@ for i, state in enumerate(states):
 # In[5]:
 
 
-save_path = '/home/patricknaughton01/Downloads/LearnControllers/learn_general_controller/data/simulate_' + data_type.lower()
+save_path = '/home/patricknaughton01/Downloads/LearnControllers/learn_failure/simulate_' + data_type.lower()
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 print('save path is: %s' % save_path)
@@ -114,7 +113,7 @@ print('save path is: %s' % save_path)
 # obstacle_files = glob(directory  + data_type + "_obstacles_*.txt")
 # obstacle_files.sort(key=lambda x: int(x.split('/')[-1].split('.')[-2].split('_')[-1]))
 
-filt = seq_lengths < 100
+filt = seq_lengths < 200
 # print(filt)
 # print(seq_lengths)
 seq_lengths = seq_lengths[filt]

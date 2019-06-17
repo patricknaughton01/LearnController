@@ -9,6 +9,7 @@ import math
 import utils
 import torch
 import numpy as np
+import random
 # Used to conveniently find the nearest point on a polygon to the robot
 from shapely.geometry import Point, Polygon
 from shapely.ops import nearest_points
@@ -102,15 +103,22 @@ class Simulator(object):
         close_thresh = 0.2
         robot_pos = self.sim.getAgentPosition(self.robot_num)
         for obs in self.obstacles:
-            for vertex in obs:
-                if (self.dist(vertex, robot_pos)
-                    < self.sim.getAgentRadius(self.robot_num)):
-                    # Collision
-                    total += col_reward
-                elif (self.dist(vertex, robot_pos)
-                    < self.sim.getAgentRadius(self.robot_num) + close_thresh):
-                    # Closeness penalty
-                    total += close_reward
+            dist = 0
+            if len(obs) > 1:
+                # Polygonal obstacle
+                o = Polygon(obs)
+                p = Point(robot_pos)
+                p1, p2 = nearest_points(o, p)
+                if not o.contains(p):
+                    dist = self.dist((p1.x, p1.y), (p2.x, p2.y))
+            else:
+                # Point obstacle
+                dist = self.dist(robot_pos, obs[0])
+            if dist < self.sim.getAgentRadius(self.robot_num) + self.obs_width:
+                total += col_reward
+            elif (dist < self.sim.getAgentRadius(self.robot_num)
+                  + self.obs_width + close_thresh):
+                total += close_reward
         return torch.tensor([[total]], dtype=torch.float), False
 
     def dist(self, v1, v2):
@@ -131,9 +139,10 @@ class Simulator(object):
         v_pref = self.sim.getAgentMaxSpeed(self.robot_num)
         theta = math.atan2(rvel[1], rvel[0])
         self.file.write(str(self.time) + " ")
-        self.file.write(str(rpos) + " ")
-        self.file.write(str(rvel) + " ")
+        self.file.write("(" + str(rpos[0]) + "," + str(rpos[1]) + ") ")
+        self.file.write("(" + str(rvel[0]) + "," + str(rvel[1]) + ") ")
         self.file.write(str(rrad) + " ")
+        self.file.write("(" + str(rpos[0]) + "," + str(rpos[1]) + ") ")
         self.file.write(str(v_pref) + " ")
         self.file.write(str(theta) + " ")
         for obs in self.obstacles:
@@ -142,13 +151,15 @@ class Simulator(object):
                 o = Polygon(obs)
                 p = Point(rpos)
                 p1, p2 = nearest_points(o, p)
-                self.file.write(str((p1.x, p1.y)) + " ")
-                self.file.write("(0, 0) ")
+                self.file.write("(" + str(p1.x) + "," + str(p1.y) + ") ")
+                self.file.write("(0,0) ")
                 self.file.write(str(self.obs_width) + " ")
             else:
                 # Point obstacle
-                self.file.write(str((obs[0][0], obs[0][1])) + " ")
-                self.file.write("(0, 0) ")
+                self.file.write(
+                    "(" + str(obs[0][0]) + "," +str(obs[0][1]) + ") "
+                )
+                self.file.write("(0,0) ")
                 self.file.write(str(self.obs_width) + " ")
         self.file.write("\n")
 
@@ -276,7 +287,10 @@ class Simulator(object):
                 1.0, 10, 5.0, 5.0, 0.22, 1.5, (0, 0)
             )
         else:       # Build a random scene
-            pass
+            max_dim = 10        # Maximum x and y start/goal locations
+            max_agents = 10
+            max_obs = 10
+
         if self.file is not None:
             self.file.write("timestamp position0 velocity0 radius0 goal ")
             self.file.write("pref_speed theta ")
@@ -291,4 +305,5 @@ class Simulator(object):
                 self.file.write("velocity" + str(num) + " ")
                 self.file.write("radius" + str(num) + " ")
                 num += 1
+            self.file.write("\n")
         self.sim.processObstacles()
