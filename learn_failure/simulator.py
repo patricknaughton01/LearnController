@@ -22,6 +22,7 @@ class Simulator(object):
         self.obstacles = []
         self.robot_num = None
         self.agents = []
+        self.goals = []
         self.scene = scene
         self.obs_width = 0.3
         self.file = file
@@ -56,14 +57,25 @@ class Simulator(object):
                 robot_max_vel * math.cos((action_ind - 17)*(math.pi / 8)),
                 robot_max_vel * math.sin((action_ind - 17)*(math.pi / 8))
             )
+        # Set the robot's goal given the action that was selected
         self.sim.setAgentVelocity(self.robot_num, vel)
         ts = self.sim.getTimeStep()
         pos = self.sim.getAgentPosition(self.robot_num)
-        self.sim.setAgentPosition(
-            self.robot_num,
-            (pos[0] + vel[0] * ts, pos[1] + vel[1] * ts)
+        self.goals[self.robot_num] = (
+            pos[0] + vel[0] * ts, pos[1] + vel[1] * ts
         )
-        self.time += ts
+        # Move all the agents towards their goals
+        for agent in self.agents:
+            p = self.sim.getAgentPosition(agent)
+            g = self.goals[agent]
+            vec = (g[0] - p[0], g[1] - p[1])
+            mag_mul = (
+                    self.sim.getAgentMaxSpeed(agent)
+                    / (vec[0]**2 + vec[1]**2)**5
+            )
+            vec = (vec[0] * mag_mul, vec[1] * mag_mul)
+            self.sim.setAgentPrefVelocity(agent, vec)
+        self.sim.doStep()
         if self.file is not None:
             self.update_visualization()
 
@@ -102,6 +114,15 @@ class Simulator(object):
         close_reward = -0.25
         close_thresh = 0.2
         robot_pos = self.sim.getAgentPosition(self.robot_num)
+        for agent in self.agents:
+            if agent != self.robot_num: # Don't care about self collisions
+                dist = self.dist(self.sim.getAgentPosition(agent), robot_pos)
+                if dist < self.sim.getAgentRadius(
+                        self.robot_num) + self.sim.getAgentRadius(agent):
+                    total += col_reward
+                elif (dist < self.sim.getAgentRadius(self.robot_num)
+                      + self.sim.getAgentRadius(agent) + close_thresh):
+                    total += close_reward
         for obs in self.obstacles:
             dist = 0
             if len(obs) > 1:
@@ -145,6 +166,14 @@ class Simulator(object):
         self.file.write("(" + str(rpos[0]) + "," + str(rpos[1]) + ") ")
         self.file.write(str(v_pref) + " ")
         self.file.write(str(theta) + " ")
+        for agent in self.agents:
+            if agent != self.robot_num: # We already wrote out the robot
+                pos = self.sim.getAgentPosition(agent)
+                vel = self.sim.getAgentVelocity(agent)
+                rad = self.sim.getAgentRadius(agent)
+                self.file.write("(" + str(pos[0]) + "," + str(pos[1]) + ") ")
+                self.file.write("(" + str(vel[0]) + "," + str(vel[1]) + ") ")
+                self.file.write(str(rad) + " ")
         for obs in self.obstacles:
             if len(obs) > 1:
                 # Polygonal obstacle
@@ -193,6 +222,12 @@ class Simulator(object):
             rpos[0], rpos[1], rvel[0], rvel[1], rrad, rpos[0], rpos[1],
             v_pref, theta
         ]
+        for agent in self.agents:
+            if agent != self.robot_num: # We already accounted for the robot
+                pos = self.sim.getAgentPosition(agent)
+                vel = self.sim.getAgentVelocity(agent)
+                rad = self.sim.getAgentRadius(agent)
+                state.extend([pos[0], pos[1], vel[0], vel[1], rad])
         for obs in self.obstacles:
             if len(obs) > 1:
                 # Polygonal obstacle
@@ -282,14 +317,48 @@ class Simulator(object):
                 self.obstacles.append(hum)
 
             # Add the robot
+            robot_pos = (
+                wall_length - 0.2, -0.15 + wall_width + wall_dist / 2.0
+            )
             self.robot_num = self.sim.addAgent(
-                (wall_length - 0.2, -0.15 + wall_width + wall_dist / 2.0),
+                robot_pos,
                 1.0, 10, 5.0, 5.0, 0.22, 1.5, (0, 0)
             )
+            self.agents.append(self.robot_num)
+            self.goals.append(robot_pos)
         else:       # Build a random scene
             max_dim = 10        # Maximum x and y start/goal locations
             max_agents = 10
             max_obs = 10
+            num_agents = random.randint(1, max_agents)
+            num_obstacles = random.randint(1, max_obs)
+            # Create the robot
+            robot_pos = (max_dim * random.random(), max_dim * random.random())
+            self.robot_num = self.sim.addAgent(
+                robot_pos
+            )
+            self.agents.append(self.robot_num)
+            self.goals.append(robot_pos)
+            # For this, just create point obstacles
+            # Note that they are just the same vertex thrice because RVO2
+            # didn't like one vertex obstacles and shapely requires 3 verticies
+            # to treat them like a polygon (used to find distance from robot
+            # to obstacles).
+            for i in range(num_obstacles):
+                pt = (max_dim * random.random(), max_dim * random.random())
+                o = (pt, pt, pt)
+                self.obstacles.append(o)
+                self.sim.addObstacle(o)
+            # Create agents in random spots with random goals
+            for i in range(num_agents):
+                self.agents.append(
+                    self.sim.addAgent(
+                        (max_dim * random.random(), max_dim * random.random())
+                    )
+                )
+                self.goals.append(
+                    (max_dim * random.random(), max_dim * random.random())
+                )
 
         if self.file is not None:
             self.file.write("timestamp position0 velocity0 radius0 goal ")
