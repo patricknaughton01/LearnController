@@ -31,6 +31,8 @@ pip install -r requirements.txt
 cd learn_failure/pyrvo2
 # Install Cython. This did not work with pip for me
 conda install Cython
-# If you don't have cmake installed, install it now (depends on distro)
-
 ```
+Theoretically speaking, you should be good to go now because they pyrvo2 binaries were committed in this repo.
+
+# Running
+The main module is `train.py`. `python train.py` should start the model running simulations.
