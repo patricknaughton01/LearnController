@@ -17,14 +17,14 @@ from shapely.ops import nearest_points
 
 class Simulator(object):
 
-    def __init__(self, scene=None, file=None, max_dim=3):
+    def __init__(self, scene=None, file=None, max_dim=1):
         self.sim = rvo2.PyRVOSimulator(0.1, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
         self.robot_num = None
         self.agents = []
         self.goals = []
         self.scene = scene
-        self.obs_width = 0.3
+        self.obs_width = 0.05
         self.file = file
         self.max_dim = max_dim
         self.build_scene(scene)
@@ -58,7 +58,6 @@ class Simulator(object):
                 robot_max_vel * math.sin((action_ind - 17)*(math.pi / 8))
             )
         # Set the robot's goal given the action that was selected
-        self.sim.setAgentVelocity(self.robot_num, vel)
         ts = self.sim.getTimeStep()
         pos = self.sim.getAgentPosition(self.robot_num)
         self.goals[self.robot_num] = (
@@ -71,9 +70,11 @@ class Simulator(object):
             vec = (g[0] - p[0], g[1] - p[1])
             mag_mul = (vec[0]**2 + vec[1]**2)**5
             # check for division by 0/reaching the goal
-            if mag_mul > 0.001:
+            if mag_mul > 10**(-14):
                 mag_mul = self.sim.getAgentMaxSpeed(agent)/mag_mul
-            else:   # We've reached the goal so generate a new one
+            # We've reached the goal (and this isn't the robot) so generate
+            # a new one
+            elif agent != self.robot_num:
                 self.goals[agent] = (
                     self.max_dim * random.random(),
                     self.max_dim * random.random()
@@ -140,14 +141,15 @@ class Simulator(object):
             else:
                 # Point obstacle
                 dist = self.dist(robot_pos, obs[0])
-            if dist < self.sim.getAgentRadius(self.robot_num) + self.obs_width:
+            if dist < self.sim.getAgentRadius(self.robot_num):
                 total += col_reward
             elif (dist < self.sim.getAgentRadius(self.robot_num)
-                  + self.obs_width + close_thresh):
+                  + close_thresh):
                 total += close_reward
         return torch.tensor([[total]], dtype=torch.float), False
 
-    def dist(self, v1, v2):
+    @staticmethod
+    def dist(v1, v2):
         """Calculate the distance between v1 and v2
 
         :param tuple v1: (x, y) of v1.
@@ -259,7 +261,7 @@ class Simulator(object):
         if scene == "barge_in":
             num_people = 4
             # Walls
-            wall_width = self.obs_width
+            wall_width = 0.3
             wall_length = 2.0
             wall_dist = 1.5
             up_wall_vertices = [
@@ -289,31 +291,31 @@ class Simulator(object):
             hums = [
                 [
                     (wall_length + 0.2, wall_width + 0.1),
-                    (wall_length + 0.2, wall_width + 0.1),
-                    (wall_length + 0.2, wall_width + 0.1)
+                    (wall_length + 0.2, wall_width + 0.1 + 0.5),
+                    (wall_length + 0.2 + 0.1, wall_width + 0.1)
                 ],
                 [
                     (wall_length + 0.2,
                      wall_width + wall_dist / num_people + 0.1),
                     (wall_length + 0.2,
-                     wall_width + wall_dist / num_people + 0.1),
-                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people + 0.1 + 0.5),
+                    (wall_length + 0.2 + 0.1,
                      wall_width + wall_dist / num_people + 0.1)
                 ],
                 [
                     (wall_length + 0.2,
                      wall_width + wall_dist / num_people * 2 + 0.1),
                     (wall_length + 0.2,
-                     wall_width + wall_dist / num_people * 2 + 0.1),
-                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people * 2 + 0.1 + 0.5),
+                    (wall_length + 0.2 + 0.1,
                      wall_width + wall_dist / num_people * 2 + 0.1)
                 ],
                 [
                     (wall_length + 0.2,
                      wall_width + wall_dist / num_people * 3 + 0.1),
                     (wall_length + 0.2,
-                     wall_width + wall_dist / num_people * 3 + 0.1),
-                    (wall_length + 0.2,
+                     wall_width + wall_dist / num_people * 3 + 0.1 + 0.5),
+                    (wall_length + 0.2 + 0.1,
                      wall_width + wall_dist / num_people * 3 + 0.1)
                 ]
             ]
@@ -351,7 +353,11 @@ class Simulator(object):
             # to obstacles).
             for i in range(num_obstacles):
                 pt = (max_dim * random.random(), max_dim * random.random())
-                o = [pt, pt, pt]
+                width = 0.2
+                o = [
+                    pt, (pt[0] + width, pt[1]), (pt[0] + width, pt[1] + width),
+                    (pt[0], pt[1] + width)
+                ]
                 self.obstacles.append(o)
                 self.sim.addObstacle(o)
             # Create agents in random spots with random goals

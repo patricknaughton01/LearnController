@@ -46,7 +46,7 @@ class Trainer(object):
 
         """
         # print('in run')
-        num_episodes = 25#self.config.get('num_episodes', 100)
+        num_episodes = 1#self.config.get('num_episodes', 100)
         print_every = 1 #self.config.get('print_every', 10)
         log_path = self.config.get('log_path', 'log')
         for episode in range(1, num_episodes + 1):

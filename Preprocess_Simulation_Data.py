@@ -165,7 +165,7 @@ num_humans = np.load(save_path + '/num_humans.npy',allow_pickle=True)
 
 
 # visualization of the data 
-idx = 1
+idx = 0
 
 episode = states_array[idx]
 n = int((episode.shape[1] - 4) / 5)
