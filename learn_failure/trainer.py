@@ -28,12 +28,14 @@ class Trainer(object):
                                     weight_decay=config.get('weight_decay', 0))
         self.config = config
         # TODO: push the following things into the config
-        self.batch_size = 32
+        self.batch_size = 64
         self.memory = ReplayMemory(1000000)
         self.gamma = 0.9
-        self.max_timesteps = 4096
-        self.epsilon = 0.99
-        self.epsilon_decay = 0.9998
+        self.max_timesteps = 128
+        self.epsilon = 1.0
+        self.epsilon_decay = 0.99999769741
+        self.cumulative_timesteps = 0
+        self.target_update = 1000
 
     def run(self):
         """Run the trainer to train the policy_model such that it learns
@@ -98,6 +100,11 @@ class Trainer(object):
             curr_state = next_state
             total_reward += reward
             self.optimize_model()
+            self.cumulative_timesteps += 1
+            if self.cumulative_timesteps % self.target_update == 0:
+                self.target_model.load_state_dict(
+                    self.policy_model.state_dict()
+                )
         if record:
             out_file.close()
         return total_reward
@@ -116,6 +123,8 @@ class Trainer(object):
             return
         transitions = self.memory.sample(self.batch_size)
 
+        # We have to clone this var so that it isn't a leaf variable because
+        # we want to use it in an in-place operation (update the total loss).
         total_loss = Variable(torch.zeros(1), requires_grad=True).clone()
         for transition in transitions:
             state_action_value = self.policy_model(
