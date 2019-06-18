@@ -23,46 +23,46 @@ class Trainer(object):
         self.policy_model = model
         self.target_model = copy.deepcopy(model)
         self.criterion = neg_2d_gaussian_likelihood
-        self.optimizer = optim.Adam(model.parameters(),
-                                    lr=config.get('learning_rate', 0.001),
-                                    weight_decay=config.get('weight_decay', 0))
+        self.optimizer = optim.RMSprop(
+            model.parameters(), lr=0.00025, momentum=0.95, weight_decay=0
+        )
         self.config = config
         # TODO: push the following things into the config
-        self.batch_size = 64
+        self.batch_size = 32
         self.memory = ReplayMemory(1000000)
-        self.gamma = 0.9
-        self.max_timesteps = 128
+        self.gamma = 0.99
+        self.max_timesteps = 10**8
         self.epsilon = 1.0
         self.epsilon_decay = 0.99999769741
         self.cumulative_timesteps = 0
-        self.target_update = 1000
+        self.target_update = 10000
+        self.converge_thresh = 0.0001
 
     def run(self):
         """Run the trainer to train the policy_model such that it learns
         an optimal policy with respect to the reward given by the simulator.
 
-        :return:
-            :rtype: None
+        :return: The reward of the last episode
+            :rtype: float
 
         """
         # print('in run')
-        num_episodes = 1#self.config.get('num_episodes', 100)
-        print_every = 1 #self.config.get('print_every', 10)
-        log_path = self.config.get('log_path', 'log')
+        num_episodes = 1
+        reward = 0
         for episode in range(1, num_episodes + 1):
-            reward = self.run_episode(
-                record=((episode%print_every)==0),
-                key=episode
-            )
+            reward = self.run_episode()
             print("Ran episode {}\n\tGot reward {}".format(
                 episode, reward[0][0]
             ))
+        return reward
 
-    def run_episode(self, record=False, key=0):
+    def run_episode(self, record=False, key=0, print_every=1000):
         """Run one episode of training by creating a simulation using
         RVO2 (specifically the `Simulator` class in the `simulator` module.
         Episodes are limited to `self.max_timesteps` timesteps.
 
+        :param int print_every: After how many timesteps should we print the
+            loss
         :param boolean record: Whether or not to record this episode in a file
         :param int key: The number to append to this file to make it unique
 
@@ -77,11 +77,14 @@ class Trainer(object):
         h_t = None
         curr_state = sim.state()
         total_reward = torch.zeros((1, 1), dtype=torch.float)
+        last_loss = 0.0
         for i in range(self.max_timesteps):
             action, h_t = self.policy_model.select_action(
                 sim.state(), h_t, epsilon=self.epsilon
             )
             self.epsilon *= self.epsilon_decay
+            if self.epsilon < 0.1:
+                self.epsilon = 0.1
             sim.do_step(action)
             reward, _ = sim.reward()
             # Penalize moving
@@ -99,12 +102,21 @@ class Trainer(object):
                 )
             curr_state = next_state
             total_reward += reward
-            self.optimize_model()
+            loss = self.optimize_model()
+            # If loss is decreasing but by less than x%, we have converged
+            if loss < last_loss and (((last_loss - loss)/last_loss) < self.converge_thresh):
+                print("Loss: ", loss)
+                break
+            else:
+                last_loss = loss
             self.cumulative_timesteps += 1
-            if self.cumulative_timesteps % self.target_update == 0:
+            if (self.cumulative_timesteps % self.target_update == 0
+                    or self.cumulative_timesteps % print_every==0):
                 self.target_model.load_state_dict(
                     self.policy_model.state_dict()
                 )
+                print("Timestep: ", self.cumulative_timesteps)
+                print("Loss: ", loss)
         if record:
             out_file.close()
         return total_reward
@@ -115,12 +127,12 @@ class Trainer(object):
         their true values using the Bellman expectation equation and using the
         target_model to estimate the values of the next states.
 
-        :return:
-            :rtype: None
+        :return: The loss of the current model
+            :rtype: float
 
         """
         if len(self.memory) < self.batch_size:
-            return
+            return 10**8
         transitions = self.memory.sample(self.batch_size)
 
         # We have to clone this var so that it isn't a leaf variable because
@@ -138,9 +150,11 @@ class Trainer(object):
             total_loss += F.smooth_l1_loss(
                 state_action_value, expected_state_action_val
             ) / len(transitions)
+        loss_value = total_loss.data[0].item()
         self.optimizer.zero_grad()
         total_loss.backward()
         self.optimizer.step()
+        return loss_value
 
 
 # Store transitions from state to next_state via action and what reward

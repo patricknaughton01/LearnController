@@ -17,7 +17,7 @@ from shapely.ops import nearest_points
 
 class Simulator(object):
 
-    def __init__(self, scene=None, file=None, max_dim=1):
+    def __init__(self, scene=None, file=None, max_dim=4):
         self.sim = rvo2.PyRVOSimulator(0.1, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
         self.robot_num = None
@@ -335,10 +335,12 @@ class Simulator(object):
             self.goals.append(robot_pos)
         else:       # Build a random scene
             max_dim = self.max_dim    # Maximum x and y start/goal locations
+            min_agents = 5
             max_agents = 10
+            min_obs = 5
             max_obs = 10
-            num_agents = random.randint(1, max_agents)
-            num_obstacles = random.randint(1, max_obs)
+            num_agents = random.randint(min_agents, max_agents)
+            num_obstacles = random.randint(min_obs, max_obs)
             # Create the robot
             robot_pos = (max_dim * random.random(), max_dim * random.random())
             self.robot_num = self.sim.addAgent(
@@ -346,11 +348,7 @@ class Simulator(object):
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
-            # For this, just create point obstacles
-            # Note that they are just the same vertex thrice because RVO2
-            # didn't like one vertex obstacles and shapely requires 3 verticies
-            # to treat them like a polygon (used to find distance from robot
-            # to obstacles).
+            # For this, just create small square obstacles
             for i in range(num_obstacles):
                 pt = (max_dim * random.random(), max_dim * random.random())
                 width = 0.2
@@ -370,7 +368,36 @@ class Simulator(object):
                 self.goals.append(
                     (max_dim * random.random(), max_dim * random.random())
                 )
-
+            # Add in walls around the whole thing so robots don't just wander
+            # off
+            wall_left = [
+                (-self.max_dim, -self.max_dim),
+                (-self.max_dim, self.max_dim * 2),
+                (-self.max_dim * 2, self.max_dim * 0.5)
+            ]
+            wall_top = [
+                (-self.max_dim, self.max_dim * 2),
+                (self.max_dim * 2, self.max_dim * 2),
+                (self.max_dim * 0.5, self.max_dim * 3)
+            ]
+            wall_right = [
+                (self.max_dim * 2, self.max_dim * 2),
+                (self.max_dim * 2, -self.max_dim),
+                (self.max_dim * 3, self.max_dim *0.5)
+            ]
+            wall_bottom = [
+                (self.max_dim * 2, -self.max_dim),
+                (-self.max_dim, -self.max_dim),
+                (self.max_dim * 0.5, -self.max_dim * 2)
+            ]
+            self.obstacles.append(wall_left)
+            self.sim.addObstacle(wall_left)
+            self.obstacles.append(wall_right)
+            self.sim.addObstacle(wall_right)
+            self.obstacles.append(wall_top)
+            self.sim.addObstacle(wall_top)
+            self.obstacles.append(wall_bottom)
+            self.sim.addObstacle(wall_bottom)
         if self.file is not None:
             self.file.write("timestamp position0 velocity0 radius0 goal ")
             self.file.write("pref_speed theta ")

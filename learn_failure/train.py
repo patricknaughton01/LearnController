@@ -27,8 +27,14 @@ def main():
     model = Controller(model_config, model_type=args.model_type) # model_type = crossing
     print(model)
     trainer = Trainer(model, config)
-    trainer.run()
-    torch.save({'state_dict': model.state_dict()}, log_path + '/model' + '.tar')
+    try:
+        trainer.run()
+        torch.save({'state_dict': model.state_dict()},
+                   log_path + '/model' + '.tar')
+    except KeyboardInterrupt:
+        torch.save({'state_dict': model.state_dict()},
+                   log_path + '/model' + '.tar')
+
 
 if __name__ == "__main__":
     main()
