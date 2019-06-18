@@ -31,9 +31,9 @@ class Trainer(object):
         self.batch_size = 32
         self.memory = ReplayMemory(1000000)
         self.gamma = 0.9
-        self.max_timesteps = 128
+        self.max_timesteps = 4096
         self.epsilon = 0.99
-        self.epsilon_decay = 0.99998
+        self.epsilon_decay = 0.9998
 
     def run(self):
         """Run the trainer to train the policy_model such that it learns
@@ -44,7 +44,7 @@ class Trainer(object):
 
         """
         # print('in run')
-        num_episodes = 10#self.config.get('num_episodes', 100)
+        num_episodes = 25#self.config.get('num_episodes', 100)
         print_every = 1 #self.config.get('print_every', 10)
         log_path = self.config.get('log_path', 'log')
         for episode in range(1, num_episodes + 1):

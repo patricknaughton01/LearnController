@@ -17,7 +17,7 @@ from shapely.ops import nearest_points
 
 class Simulator(object):
 
-    def __init__(self, scene=None, file=None):
+    def __init__(self, scene=None, file=None, max_dim=3):
         self.sim = rvo2.PyRVOSimulator(0.1, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
         self.robot_num = None
@@ -26,6 +26,7 @@ class Simulator(object):
         self.scene = scene
         self.obs_width = 0.3
         self.file = file
+        self.max_dim = max_dim
         self.build_scene(scene)
 
     def do_step(self, action_ind):
@@ -69,9 +70,14 @@ class Simulator(object):
             g = self.goals[agent]
             vec = (g[0] - p[0], g[1] - p[1])
             mag_mul = (vec[0]**2 + vec[1]**2)**5
-            # check for division by 0
-            if mag_mul != 0:
+            # check for division by 0/reaching the goal
+            if mag_mul > 0.001:
                 mag_mul = self.sim.getAgentMaxSpeed(agent)/mag_mul
+            else:   # We've reached the goal so generate a new one
+                self.goals[agent] = (
+                    self.max_dim * random.random(),
+                    self.max_dim * random.random()
+                )
             vec = (vec[0] * mag_mul, vec[1] * mag_mul)
             self.sim.setAgentPrefVelocity(agent, vec)
         self.sim.doStep()
@@ -326,7 +332,7 @@ class Simulator(object):
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
         else:       # Build a random scene
-            max_dim = 10        # Maximum x and y start/goal locations
+            max_dim = self.max_dim    # Maximum x and y start/goal locations
             max_agents = 10
             max_obs = 10
             num_agents = random.randint(1, max_agents)
