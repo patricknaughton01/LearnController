@@ -44,8 +44,8 @@ class Trainer(object):
 
         """
         # print('in run')
-        num_episodes = 1000#self.config.get('num_episodes', 100)
-        print_every = 50 #self.config.get('print_every', 10)
+        num_episodes = 10#self.config.get('num_episodes', 100)
+        print_every = 1 #self.config.get('print_every', 10)
         log_path = self.config.get('log_path', 'log')
         for episode in range(1, num_episodes + 1):
             reward = self.run_episode(
@@ -70,8 +70,8 @@ class Trainer(object):
         """
         out_file = None
         if record:
-            out_file = open(str("barge") + "_" + str(key) + ".txt", "w")
-        sim = simulator.Simulator(scene="barge_in", file=out_file)
+            out_file = open(str("random") + "_" + str(key) + ".txt", "w")
+        sim = simulator.Simulator(scene="random", file=out_file)
         h_t = None
         curr_state = sim.state()
         total_reward = torch.zeros((1, 1), dtype=torch.float)

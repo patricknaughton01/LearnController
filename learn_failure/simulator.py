@@ -26,7 +26,6 @@ class Simulator(object):
         self.scene = scene
         self.obs_width = 0.3
         self.file = file
-        self.time = 0.0
         self.build_scene(scene)
 
     def do_step(self, action_ind):
@@ -69,10 +68,10 @@ class Simulator(object):
             p = self.sim.getAgentPosition(agent)
             g = self.goals[agent]
             vec = (g[0] - p[0], g[1] - p[1])
-            mag_mul = (
-                    self.sim.getAgentMaxSpeed(agent)
-                    / (vec[0]**2 + vec[1]**2)**5
-            )
+            mag_mul = (vec[0]**2 + vec[1]**2)**5
+            # check for division by 0
+            if mag_mul != 0:
+                mag_mul = self.sim.getAgentMaxSpeed(agent)/mag_mul
             vec = (vec[0] * mag_mul, vec[1] * mag_mul)
             self.sim.setAgentPrefVelocity(agent, vec)
         self.sim.doStep()
@@ -159,7 +158,7 @@ class Simulator(object):
         rrad = self.sim.getAgentRadius(self.robot_num)
         v_pref = self.sim.getAgentMaxSpeed(self.robot_num)
         theta = math.atan2(rvel[1], rvel[0])
-        self.file.write(str(self.time) + " ")
+        self.file.write(str(self.sim.getGlobalTime()) + " ")
         self.file.write("(" + str(rpos[0]) + "," + str(rpos[1]) + ") ")
         self.file.write("(" + str(rvel[0]) + "," + str(rvel[1]) + ") ")
         self.file.write(str(rrad) + " ")
@@ -346,7 +345,7 @@ class Simulator(object):
             # to obstacles).
             for i in range(num_obstacles):
                 pt = (max_dim * random.random(), max_dim * random.random())
-                o = (pt, pt, pt)
+                o = [pt, pt, pt]
                 self.obstacles.append(o)
                 self.sim.addObstacle(o)
             # Create agents in random spots with random goals
