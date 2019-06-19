@@ -24,7 +24,7 @@ class Trainer(object):
         self.target_model = copy.deepcopy(model)
         self.criterion = neg_2d_gaussian_likelihood
         self.optimizer = optim.RMSprop(
-            model.parameters(), lr=0.000010, weight_decay=0
+            model.parameters(), lr=0.000005, weight_decay=0
         )
         self.config = config
         # TODO: push the following things into the config
@@ -36,7 +36,7 @@ class Trainer(object):
         self.epsilon_decay = 0.99999769741
         self.cumulative_timesteps = 0
         self.target_update = 10000
-        self.converge_thresh = 0.0001
+        self.converge_thresh = 10**(-6)
 
     def run(self):
         """Run the trainer to train the policy_model such that it learns

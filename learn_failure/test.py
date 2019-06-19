@@ -7,9 +7,9 @@ from simulator import Simulator
 
 
 def main():
-    model_path = "model.tar"
+    model_path = "barge_fail_test_1/model.tar"
     scene = "barge_in"
-    timesteps = 100
+    timesteps = 300
     out_path = "barge_0.txt"
     out_file = open(out_path, "w")
     epsilon = 0.05
