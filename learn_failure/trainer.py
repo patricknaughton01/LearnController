@@ -24,7 +24,7 @@ class Trainer(object):
         self.target_model = copy.deepcopy(model)
         self.criterion = neg_2d_gaussian_likelihood
         self.optimizer = optim.RMSprop(
-            model.parameters(), lr=0.00025, momentum=0.95, weight_decay=0
+            model.parameters(), lr=0.000010, weight_decay=0
         )
         self.config = config
         # TODO: push the following things into the config
@@ -103,6 +103,7 @@ class Trainer(object):
             curr_state = next_state
             total_reward += reward
             loss = self.optimize_model()
+            loss_file_name = "loss.txt"
             # If loss is decreasing but by less than x%, we have converged
             if loss < last_loss and (((last_loss - loss)/last_loss) < self.converge_thresh):
                 print("Loss: ", loss)
@@ -117,6 +118,10 @@ class Trainer(object):
                 )
                 print("Timestep: ", self.cumulative_timesteps)
                 print("Loss: ", loss)
+                f = open(loss_file_name, "a")
+                f.write(str(self.cumulative_timesteps)
+                        + " " + str(loss) + "\n")
+                f.close()
         if record:
             out_file.close()
         return total_reward
@@ -153,6 +158,8 @@ class Trainer(object):
         loss_value = total_loss.data[0].item()
         self.optimizer.zero_grad()
         total_loss.backward()
+        for param in self.policy_model.parameters():
+            param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
         return loss_value
 
