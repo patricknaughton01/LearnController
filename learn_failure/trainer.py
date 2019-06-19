@@ -72,8 +72,8 @@ class Trainer(object):
         """
         out_file = None
         if record:
-            out_file = open(str("random") + "_" + str(key) + ".txt", "w")
-        sim = simulator.Simulator(scene="random", file=out_file)
+            out_file = open(str("barge") + "_" + str(key) + ".txt", "w")
+        sim = simulator.Simulator(scene="barge_in", file=out_file)
         h_t = None
         curr_state = sim.state()
         total_reward = torch.zeros((1, 1), dtype=torch.float)

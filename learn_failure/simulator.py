@@ -17,7 +17,7 @@ from shapely.ops import nearest_points
 
 class Simulator(object):
 
-    def __init__(self, scene=None, file=None, max_dim=4):
+    def __init__(self, scene=None, file=None, max_dim=2):
         self.sim = rvo2.PyRVOSimulator(0.1, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
         self.robot_num = None
@@ -322,7 +322,36 @@ class Simulator(object):
             for hum in hums:
                 self.sim.addObstacle(hum)
                 self.obstacles.append(hum)
-
+            # Add in walls around the whole thing so robots don't just wander
+            # off
+            wall_left = [
+                (-self.max_dim, -self.max_dim),
+                (-self.max_dim, self.max_dim * 2),
+                (-self.max_dim * 2, self.max_dim * 0.5)
+            ]
+            wall_top = [
+                (-self.max_dim, self.max_dim * 2),
+                (self.max_dim * 2, self.max_dim * 2),
+                (self.max_dim * 0.5, self.max_dim * 3)
+            ]
+            wall_right = [
+                (self.max_dim * 2, self.max_dim * 2),
+                (self.max_dim * 2, -self.max_dim),
+                (self.max_dim * 3, self.max_dim * 0.5)
+            ]
+            wall_bottom = [
+                (self.max_dim * 2, -self.max_dim),
+                (-self.max_dim, -self.max_dim),
+                (self.max_dim * 0.5, -self.max_dim * 2)
+            ]
+            self.obstacles.append(wall_left)
+            self.sim.addObstacle(wall_left)
+            self.obstacles.append(wall_right)
+            self.sim.addObstacle(wall_right)
+            self.obstacles.append(wall_top)
+            self.sim.addObstacle(wall_top)
+            self.obstacles.append(wall_bottom)
+            self.sim.addObstacle(wall_bottom)
             # Add the robot
             robot_pos = (
                 wall_length - 0.2, -0.15 + wall_width + wall_dist / 2.0

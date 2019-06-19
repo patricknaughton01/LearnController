@@ -17,7 +17,7 @@ import os
 # In[2]:
 
 
-data_type = 'random'
+data_type = 'barge'
 directory = '/home/patricknaughton01/Downloads/LearnControllers/learn_failure/'
 parent_path = directory  + data_type + '_*.txt'
 
@@ -113,7 +113,7 @@ print('save path is: %s' % save_path)
 # obstacle_files = glob(directory  + data_type + "_obstacles_*.txt")
 # obstacle_files.sort(key=lambda x: int(x.split('/')[-1].split('.')[-2].split('_')[-1]))
 
-filt = seq_lengths < 200
+filt = seq_lengths < 400
 # print(filt)
 # print(seq_lengths)
 seq_lengths = seq_lengths[filt]
