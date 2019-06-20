@@ -25,6 +25,7 @@ def main():
     model_config = configparser.RawConfigParser()
     model_config.read(args.model_config)
     model = Controller(model_config, model_type=args.model_type) # model_type = crossing
+    model.train()
     print(model)
     trainer = Trainer(model, config)
     try:

@@ -24,7 +24,8 @@ class Trainer(object):
         self.target_model = copy.deepcopy(model)
         self.criterion = neg_2d_gaussian_likelihood
         self.optimizer = optim.RMSprop(
-            model.parameters(), lr=0.000005, weight_decay=0
+            self.policy_model.parameters(), lr=0.000005, weight_decay=0,
+            momentum=0.95
         )
         self.config = config
         self.memory = ReplayMemory(1000000)
@@ -58,7 +59,7 @@ class Trainer(object):
             ))
         return reward
 
-    def run_episode(self, record=False, key=0, print_every=1000,
+    def run_episode(self, record=False, key=0, print_every=100,
                     scene="barge_in"):
         """Run one episode of training by creating a simulation using
         RVO2 (specifically the `Simulator` class in the `simulator` module.
@@ -160,6 +161,7 @@ class Trainer(object):
             total_loss += F.smooth_l1_loss(
                 state_action_value, expected_state_action_val
             ) / len(transitions)
+            #print(state_action_value, expected_state_action_val)
         loss_value = total_loss.data[0].item()
         self.optimizer.zero_grad()
         total_loss.backward()
