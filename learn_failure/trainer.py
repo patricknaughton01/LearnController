@@ -24,8 +24,7 @@ class Trainer(object):
         self.target_model = copy.deepcopy(model)
         self.criterion = neg_2d_gaussian_likelihood
         self.optimizer = optim.RMSprop(
-            self.policy_model.parameters(), lr=0.000005, weight_decay=0,
-            momentum=0.95
+            self.policy_model.parameters(), lr=0.00000005
         )
         self.config = config
         self.memory = ReplayMemory(1000000)
@@ -104,30 +103,33 @@ class Trainer(object):
                     curr_state, torch.zeros((1, 256)), torch.zeros((1, 256)),
                     action, next_state, reward
                 )
-            curr_state = next_state
+            #curr_state = next_state
             total_reward += reward
-            loss = self.optimize_model()
-            loss_file_name = "loss.txt"
-            # If loss is decreasing but by less than x%, we have converged
-            if (loss < self.min_loss
-                    and (((self.min_loss - loss)/self.min_loss)
-                         < self.converge_thresh)):
-                print("Loss: ", loss)
-                break
-            elif loss < self.min_loss:
-                self.min_loss = loss
+            if self.cumulative_timesteps > 10 * self.batch_size:
+                loss = self.optimize_model()
+                loss_file_name = "loss.txt"
+                # If loss is decreasing but by less than x%, we have converged
+                if (loss < self.min_loss
+                        and (((self.min_loss - loss)/self.min_loss)
+                             < self.converge_thresh)):
+
+                    print("Timestep: ", self.cumulative_timesteps)
+                    print("Loss: ", loss)
+                    break
+                elif loss < self.min_loss:
+                    self.min_loss = loss
+                if (self.cumulative_timesteps % self.target_update == 0
+                        or self.cumulative_timesteps % print_every == 0):
+                    self.target_model.load_state_dict(
+                        self.policy_model.state_dict()
+                    )
+                    print("Timestep: ", self.cumulative_timesteps)
+                    print("Loss: ", loss)
+                    f = open(loss_file_name, "a")
+                    f.write(str(self.cumulative_timesteps)
+                            + " " + str(loss) + "\n")
+                    f.close()
             self.cumulative_timesteps += 1
-            if (self.cumulative_timesteps % self.target_update == 0
-                    or self.cumulative_timesteps % print_every==0):
-                self.target_model.load_state_dict(
-                    self.policy_model.state_dict()
-                )
-                print("Timestep: ", self.cumulative_timesteps)
-                print("Loss: ", loss)
-                f = open(loss_file_name, "a")
-                f.write(str(self.cumulative_timesteps)
-                        + " " + str(loss) + "\n")
-                f.close()
         if record:
             out_file.close()
         return total_reward
@@ -158,7 +160,7 @@ class Trainer(object):
             )[0].max(1)[0].detach()
             expected_state_action_val = ((next_state_value * self.gamma)
                 + transition.reward)
-            total_loss += F.smooth_l1_loss(
+            total_loss += F.mse_loss(
                 state_action_value, expected_state_action_val
             ) / len(transitions)
             #print(state_action_value, expected_state_action_val)
