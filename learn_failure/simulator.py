@@ -17,7 +17,7 @@ from shapely.ops import nearest_points
 
 class Simulator(object):
 
-    def __init__(self, scene=None, file=None, max_dim=2):
+    def __init__(self, scene=None, file=None, max_dim=4):
         self.sim = rvo2.PyRVOSimulator(0.1, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
         self.robot_num = None

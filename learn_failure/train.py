@@ -28,7 +28,7 @@ def main():
     print(model)
     trainer = Trainer(model, config)
     try:
-        trainer.run()
+        trainer.run(args.scene)
         torch.save({'state_dict': model.state_dict()},
                    log_path + '/model' + '.tar')
     except KeyboardInterrupt:
