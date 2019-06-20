@@ -9,7 +9,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Learn Controller")
     parser.add_argument("--num_epochs", type=int, default=200)
     parser.add_argument("--print_every", type=int, default=20)
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--train", action='store_true')
     parser.add_argument("--visualize_val", action='store_true')
     parser.add_argument("--show_mc", action='store_true')
@@ -33,6 +33,13 @@ def parse_args():
     parser.add_argument("--model_config", type=str, default="configs/model.config")
     parser.add_argument("--test_percent", type=float, default=0.1)
     parser.add_argument("--video_name", type=str, default="")
+    parser.add_argument("--scene", type=str, default="barge_in")
+    parser.add_argument("--max_timesteps", type=int, default=10**8)
+    parser.add_argument("--gamma", type=float, default=0.99)
+    parser.add_argument("--epsilon", type=float, default=1.0)
+    parser.add_argument("--epsilon_decay", type=float, default=0.99999769741)
+    parser.add_argument("--target_update", type=int, default=10000)
+    parser.add_argument("--converge_thresh", type=float, default=10**(-4))
     return parser.parse_args()
 
 def get_weight_decay(tao, length_scale, N, dropout):

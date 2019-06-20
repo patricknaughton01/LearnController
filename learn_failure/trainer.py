@@ -27,20 +27,22 @@ class Trainer(object):
             model.parameters(), lr=0.000005, weight_decay=0
         )
         self.config = config
-        # TODO: push the following things into the config
-        self.batch_size = 32
         self.memory = ReplayMemory(1000000)
-        self.gamma = 0.99
-        self.max_timesteps = 10**8
-        self.epsilon = 1.0
-        self.epsilon_decay = 0.99999769741
         self.cumulative_timesteps = 0
-        self.target_update = 10000
-        self.converge_thresh = 10**(-6)
+        self.batch_size = self.config["batch_size"]
+        self.gamma = self.config["gamma"]
+        self.max_timesteps = self.config["max_timesteps"]
+        self.epsilon = self.config["epsilon"]
+        self.epsilon_decay = self.config["epsilon_decay"]
+        self.target_update = self.config["target_update"]
+        self.converge_thresh = self.config["converge_thresh"]
+        self.min_loss = 10.0**6
 
-    def run(self):
+    def run(self, scene="barge_in"):
         """Run the trainer to train the policy_model such that it learns
         an optimal policy with respect to the reward given by the simulator.
+
+        :param str scene: The scene to use for training
 
         :return: The reward of the last episode
             :rtype: float
@@ -50,21 +52,23 @@ class Trainer(object):
         num_episodes = 1
         reward = 0
         for episode in range(1, num_episodes + 1):
-            reward = self.run_episode()
+            reward = self.run_episode(scene=scene)
             print("Ran episode {}\n\tGot reward {}".format(
                 episode, reward[0][0]
             ))
         return reward
 
-    def run_episode(self, record=False, key=0, print_every=1000):
+    def run_episode(self, record=False, key=0, print_every=1000,
+                    scene="barge_in"):
         """Run one episode of training by creating a simulation using
         RVO2 (specifically the `Simulator` class in the `simulator` module.
         Episodes are limited to `self.max_timesteps` timesteps.
 
-        :param int print_every: After how many timesteps should we print the
-            loss
         :param boolean record: Whether or not to record this episode in a file
         :param int key: The number to append to this file to make it unique
+        :param int print_every: After how many timesteps should we print the
+            loss
+        :param str scene: The scene to train on
 
         :return: 1x1 tensor containing total reward earned in this episode
             :rtype: tensor
@@ -72,12 +76,11 @@ class Trainer(object):
         """
         out_file = None
         if record:
-            out_file = open(str("barge") + "_" + str(key) + ".txt", "w")
-        sim = simulator.Simulator(scene="barge_in", file=out_file)
+            out_file = open(str(scene) + "_" + str(key) + ".txt", "w")
+        sim = simulator.Simulator(scene=scene, file=out_file)
         h_t = None
         curr_state = sim.state()
         total_reward = torch.zeros((1, 1), dtype=torch.float)
-        last_loss = 0.0
         for i in range(self.max_timesteps):
             action, h_t = self.policy_model.select_action(
                 sim.state(), h_t, epsilon=self.epsilon
@@ -105,11 +108,13 @@ class Trainer(object):
             loss = self.optimize_model()
             loss_file_name = "loss.txt"
             # If loss is decreasing but by less than x%, we have converged
-            if loss < last_loss and (((last_loss - loss)/last_loss) < self.converge_thresh):
+            if (loss < self.min_loss
+                    and (((self.min_loss - loss)/self.min_loss)
+                         < self.converge_thresh)):
                 print("Loss: ", loss)
                 break
-            else:
-                last_loss = loss
+            elif loss < self.min_loss:
+                self.min_loss = loss
             self.cumulative_timesteps += 1
             if (self.cumulative_timesteps % self.target_update == 0
                     or self.cumulative_timesteps % print_every==0):

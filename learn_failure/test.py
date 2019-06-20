@@ -7,13 +7,13 @@ from simulator import Simulator
 
 
 def main():
-    model_path = "barge_fail_test_1/model.tar"
-    scene = "barge_in"
+    args = parse_args()
+    model_path = "model.tar"
+    scene = args.scene
     timesteps = 300
-    out_path = "barge_0.txt"
+    out_path = args.scene + "_0.txt"
     out_file = open(out_path, "w")
     epsilon = 0.05
-    args = parse_args()
     model_config = configparser.RawConfigParser()
     model_config.read(args.model_config)
     model = Controller(model_config,

@@ -17,7 +17,7 @@ import os
 # In[2]:
 
 
-data_type = 'barge'
+data_type = 'barge_in'
 directory = '/home/patricknaughton01/Downloads/LearnControllers/learn_failure/'
 parent_path = directory  + data_type + '_*.txt'
 
