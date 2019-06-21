@@ -23,8 +23,8 @@ class Trainer(object):
         self.policy_model = model
         self.target_model = copy.deepcopy(model)
         self.criterion = neg_2d_gaussian_likelihood
-        self.optimizer = optim.RMSprop(
-            self.policy_model.parameters(), lr=0.00000005
+        self.optimizer = optim.Adam(
+            self.policy_model.parameters(), lr=0.001
         )
         self.config = config
         self.memory = ReplayMemory(1000000)
