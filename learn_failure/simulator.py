@@ -391,7 +391,16 @@ class Simulator(object):
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (goal[1], goal[0])
             elif scene == "barge_in_bottom":
-                pass
+                # flip x and y coordinates
+                # then negate new y
+                for obs in self.obstacles:
+                    for i, vert in enumerate(obs):
+                        obs[i] = (vert[1], -vert[0])
+                for agent in self.agents:
+                    pos = self.sim.getAgentPosition(agent)
+                    self.sim.setAgentPosition(agent, (pos[1], -pos[0]))
+                for i, goal in enumerate(self.goals):
+                    self.goals[i] = (goal[1], -goal[0])
             for obs in self.obstacles:
                 self.sim.addObstacle(obs)
         else:       # Build a random scene
