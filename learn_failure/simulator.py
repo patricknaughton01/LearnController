@@ -372,7 +372,7 @@ class Simulator(object):
             self.goals.append(robot_pos)
             # By default, builds a scene in which the robot barges in to the
             # right. If one of the following specific scenes is provided,
-            if scene == "barge_in_left":    # Negate
+            if scene == "barge_in_left":    # Negate x coordinate
                 for obs in self.obstacles:
                     for i, vert in enumerate(obs):
                         obs[i] = (-vert[0], vert[1])
@@ -381,8 +381,15 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (-pos[0], pos[1]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (-goal[0], goal[1])
-            elif scene == "barge_in_top":
-                pass
+            elif scene == "barge_in_top":   # flip x and y coordinates
+                for obs in self.obstacles:
+                    for i, vert in enumerate(obs):
+                        obs[i] = (vert[1], vert[0])
+                for agent in self.agents:
+                    pos = self.sim.getAgentPosition(agent)
+                    self.sim.setAgentPosition(agent, (pos[1], pos[0]))
+                for i, goal in enumerate(self.goals):
+                    self.goals[i] = (goal[1], goal[0])
             elif scene == "barge_in_bottom":
                 pass
             for obs in self.obstacles:
