@@ -258,7 +258,7 @@ class Simulator(object):
             :rtype: None
 
         """
-        if scene == "barge_in":
+        if scene.startswith("barge_in"):
             num_people = 4
             # Walls
             wall_perturbation = 0.1 # Random range to add to wall verticies
@@ -288,9 +288,6 @@ class Simulator(object):
                 (wall_length + wall_perturbation * random.random(),
                     wall_perturbation * random.random())
             ]
-
-            self.sim.addObstacle(up_wall_vertices)
-            self.sim.addObstacle(down_wall_vertices)
 
             self.obstacles.append(up_wall_vertices)
             self.obstacles.append(down_wall_vertices)
@@ -336,7 +333,6 @@ class Simulator(object):
                 for i, vert in enumerate(hum):
                     hum[i] = (vert[0] + hum_perb * random.random(),
                               vert[1] + hum_perb * random.random())
-                self.sim.addObstacle(hum)
                 self.obstacles.append(hum)
             # Add in walls around the whole thing so robots don't just wander
             # off
@@ -361,13 +357,9 @@ class Simulator(object):
                 (self.max_dim * 0.5, -self.max_dim * 2)
             ]
             self.obstacles.append(wall_left)
-            self.sim.addObstacle(wall_left)
             self.obstacles.append(wall_right)
-            self.sim.addObstacle(wall_right)
             self.obstacles.append(wall_top)
-            self.sim.addObstacle(wall_top)
             self.obstacles.append(wall_bottom)
-            self.sim.addObstacle(wall_bottom)
             # Add the robot
             robot_pos = (
                 wall_length - 0.2, -0.15 + wall_width + wall_dist / 2.0
@@ -378,6 +370,23 @@ class Simulator(object):
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
+            # By default, builds a scene in which the robot barges in to the
+            # right. If one of the following specific scenes is provided,
+            if scene == "barge_in_left":    # Negate
+                for obs in self.obstacles:
+                    for i, vert in enumerate(obs):
+                        obs[i] = (-vert[0], vert[1])
+                for agent in self.agents:
+                    pos = self.sim.getAgentPosition(agent)
+                    self.sim.setAgentPosition(agent, (-pos[0], pos[1]))
+                for i, goal in enumerate(self.goals):
+                    self.goals[i] = (-goal[0], goal[1])
+            elif scene == "barge_in_top":
+                pass
+            elif scene == "barge_in_bottom":
+                pass
+            for obs in self.obstacles:
+                self.sim.addObstacle(obs)
         else:       # Build a random scene
             max_dim = self.max_dim    # Maximum x and y start/goal locations
             min_agents = 5
