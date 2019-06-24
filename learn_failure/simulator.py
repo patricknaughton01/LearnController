@@ -261,20 +261,32 @@ class Simulator(object):
         if scene == "barge_in":
             num_people = 4
             # Walls
+            wall_perturbation = 0.1 # Random range to add to wall verticies
             wall_width = 0.3
             wall_length = 2.0
             wall_dist = 1.5
             up_wall_vertices = [
-                (wall_length, 2 * wall_width + wall_dist),
-                (0, 2 * wall_width + wall_dist),
-                (0, wall_dist + wall_width),
-                (wall_length, wall_dist + wall_width)
+                (wall_length + wall_perturbation * random.random(),
+                    2 * wall_width + wall_dist
+                        + wall_perturbation * random.random()),
+                (wall_perturbation * random.random(),
+                    2 * wall_width + wall_dist
+                        + wall_perturbation * random.random()),
+                (wall_perturbation * random.random(), wall_dist + wall_width
+                    + wall_perturbation * random.random()),
+                (wall_length + wall_perturbation * random.random(),
+                    wall_dist + wall_width
+                        + wall_perturbation * random.random())
             ]
             down_wall_vertices = [
-                (wall_length, wall_width),
-                (0, wall_width),
-                (0, 0),
-                (wall_length, 0)
+                (wall_length + wall_perturbation * random.random(),
+                    wall_width + wall_perturbation * random.random()),
+                (wall_perturbation * random.random(),
+                    wall_width + wall_perturbation * random.random()),
+                (wall_perturbation * random.random(),
+                    wall_perturbation * random.random()),
+                (wall_length + wall_perturbation * random.random(),
+                    wall_perturbation * random.random())
             ]
 
             self.sim.addObstacle(up_wall_vertices)
@@ -288,6 +300,7 @@ class Simulator(object):
             # didn't like one vertex obstacles and shapely requires 3 verticies
             # to treat them like a polygon (used to find distance from robot
             # to obstacles).
+            hum_perb = 0.1  # Random perturbation to add to human positions
             hums = [
                 [
                     (wall_length + 0.2, wall_width + 0.1),
@@ -320,6 +333,9 @@ class Simulator(object):
                 ]
             ]
             for hum in hums:
+                for i, vert in enumerate(hum):
+                    hum[i] = (vert[0] + hum_perb * random.random(),
+                              vert[1] + hum_perb * random.random())
                 self.sim.addObstacle(hum)
                 self.obstacles.append(hum)
             # Add in walls around the whole thing so robots don't just wander
