@@ -253,6 +253,7 @@ class Simulator(object):
         :param string scene: String representing what type of scene to build.
             Pick one from this list:
                 `barge_in`,
+                `crossing`,
             If the argument is none of these, a random scene is built
         :return:
             :rtype: None
@@ -403,6 +404,23 @@ class Simulator(object):
                     self.goals[i] = (goal[1], -goal[0])
             for obs in self.obstacles:
                 self.sim.addObstacle(obs)
+        elif scene == "crossing":   # Build crossing scene
+            position1 = (-1.5, 25.0)
+            position2 = (2.5, 25.0)
+            self.robot_num = self.sim.addAgent(
+                position1, 15.0, 10, 5.0, 5.0,
+                randomize(0.15, 0.25), randomize(0.8, 2.0)
+            )
+            self.agents.append(self.robot_num)
+            self.goals.append(position2)
+
+            self.agents.append(
+                self.sim.addAgent(
+                    position2, 15.0, 10, 5.0, 5.0, randomize(0.15, 0.25),
+                    randomize(0.8, 2.0)
+                )
+            )
+            self.goals.append(position1)
         else:       # Build a random scene
             max_dim = self.max_dim    # Maximum x and y start/goal locations
             min_agents = 5
@@ -484,3 +502,14 @@ class Simulator(object):
                 num += 1
             self.file.write("\n")
         self.sim.processObstacles()
+
+
+def randomize(lower, upper):
+    """Generate a random float in the range [min, max)
+
+    :param float lower: The minimum number of the range
+    :param float upper: The maximum number of the range
+    :return: A random float in the range [min, max)
+        :rtype: float
+    """
+    return lower + (random.random() * (upper - lower))
