@@ -8,7 +8,7 @@ from simulator import Simulator
 
 def main():
     args = parse_args()
-    model_path = "model.tar"
+    model_path = "tests/random_fail_model/model.tar"
     scene = args.scene
     timesteps = 300
     epsilon = 0.05

@@ -17,7 +17,7 @@ import os
 # In[2]:
 
 
-data_type = 'barge_in'
+data_type = 'random'
 directory = '/home/patricknaughton01/Downloads/LearnControllers/learn_failure/'
 parent_path = directory  + data_type + '_*.txt'
 
@@ -165,7 +165,7 @@ num_humans = np.load(save_path + '/num_humans.npy',allow_pickle=True)
 
 
 # visualization of the data 
-idx = 0
+idx = 3
 
 episode = states_array[idx]
 n = int((episode.shape[1] - 4) / 5)
