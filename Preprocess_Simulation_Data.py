@@ -17,8 +17,8 @@ import os
 # In[2]:
 
 
-data_type = 'barge_in'
-directory = '/home/patricknaughton01/Downloads/LearnControllers/learn_failure/tests/random_fail_test_6/'
+data_type = 'dynamic_barge_in_top'
+directory = '/home/patricknaughton01/Downloads/LearnControllers/learn_failure/'
 parent_path = directory  + data_type + '_*.txt'
 
 

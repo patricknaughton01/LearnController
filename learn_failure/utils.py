@@ -40,6 +40,8 @@ def parse_args():
     parser.add_argument("--epsilon_decay", type=float, default=0.9999907897)#0.99999769741)
     parser.add_argument("--target_update", type=int, default=10000)
     parser.add_argument("--converge_thresh", type=float, default=10**(-5))
+    parser.add_argument("--record", type=bool, default=False)
+    parser.add_argument("--num_episodes", type=int, default=1)
     return parser.parse_args()
 
 def get_weight_decay(tao, length_scale, N, dropout):

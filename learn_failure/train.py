@@ -31,10 +31,10 @@ def main():
     try:
         trainer.run(args.scene)
         torch.save({'state_dict': model.state_dict()},
-                   log_path + '/model' + '.tar')
+                   log_path + '/' + args.scene + '/model' + '.tar')
     except KeyboardInterrupt:
         torch.save({'state_dict': model.state_dict()},
-                   log_path + '/model' + '.tar')
+                   log_path + '/' + args.scene + '/model' + '.tar')
 
 
 if __name__ == "__main__":

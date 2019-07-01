@@ -259,7 +259,8 @@ class Simulator(object):
             :rtype: None
 
         """
-        if scene.startswith("barge_in"):
+        if (scene.startswith("barge_in")
+                or scene.startswith("dynamic_barge_in")):
             num_people = 4
             # Walls
             wall_perturbation = 0.1 # Random range to add to wall verticies
@@ -289,78 +290,9 @@ class Simulator(object):
                 (wall_length + wall_perturbation * random.random(),
                     wall_perturbation * random.random())
             ]
-
             self.obstacles.append(up_wall_vertices)
             self.obstacles.append(down_wall_vertices)
 
-            # "Humans," really just stationary obstacles that fill the corridor
-            # Note that they are just the same vertex thrice because RVO2
-            # didn't like one vertex obstacles and shapely requires 3 verticies
-            # to treat them like a polygon (used to find distance from robot
-            # to obstacles).
-            hum_perb = 0.1  # Random perturbation to add to human positions
-            hums = [
-                [
-                    (wall_length + 0.2, wall_width + 0.1),
-                    (wall_length + 0.2, wall_width + 0.1 + 0.5),
-                    (wall_length + 0.2 + 0.1, wall_width + 0.1)
-                ],
-                [
-                    (wall_length + 0.2,
-                     wall_width + wall_dist / num_people + 0.1),
-                    (wall_length + 0.2,
-                     wall_width + wall_dist / num_people + 0.1 + 0.5),
-                    (wall_length + 0.2 + 0.1,
-                     wall_width + wall_dist / num_people + 0.1)
-                ],
-                [
-                    (wall_length + 0.2,
-                     wall_width + wall_dist / num_people * 2 + 0.1),
-                    (wall_length + 0.2,
-                     wall_width + wall_dist / num_people * 2 + 0.1 + 0.5),
-                    (wall_length + 0.2 + 0.1,
-                     wall_width + wall_dist / num_people * 2 + 0.1)
-                ],
-                [
-                    (wall_length + 0.2,
-                     wall_width + wall_dist / num_people * 3 + 0.1),
-                    (wall_length + 0.2,
-                     wall_width + wall_dist / num_people * 3 + 0.1 + 0.5),
-                    (wall_length + 0.2 + 0.1,
-                     wall_width + wall_dist / num_people * 3 + 0.1)
-                ]
-            ]
-            for hum in hums:
-                for i, vert in enumerate(hum):
-                    hum[i] = (vert[0] + hum_perb * random.random(),
-                              vert[1] + hum_perb * random.random())
-                self.obstacles.append(hum)
-            # Add in walls around the whole thing so robots don't just wander
-            # off
-            wall_left = [
-                (-self.max_dim, -self.max_dim),
-                (-self.max_dim, self.max_dim * 2),
-                (-self.max_dim * 2, self.max_dim * 0.5)
-            ]
-            wall_top = [
-                (-self.max_dim, self.max_dim * 2),
-                (self.max_dim * 2, self.max_dim * 2),
-                (self.max_dim * 0.5, self.max_dim * 3)
-            ]
-            wall_right = [
-                (self.max_dim * 2, self.max_dim * 2),
-                (self.max_dim * 2, -self.max_dim),
-                (self.max_dim * 3, self.max_dim * 0.5)
-            ]
-            wall_bottom = [
-                (self.max_dim * 2, -self.max_dim),
-                (-self.max_dim, -self.max_dim),
-                (self.max_dim * 0.5, -self.max_dim * 2)
-            ]
-            self.obstacles.append(wall_left)
-            self.obstacles.append(wall_right)
-            self.obstacles.append(wall_top)
-            self.obstacles.append(wall_bottom)
             # Add the robot
             robot_pos = (
                 wall_length - 0.2, -0.15 + wall_width + wall_dist / 2.0
@@ -371,9 +303,77 @@ class Simulator(object):
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
+
+            hum_perb = 0.1  # Random perturbation to add to human positions
+            if scene.startswith("barge_in"):
+                # "Humans," really just obstacles that fill the corridor
+                # Note that they are just the same vertex thrice because RVO2
+                # didn't like one vert obstacles and shapely needs 3 verticies
+                # to treat them like a polygon (used to find dist from robot
+                # to obstacles).
+                hums = [
+                    [
+                        (wall_length + 0.2, wall_width + 0.1),
+                        (wall_length + 0.2, wall_width + 0.1 + 0.5),
+                        (wall_length + 0.2 + 0.1, wall_width + 0.1)
+                    ],
+                    [
+                        (wall_length + 0.2,
+                         wall_width + wall_dist / num_people + 0.1),
+                        (wall_length + 0.2,
+                         wall_width + wall_dist / num_people + 0.1 + 0.5),
+                        (wall_length + 0.2 + 0.1,
+                         wall_width + wall_dist / num_people + 0.1)
+                    ],
+                    [
+                        (wall_length + 0.2,
+                         wall_width + wall_dist / num_people * 2 + 0.1),
+                        (wall_length + 0.2,
+                         wall_width + wall_dist / num_people * 2 + 0.1 + 0.5),
+                        (wall_length + 0.2 + 0.1,
+                         wall_width + wall_dist / num_people * 2 + 0.1)
+                    ],
+                    [
+                        (wall_length + 0.2,
+                         wall_width + wall_dist / num_people * 3 + 0.1),
+                        (wall_length + 0.2,
+                         wall_width + wall_dist / num_people * 3 + 0.1 + 0.5),
+                        (wall_length + 0.2 + 0.1,
+                         wall_width + wall_dist / num_people * 3 + 0.1)
+                    ]
+                ]
+                for hum in hums:
+                    for i, vert in enumerate(hum):
+                        hum[i] = (vert[0] + hum_perb * random.random(),
+                                  vert[1] + hum_perb * random.random())
+                    self.obstacles.append(hum)
+            else:
+                # Make humans actual agents that move either towards or away
+                # from the robot
+                min_hum = 3
+                max_hum = 6
+                max_hum_rad = 0.2
+                num_hum = random.randint(min_hum, max_hum)
+                for i in range(num_hum):
+                    # Stack humans in front of the passage
+                    pos = (
+                        wall_length+2*max_hum_rad + random.random() * hum_perb,
+                        wall_width+wall_dist+0.1 + random.random() * hum_perb
+                            - (max_hum_rad + hum_perb) * (max_hum/num_hum) * i
+                    )
+                    self.agents.append(self.sim.addAgent(
+                        pos, 1.0, 10, 5.0, 5.0, randomize(0.12, 0.22),
+                        randomize(0.1, 0.4), (0, 0)
+                    ))
+                    goal_min = 0.2
+                    goal_max = 0.5
+                    self.goals.append((
+                        pos[0] - randomize(goal_min, goal_max),
+                        pos[1] + randomize(-hum_perb, hum_perb)
+                    ))
             # By default, builds a scene in which the robot barges in to the
             # right. If one of the following specific scenes is provided,
-            if scene == "barge_in_left":    # Negate x coordinate
+            if scene.endswith("left"):    # Negate x coordinate
                 for obs in self.obstacles:
                     for i, vert in enumerate(obs):
                         obs[i] = (-vert[0], vert[1])
@@ -382,7 +382,7 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (-pos[0], pos[1]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (-goal[0], goal[1])
-            elif scene == "barge_in_top":   # flip x and y coordinates
+            elif scene.endswith("top"):   # flip x and y coordinates
                 for obs in self.obstacles:
                     for i, vert in enumerate(obs):
                         obs[i] = (vert[1], vert[0])
@@ -391,7 +391,7 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (pos[1], pos[0]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (goal[1], goal[0])
-            elif scene == "barge_in_bottom":
+            elif scene.endswith("bottom"):
                 # flip x and y coordinates
                 # then negate new y
                 for obs in self.obstacles:
@@ -456,36 +456,36 @@ class Simulator(object):
                 self.goals.append(
                     (max_dim * random.random(), max_dim * random.random())
                 )
-            # Add in walls around the whole thing so robots don't just wander
-            # off
-            wall_left = [
-                (-self.max_dim, -self.max_dim),
-                (-self.max_dim, self.max_dim * 2),
-                (-self.max_dim * 2, self.max_dim * 0.5)
-            ]
-            wall_top = [
-                (-self.max_dim, self.max_dim * 2),
-                (self.max_dim * 2, self.max_dim * 2),
-                (self.max_dim * 0.5, self.max_dim * 3)
-            ]
-            wall_right = [
-                (self.max_dim * 2, self.max_dim * 2),
-                (self.max_dim * 2, -self.max_dim),
-                (self.max_dim * 3, self.max_dim *0.5)
-            ]
-            wall_bottom = [
-                (self.max_dim * 2, -self.max_dim),
-                (-self.max_dim, -self.max_dim),
-                (self.max_dim * 0.5, -self.max_dim * 2)
-            ]
-            self.obstacles.append(wall_left)
-            self.sim.addObstacle(wall_left)
-            self.obstacles.append(wall_right)
-            self.sim.addObstacle(wall_right)
-            self.obstacles.append(wall_top)
-            self.sim.addObstacle(wall_top)
-            self.obstacles.append(wall_bottom)
-            self.sim.addObstacle(wall_bottom)
+        # Add in walls around the whole thing so robots don't just wander
+        # off
+        wall_left = [
+            (-self.max_dim, -self.max_dim),
+            (-self.max_dim, self.max_dim * 2),
+            (-self.max_dim * 2, self.max_dim * 0.5)
+        ]
+        wall_top = [
+            (-self.max_dim, self.max_dim * 2),
+            (self.max_dim * 2, self.max_dim * 2),
+            (self.max_dim * 0.5, self.max_dim * 3)
+        ]
+        wall_right = [
+            (self.max_dim * 2, self.max_dim * 2),
+            (self.max_dim * 2, -self.max_dim),
+            (self.max_dim * 3, self.max_dim *0.5)
+        ]
+        wall_bottom = [
+            (self.max_dim * 2, -self.max_dim),
+            (-self.max_dim, -self.max_dim),
+            (self.max_dim * 0.5, -self.max_dim * 2)
+        ]
+        self.obstacles.append(wall_left)
+        self.sim.addObstacle(wall_left)
+        self.obstacles.append(wall_right)
+        self.sim.addObstacle(wall_right)
+        self.obstacles.append(wall_top)
+        self.sim.addObstacle(wall_top)
+        self.obstacles.append(wall_bottom)
+        self.sim.addObstacle(wall_bottom)
         if self.file is not None:
             self.file.write("timestamp position0 velocity0 radius0 goal ")
             self.file.write("pref_speed theta ")

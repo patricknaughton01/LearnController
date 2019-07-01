@@ -8,11 +8,11 @@ from simulator import Simulator
 
 def main():
     args = parse_args()
-    model_path = "tests/random_fail_model/model.tar"
+    model_path = "tests/random/random_fail_model/model.tar"
     scene = args.scene
     timesteps = 300
     epsilon = 0.05
-    for i in range(10):
+    for i in range(args.num_episodes):
         out_path = args.scene + "_{}.txt".format(i)
         out_file = open(out_path, "w")
         model_config = configparser.RawConfigParser()
