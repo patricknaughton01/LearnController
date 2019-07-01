@@ -309,8 +309,29 @@ def build_humans(states):
     return human_states
 
 def build_occupancy_maps(human_states, config={}):
-    """
-    :param human_states
+    """Builds an occupancy map for each human in human_states.
+
+    If `om_channel_size` is 1, each occupancy map is simply a grid centered on
+    a given human and an indication in each of the `cell_num**2` cells
+    of whether or not it is occupied.
+
+    If `om_channel_size` is 2, the final occupancy map is `2 * cell_num**2`
+    elements and each pair of elements is the average x and y velocities of
+    agents in that cell respectively.
+
+    If `om_channel_size` is 3, the final occupancy map is `3 * cell_num**2`
+    elements and each triplet is 1 if there's at least one agent in that cell
+    and the other two elements are the same as for if `om_channel_size` is 2
+    (i.e. the average velocities).
+
+    :param human_states: State of all humans in the scene (Note, as we
+        are using it, this includes the robot itself and the points on any
+        obstacles which are closest to the robot. The format is
+        [x, y, vx, vy, rad]).
+    :param config: Configuration for the function to specify:
+        om_channel_size
+        cell_num
+        cell_size
     :return: tensor of shape (# human - 1, self.cell_num ** 2)
     """
     om_channel_size = config.get('om_channel_size', 3)
