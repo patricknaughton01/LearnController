@@ -100,21 +100,7 @@ def covariance_to_std(var):
     return temp
 
 def get_coefs(preds):
-    mu_x, mu_y, sigma_x, sigma_y, corr = preds[:, :, 0], preds[:, :, 1], preds[:, :, 2], preds[:, :, 3], preds[:, :, 4]
-
-    # print("mu_x.shape", mu_x.shape)
-    # print("mu_y.shape", mu_y.shape)
-    # print("sigma_x.shape", sigma_x.shape)
-    # print("sigma_y.shape", sigma_y.shape)
-    # print("mu_x.shape", mu_x.shape)
-
-    # print("mu_x", mu_x)
-    # print("mu_y", mu_y)
-    # print("sigma_x", sigma_x)
-    # print("sigma_y", sigma_y)
-
-    # a = input('').split(" ")[0]
-    # print(a)
+    mu_x, mu_y, sigma_x, sigma_y, corr = preds[:, 0], preds[:, 1], preds[:, 2], preds[:, 3], preds[:, 4]
 
     sigma_x = torch.exp(sigma_x)
     sigma_y = torch.exp(sigma_y)
@@ -387,13 +373,13 @@ def build_occupancy_maps(human_states, config={}):
 
     return torch.from_numpy(np.concatenate(occupancy_maps, axis=0)).float()
 
-def neg_2d_gaussian_likelihood(outputs, targets, seq_lengths):
+def neg_2d_gaussian_likelihood(outputs, targets):
     # Extract mean, std devs and correlation
     mux, muy, sx, sy, corr = get_coefs(outputs)
 
     # Compute factors
-    normx = targets[:, :, 0] - mux
-    normy = targets[:, :, 1] - muy
+    normx = targets[:, 0] - mux
+    normy = targets[:, 1] - muy
     sxsy = sx * sy
 
     z = (normx/sx)**2 + (normy/sy)**2 - 2*((corr*normx*normy)/sxsy)
@@ -411,21 +397,12 @@ def neg_2d_gaussian_likelihood(outputs, targets, seq_lengths):
     result = result / (denom + epsilon)
 
     result = -torch.log(result + epsilon)
-    mask = []
-    seq_len, batch_size = result.size()
-    error_vector = targets - outputs[:, :, 0:2]
+    error_vector = targets - outputs[:, 0:2]
     error = torch.norm(error_vector, p=2, dim=-1)
-    for i in range(batch_size):
-        mask.append(torch.arange(0, seq_len) < seq_lengths[i])
-        # print("val1", torch.arange(0, seq_len) )
-        # print("val2", seq_lengths[i])
-        # print("val3", torch.arange(0, seq_len) < seq_lengths[i])
-    mask = torch.stack(mask).transpose(0, 1).float()
     # print("mask", mask)
-    total = torch.sum(mask)
     # print("total", total)
 
-    return torch.sum(result * mask) / total, torch.sum(error * mask) / total
+    return torch.sum(result), torch.sum(error)
 
 def rotate(state, kinematics='unicycle'):
     """
