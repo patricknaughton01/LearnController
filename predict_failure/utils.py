@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import argparse
+import math
 from functools import reduce
 from operator import mul
 from state import ObservableState
@@ -382,6 +383,29 @@ def neg_2d_gaussian_likelihood(outputs, targets):
     normy = targets[:, 1] - muy
     sxsy = sx * sy
 
+    r2 = math.sqrt(2)
+    z = (normx/(r2*sx))**2 + (normy/(r2*sy))**2 + 2*((corr*normx*normy)/sxsy)
+
+    # Numerical stability
+    epsilon = 1e-10
+
+    result = z#-torch.log(torch.sqrt(sxsy + corr) + epsilon) + z
+    error_vector = targets - outputs[:, 0:2]
+    error = torch.norm(error_vector, p=2, dim=-1)
+    # print("mask", mask)
+    # print("total", total)
+
+    return torch.sum(result), torch.sum(error)
+
+"""def neg_2d_gaussian_likelihood(outputs, targets):
+    # Extract mean, std devs and correlation
+    mux, muy, sx, sy, corr = get_coefs(outputs)
+
+    # Compute factors
+    normx = targets[:, 0] - mux
+    normy = targets[:, 1] - muy
+    sxsy = sx * sy
+
     z = (normx/sx)**2 + (normy/sy)**2 - 2*((corr*normx*normy)/sxsy)
     negRho = 1 - corr**2
 
@@ -402,7 +426,7 @@ def neg_2d_gaussian_likelihood(outputs, targets):
     # print("mask", mask)
     # print("total", total)
 
-    return torch.sum(result), torch.sum(error)
+    return torch.sum(result), torch.sum(error)"""
 
 def rotate(state, kinematics='unicycle'):
     """

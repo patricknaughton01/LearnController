@@ -23,12 +23,13 @@ class Trainer(object):
                                     lr=config.get('learning_rate', 0.001),
                                     weight_decay=config.get('weight_decay', 0))
         self.config = config
-        #TODO Make batch size configurable
         self.train_loader = DataLoader(
-            self.train_data, batch_size=4, shuffle=True, num_workers=4
+            self.train_data, batch_size=config['batch_size'], shuffle=True,
+            num_workers=4
         )
         self.val_loader = DataLoader(
-            self.val_data, batch_size=4, shuffle=True, num_workers=4
+            self.val_data, batch_size=config['batch_size'], shuffle=True,
+            num_workers=4
         )
 
     def run(self):
@@ -76,7 +77,7 @@ class Trainer(object):
 
         train_loss = 0
         train_l2_error = 0
-        c = 0
+        c = 1
 
         for batch, labels in self.train_loader:
             pred_t = self.model(batch)
@@ -94,7 +95,7 @@ class Trainer(object):
         self.model.eval()   # Put model in eval mode
         val_loss = 0
         val_l2_error = 0
-        c = 0
+        c = 1
         for batch, labels in self.val_loader:
             with torch.no_grad():   # We won't back-propagate based on eval
                 pred_t = self.model(batch)

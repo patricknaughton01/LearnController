@@ -39,6 +39,11 @@ def main():
 
     f = open(data_path, "rb")
     all_data = pickle.load(f)
+    random.shuffle(all_data)
+    print("Total dataset size: {}".format(len(all_data)))
+    split_ind = int(len(all_data) * (1 - args.test_percent))
+    train_data = all_data[:split_ind]
+    val_data = all_data[split_ind:]
 
     # print('model_config')
     # print(args.model_config)
@@ -47,8 +52,7 @@ def main():
         model = Controller(model_config,
                            model_type=args.model_type)  # model_type = crossing
         print(model)
-        #TODO partition training set into training and validation sets
-        trainer = Trainer(model, all_data, all_data, config)
+        trainer = Trainer(model, train_data, val_data, config)
         trainer.run()
         torch.save({'state_dict': model.state_dict()},
                    log_path + '/model_m_' + str(m) + '.tar')

@@ -63,9 +63,5 @@ class Controller(nn.Module):
         # concatenate agent's state with global weighted humans' state
         batch_state = self_state.repeat(size[1], 1)     # size[1] is batch size
         joint_state = torch.cat([batch_state, mlp2_output], dim=1)
-        # TODO: should this be joint_state?
         pred_t = self.mlp3(joint_state)
-        # print('pred_t',pred_t.shape)
-        # print('h_t')
-        # print(h_t)
         return pred_t
