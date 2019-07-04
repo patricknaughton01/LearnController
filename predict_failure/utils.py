@@ -374,7 +374,7 @@ def build_occupancy_maps(human_states, config={}):
 
     return torch.from_numpy(np.concatenate(occupancy_maps, axis=0)).float()
 
-def neg_2d_gaussian_likelihood(outputs, targets):
+"""def neg_2d_gaussian_likelihood(outputs, targets):
     # Extract mean, std devs and correlation
     mux, muy, sx, sy, corr = get_coefs(outputs)
 
@@ -395,9 +395,9 @@ def neg_2d_gaussian_likelihood(outputs, targets):
     # print("mask", mask)
     # print("total", total)
 
-    return torch.sum(result), torch.sum(error)
+    return torch.sum(result), torch.sum(error)"""
 
-"""def neg_2d_gaussian_likelihood(outputs, targets):
+def neg_2d_gaussian_likelihood(outputs, targets):
     # Extract mean, std devs and correlation
     mux, muy, sx, sy, corr = get_coefs(outputs)
 
@@ -426,7 +426,7 @@ def neg_2d_gaussian_likelihood(outputs, targets):
     # print("mask", mask)
     # print("total", total)
 
-    return torch.sum(result), torch.sum(error)"""
+    return torch.sum(result), torch.sum(error)
 
 def rotate(state, kinematics='unicycle'):
     """
