@@ -19,12 +19,17 @@ import os
 # In[2]:
 
 def main():
-    data_type = 'dynamic_barge_in_top'
-    directory = 'learn_failure/tests/dynamic_barge/dynamic_barge_fail_test_2/'
+    data_type = 'dynamic_barge_in'
+    directory = 'learn_failure/tests/dynamic_barge/dynamic_barge_fail_test_1/'
     parent_path = directory  + data_type + '_*.txt'
 
     parser = argparse.ArgumentParser(description="Pre-process simulation data")
-    parser.add_argument('--animate', type=bool, default=False, help="animate the playback?")
+    parser.add_argument('--animate', type=bool, default=False,
+                        help="animate the playback")
+    parser.add_argument('--save', type=bool, default=False,
+                        help="save the animation")
+    parser.add_argument('--animation_name', type=str, default="animation.mp4",
+                        help="filename to save the animation as")
     args = parser.parse_args()
 
     # In[3]:
@@ -199,6 +204,8 @@ def main():
         ani = animation.FuncAnimation(fig, animate, interval=100,
                                       fargs=(fig, episode, colors,
                                              -2.5, 7.5, 4, -1))
+        if args.save:
+            ani.save(args.animation_name)
     else:
         for t in range(T):
             for i in range(n):
