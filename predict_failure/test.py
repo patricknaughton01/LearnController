@@ -13,7 +13,7 @@ from dataset import Dataset
 
 def main():
     args = utils.parse_args()
-    model_path = "log/simulate_crossing/seed_1234_bootstrap_False_M_1/model_m_0.tar"
+    model_path = "log/simulate_crossing/predictor_2/model_m_0.tar"
     data_path = "barge_in_final_states_test.p"
 
     f = open(data_path, "rb")
