@@ -161,13 +161,12 @@ class Simulator(object):
         return torch.cat([state, om], dim=-1)
 
     def reward(self):
-        """Calculate the reward the robot receives.
+        """Calculates the reward the robot receives.
 
         :return: The (possibly negative) reward of the robot in this time step
             as a 1x1 tensor and whether or not the episode is over.
             :rtype: tensor
             :rtype: boolean
-
         """
         total = 0
         # Penalties for being close to obstacles:
@@ -176,16 +175,27 @@ class Simulator(object):
         col_reward = -1
         close_reward = -0.25
         close_thresh = 0.2
+        pred_mul = 0.05     # Factor to multiply collision penalty by
+        ts = self.sim.getTimeStep()
         robot_pos = self.sim.getAgentPosition(self.robot_num)
+        r_vel = self.sim.getAgentVelocity(self.robot_num)
+        r_rad = self.sim.getAgentRadius(self.robot_num)
+        pred_robot_pos = (robot_pos[0] + r_vel[0] * ts,
+                          robot_pos[1] + r_vel[1] * ts)
         for agent in self.agents:
             if agent != self.robot_num: # Don't care about self collisions
-                dist = self.dist(self.sim.getAgentPosition(agent), robot_pos)
-                if dist < self.sim.getAgentRadius(
-                        self.robot_num) + self.sim.getAgentRadius(agent):
+                a_pos = self.sim.getAgentPosition(agent)
+                a_vel = self.sim.getAgentVelocity(agent)
+                a_rad = self.sim.getAgentRadius(agent)
+                dist = self.dist(a_pos, robot_pos)
+                if dist < r_rad + a_rad:
                     total += col_reward
-                elif (dist < self.sim.getAgentRadius(self.robot_num)
-                      + self.sim.getAgentRadius(agent) + close_thresh):
+                elif r_rad + a_rad + close_thresh:
                     total += close_reward
+                pred_pos = (a_pos[0] + a_vel[0] * ts,
+                            a_pos[1] + a_vel[1] * ts)
+                if self.dist(pred_robot_pos, pred_pos) < r_rad + a_rad:
+                    total += pred_mul * col_reward
         for obs in self.obstacles:
             dist = 0
             if len(obs) > 1:
