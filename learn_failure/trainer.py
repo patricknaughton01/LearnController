@@ -92,9 +92,6 @@ class Trainer(object):
                 self.epsilon = 0.1
             sim.do_step(action)
             reward, _ = sim.reward()
-            # Penalize moving
-            if action.item() != 0:
-                reward -= 0.01
             next_state = sim.state()
             if h_t is not None:
                 self.memory.push(

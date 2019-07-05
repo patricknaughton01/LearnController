@@ -28,6 +28,10 @@ class Simulator(object):
         self.file = file
         self.max_dim = max_dim
         self.build_scene(scene)
+        self.last_actions = []
+        # This should be at least 2 (used for calculating reward)
+        self.last_action_capacity = 2
+        self.last_action_ind = 0
 
     def do_step(self, action_ind):
         """Run a step of the simulation.
@@ -38,6 +42,11 @@ class Simulator(object):
 
         """
         action_ind = action_ind.item()
+        if len(self.last_actions) < self.last_action_capacity:
+            self.last_actions.append(action_ind)
+        self.last_actions[self.last_action_ind] = action_ind
+        self.last_action_ind = (
+                        self.last_action_ind + 1) % self.last_action_capacity
         robot_max_vel = self.sim.getAgentMaxSpeed(self.robot_num)
         # Decode the action selection:
         #   0 => do nothing
@@ -146,6 +155,20 @@ class Simulator(object):
             elif (dist < self.sim.getAgentRadius(self.robot_num)
                   + close_thresh):
                 total += close_reward
+        prev_action_ind = self.last_action_ind - 1
+        prev2_action_ind = self.last_action_ind - 2
+        while prev_action_ind < 0:
+            prev_action_ind += self.last_action_capacity
+        while prev2_action_ind < 0:
+            prev2_action_ind += self.last_action_capacity
+        prev_action_ind %= self.last_action_capacity
+        prev2_action_ind %= self.last_action_capacity
+        # Penalize non-still actions
+        if prev_action_ind != 0:
+            total += -0.01
+        # Encourage smooth trajectories by penalizing changing actions
+        if prev_action_ind != prev2_action_ind:
+            total += -0.01
         return torch.tensor([[total]], dtype=torch.float), False
 
     @staticmethod
@@ -421,6 +444,46 @@ class Simulator(object):
                 )
             )
             self.goals.append(position1)
+        elif scene == "overtaking":     # overtaking scene
+            pos1 = (randomize(-2.0, -1.5), randomize(-2.0, -1.5))   # Robot
+            # Human to overtake
+            pos2 = (randomize(-1.0, -0.5), randomize(-1.0, -0.5))
+            hum_goal = (randomize(2.0, 3.0), randomize(2.0, 3.0))
+            # Robot
+            self.robot_num = self.sim.addAgent(pos1, 15.0, 10, 5.0, 5.0,
+                                               randomize(0.15, 0.25),
+                                               randomize(1.5, 2.0), (0, 0))
+            self.goals.append(pos1)     # Robot has no explicit goal at first
+            # Human to overtake
+            self.agents.append(self.robot_num)
+
+            self.agents.append(self.sim.addAgent(pos2, 15.0, 10, 5.0, 5.0,
+                                                 randomize(0.15, 0.25),
+                                                 randomize(0.2, 0.4), (0, 0)))
+            self.goals.append(hum_goal)
+            # Another human going the opposite way
+            self.agents.append(self.sim.addAgent(hum_goal, 15.0, 10, 5.0, 5.0,
+                                                 randomize(0.15, 0.25),
+                                                 randomize(0.2, 0.4), (0, 0)))
+            self.goals.append(pos2)
+
+            # Add other humans walking around in the middle of the path...
+            self.agents.append(self.sim.addAgent(
+                (randomize(1.0, 2.0), randomize(-1.0, -2.0)), 15.0, 10, 5.0,
+                5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
+            self.goals.append((randomize(-1.0, 0.0), randomize(0.0, 1.0)))
+            self.agents.append(self.sim.addAgent(
+                (randomize(0.0, 1.0), randomize(0.0, -1.0)), 15.0, 10, 5.0,
+                5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
+            self.goals.append((randomize(-2.0, -1.0), randomize(1.0, 2.0)))
+            self.agents.append(self.sim.addAgent(
+                (randomize(-2.0, -1.0), randomize(1.0, 2.0)), 15.0, 10, 5.0,
+                5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
+            self.goals.append((randomize(1.0, 2.0), randomize(-2.0, -1.0)))
+            self.agents.append(self.sim.addAgent(
+                (randomize(0.0, -1.0), randomize(0.0, 1.0)), 15.0, 10, 5.0,
+                5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
+            self.goals.append((randomize(0.0, 1.0), randomize(0.0, -1.0)))
         else:       # Build a random scene
             max_dim = self.max_dim    # Maximum x and y start/goal locations
             min_agents = 5
