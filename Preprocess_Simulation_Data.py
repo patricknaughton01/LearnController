@@ -19,8 +19,8 @@ import os
 # In[2]:
 
 def main():
-    data_type = 'dynamic_barge_in'
-    directory = 'learn_failure/tests/dynamic_barge/dynamic_barge_fail_test_1/'
+    data_type = 'overtaking'
+    directory = 'learn_failure/'
     parent_path = directory  + data_type + '_*.txt'
 
     parser = argparse.ArgumentParser(description="Pre-process simulation data")
