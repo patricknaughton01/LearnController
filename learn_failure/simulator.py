@@ -34,7 +34,8 @@ class Simulator(object):
         self.last_action_ind = 0
 
     def do_step(self, action_ind):
-        """Run a step of the simulation.
+        """Run a step of the simulation taking in an action from an
+        rl_model.
 
         :param tensor action_ind: The index of the action to take.
         :return:
@@ -72,6 +73,40 @@ class Simulator(object):
         self.goals[self.robot_num] = (
             pos[0] + vel[0] * ts, pos[1] + vel[1] * ts
         )
+        self.advance_simulation()
+
+    def forward_simulate(self, success_model, failure_func=None):
+        """Simulates the beginning of the scenario by using the predictions of
+        the success_model (a neural network which takes in the state of the
+        robot and predicts a mux, muy, sx, sy, and correlation for the
+        next state).
+
+        :param torch.nn.Module success_model: a neural network which takes in
+            the state of the robot and predicts a mux, muy, sx, sy, and
+            correlation for the next state
+        :param function failure_func: function that returns a boolean value
+            and takes in the prediction made by the network. It should
+            return True iff the model is making poor predictions/thinks that
+            the controller will no longer be successful
+        :return: None
+        """
+        success_model.eval()
+        h_t = None
+        pred, h_t = success_model(self.state().unsqueeze(0), h_t)
+        if failure_func is None:
+            failure_func = self.base_failure
+        while not failure_func(pred):
+            self.goals[self.robot_num] = (pred[0][0], pred[0][1])
+            self.advance_simulation()
+            pred, h_t = success_model(self.state().unsqueeze(0), h_t)
+
+    def advance_simulation(self):
+        """Advance the simulation by moving all the agents towards their
+        goals (preferably) and, if `self.file` exists make a record of this
+        step.
+
+        :return: None
+        """
         # Move all the agents towards their goals
         for agent in self.agents:
             p = self.sim.getAgentPosition(agent)
@@ -93,6 +128,19 @@ class Simulator(object):
         self.sim.doStep()
         if self.file is not None:
             self.update_visualization()
+
+    def base_failure(self, prediction):
+        """Determines if the predictor has failed. Simply checks the standard
+        deviation of the prediction to see if it is larger than the radius
+        of the robot in either x or y.
+
+        :param tensor 1x5 prediction: prediction made by the success model
+        :return: whether or not the prediction has failed
+            :rtype: bool
+        """
+        r_rad = self.sim.getAgentRadius(self.robot_num)
+        _, _, sx, sy, corr = utils.get_coefs(prediction.unsqueeze(0))
+        return sx.item() > r_rad or sy.item() > r_rad
 
     def state(self):
         """Compute the state that will be fed to the DQN. This is composed
@@ -184,6 +232,11 @@ class Simulator(object):
         return ( (v1[0] - v2[0])**2 + (v1[1] - v2[1])**2 )**0.5
 
     def update_visualization(self):
+        """Adds the current state of the robot to this simulator's file for
+        viewing later.
+
+        :return: None
+        """
         rpos = self.sim.getAgentPosition(self.robot_num)
         rvel = self.sim.getAgentVelocity(self.robot_num)
         rrad = self.sim.getAgentRadius(self.robot_num)

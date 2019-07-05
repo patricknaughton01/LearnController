@@ -19,9 +19,10 @@ import os
 # In[2]:
 
 def main():
-    data_type = 'overtaking'
+    data_type = 'dynamic_barge_in'
     directory = 'learn_failure/'
     parent_path = directory  + data_type + '_*.txt'
+    print(parent_path)
 
     parser = argparse.ArgumentParser(description="Pre-process simulation data")
     parser.add_argument('--animate', type=bool, default=False,
