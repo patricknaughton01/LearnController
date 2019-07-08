@@ -10,6 +10,7 @@ import utils
 import torch
 import numpy as np
 import random
+import copy
 # Used to conveniently find the nearest point on a polygon to the robot
 from shapely.geometry import Point, Polygon
 from shapely.ops import nearest_points
@@ -27,7 +28,8 @@ class Simulator(object):
         self.obs_width = 0.05
         self.file = file
         self.max_dim = max_dim
-        self.build_scene(scene)
+        if scene is not None:
+            self.build_scene(scene)
         self.last_actions = []
         # This should be at least 2 (used for calculating reward)
         self.last_action_capacity = 2
@@ -165,8 +167,7 @@ class Simulator(object):
 
         :return: The (possibly negative) reward of the robot in this time step
             as a 1x1 tensor and whether or not the episode is over.
-            :rtype: tensor
-            :rtype: boolean
+            :rtype: tuple
         """
         total = 0
         # Penalties for being close to obstacles:
@@ -184,18 +185,62 @@ class Simulator(object):
                           robot_pos[1] + r_vel[1] * ts)
         for agent in self.agents:
             if agent != self.robot_num: # Don't care about self collisions
+                # Check for collisions/closeness violations
                 a_pos = self.sim.getAgentPosition(agent)
                 a_vel = self.sim.getAgentVelocity(agent)
                 a_rad = self.sim.getAgentRadius(agent)
                 dist = self.dist(a_pos, robot_pos)
                 if dist < r_rad + a_rad:
                     total += col_reward
-                elif r_rad + a_rad + close_thresh:
+                elif dist < r_rad + a_rad + close_thresh:
                     total += close_reward
                 pred_pos = (a_pos[0] + a_vel[0] * ts,
                             a_pos[1] + a_vel[1] * ts)
+                # Check for predicted collisions
                 if self.dist(pred_robot_pos, pred_pos) < r_rad + a_rad:
                     total += pred_mul * col_reward
+                # Check for right hand rule violations (see
+                # https://arxiv.org/pdf/1703.08862.pdf for more details)
+                # Note the precise sizes of all the zones are determined by
+                # the radius of the robot.
+                a_ang = math.atan2(a_pos[1] - robot_pos[1], a_pos[0] -
+                                   robot_pos[0])
+                r_ang = math.atan2(r_vel[1], r_vel[0])
+                a_rel_ang = a_ang - r_ang
+                a_vel_ang = math.atan2(a_vel[1], a_vel[0])
+                vel_ang_diff = a_vel_ang - r_ang
+                # Transformed coordinates where x-axis is aligned along
+                # robot's velocity vector
+                x_rel = dist * math.cos(a_rel_ang)
+                y_rel = dist * math.sin(a_rel_ang)
+                ovtk_min_x = 0
+                ovtk_max_x = 3 * r_rad
+                ovtk_min_y = 0
+                ovtk_max_y = 2 * r_rad
+                pass_min_x = 1.5 * r_rad
+                pass_max_x = 4 * r_rad
+                pass_min_y = -3 * r_rad
+                pass_max_y = 0
+                cross_min_ang = -math.pi/4.0
+                cross_max_ang = math.pi/4.0
+                cross_max_dist = 4 * r_rad
+                # Penalty for violating one of these rules. Same weight for
+                # all rules right now
+                social_reward = -0.02
+                # Check both relative position of the other agent as well as
+                # the angle between the agent's and robot's velocities
+                if ovtk_min_x <= x_rel <= ovtk_max_x and ovtk_min_y <= \
+                        y_rel <= ovtk_max_y and math.fabs(vel_ang_diff) < \
+                        math.pi/4.0:
+                    total += social_reward
+                if pass_min_x <= x_rel <= pass_max_x and pass_min_y <= y_rel \
+                        <= pass_max_y and math.fabs(vel_ang_diff) > \
+                        3*math.pi/4.0:
+                    total += social_reward
+                if -3*math.pi/4.0 <= vel_ang_diff <= -math.pi/4.0 and dist <\
+                        cross_max_dist and cross_min_ang <= a_rel_ang <= \
+                        cross_max_ang:
+                    total += social_reward
         for obs in self.obstacles:
             dist = 0
             if len(obs) > 1:
@@ -222,10 +267,12 @@ class Simulator(object):
         prev_action_ind %= self.last_action_capacity
         prev2_action_ind %= self.last_action_capacity
         # Penalize non-still actions
-        if prev_action_ind != 0:
+        if len(self.last_actions) > 0 and self.last_actions[prev_action_ind] \
+                != 0:
             total += -0.01
         # Encourage smooth trajectories by penalizing changing actions
-        if prev_action_ind != prev2_action_ind:
+        if len(self.last_actions) > 1 and self.last_actions[prev_action_ind] \
+                != self.last_actions[prev2_action_ind]:
             total += -0.01
         return torch.tensor([[total]], dtype=torch.float), False
 
@@ -629,6 +676,131 @@ class Simulator(object):
             self.file.write("\n")
         self.sim.processObstacles()
 
+    def test_reward(self):
+        """Tests the reward function to make sure it evaluates correctly
+
+        :return: whether the reward function is correct
+            :rtype: bool
+        """
+        success = True
+        old_sim = self.sim
+        old_robot_num = self.robot_num
+        old_agents = copy.deepcopy(self.agents)
+        old_obstacles = copy.deepcopy(self.obstacles)
+        old_goals = copy.deepcopy(self.goals)
+        old_action_list = copy.deepcopy(self.last_actions)
+
+        # Test collision penalties and overtaking penalty
+        self.sim = rvo2.PyRVOSimulator(
+            0.1, 1.0, 10, 5.0, 5.0, 0.2, 1.5, (0,0)
+        )
+        self.obstacles = []
+        self.goals = []
+        self.last_actions = []
+        self.robot_num = self.sim.addAgent((0, 0))
+        self.agents = [self.robot_num]
+        self.agents.append(self.sim.addAgent((0.1, 0.1)))
+        self.agents.append(self.sim.addAgent((-0.1, 0.1)))
+        self.agents.append(self.sim.addAgent((0.1, -0.1)))
+        self.agents.append(self.sim.addAgent((-0.1, -0.1)))
+        r = self.reward()[0].item()
+        exp = -4.22
+        if r != exp:
+            success = False
+        print("Actual reward: ", r, "Expected: ", exp)
+        print("Explanation: -4 for 4 collisions, -0.2 for 4 predicted "
+              "collisions, -0.02 for overtake penalty with top right agent")
+
+        # Test closeness penalties and overtaking penalty
+        self.agents = []
+        self.sim = rvo2.PyRVOSimulator(
+            0.1, 1.0, 10, 5.0, 5.0, 0.2, 1.5, (0,0)
+        )
+        self.robot_num = self.sim.addAgent((0, 0))
+        self.agents = [self.robot_num]
+        self.agents.append(self.sim.addAgent((0.35, 0.35)))
+        self.agents.append(self.sim.addAgent((0.35, -0.35)))
+        self.agents.append(self.sim.addAgent((-0.35, 0.35)))
+        self.agents.append(self.sim.addAgent((-0.35, -0.35)))
+        r = self.reward()[0].item()
+        exp = -1.02
+        if r != exp:
+            success = False
+        print("Actual reward: ", r, "Expected: ", exp)
+        print("Explanation: -1 for 4 closeness violations, -0.02 for "
+              "overtake penalty with top right agent")
+
+        # Test passing penalty
+        self.agents = []
+        self.sim = rvo2.PyRVOSimulator(
+            0.1, 1.0, 10, 5.0, 5.0, 0.2, 1.5, (0, 0)
+        )
+        self.robot_num = self.sim.addAgent((0, 0))
+        self.agents = [self.robot_num]
+        self.agents.append(self.sim.addAgent((0.7, -0.5), 1.0, 10, 5.0, 5.0,
+                                             0.2, 1.5, (-0.5, 0)))
+        r = self.reward()[0].item()
+        exp = -0.02
+        if r != exp:
+            success = False
+        print("Actual reward: ", r, "Expected: ", exp)
+        print("Explanation: -0.02 for passing violation")
+
+        # Test crossing penalty
+        self.agents = []
+        self.sim = rvo2.PyRVOSimulator(
+            0.1, 1.0, 10, 5.0, 5.0, 0.2, 1.5, (0, 0)
+        )
+        self.robot_num = self.sim.addAgent((0, 0))
+        self.agents = [self.robot_num]
+        self.agents.append(self.sim.addAgent((0.35, 0.3), 1.0, 10, 5.0, 5.0,
+                                             0.2, 1.5, (0, -0.5)))
+        r = self.reward()[0].item()
+        exp = -0.27
+        if r != exp:
+            success = False
+        print("Actual reward: ", r, "Expected: ", exp)
+        print("Explanation: -0.02 for crossing violation, -0.25 for "
+              "closeness violation")
+
+        # Test action penalty (moving)
+        self.agents = []
+        self.sim = rvo2.PyRVOSimulator(
+            0.1, 1.0, 10, 5.0, 5.0, 0.2, 1.5, (0, 0)
+        )
+        self.robot_num = self.sim.addAgent((0, 0))
+        self.last_actions = [1, 1]
+        self.last_action_ind = 0
+        r = self.reward()[0].item()
+        exp = -0.01
+        if r != exp:
+            success = False
+        print("Actual reward: ", r, "Expected: ", exp)
+        print("Explanation: -0.01 for moving")
+
+        # Test action penalty (changing actions)
+        self.agents = []
+        self.sim = rvo2.PyRVOSimulator(
+            0.1, 1.0, 10, 5.0, 5.0, 0.2, 1.5, (0, 0)
+        )
+        self.robot_num = self.sim.addAgent((0, 0))
+        self.last_actions = [1, 0]
+        self.last_action_ind = 0
+        r = self.reward()[0].item()
+        exp = -0.01
+        if r != exp:
+            success = False
+        print("Actual reward: ", r, "Expected: ", exp)
+        print("Explanation: -0.01 for changing actions")
+
+        self.sim = old_sim
+        self.robot_num = old_robot_num
+        self.agents = old_agents
+        self.obstacles = old_obstacles
+        self.goals = old_goals
+        self.last_actions = old_action_list
+        return success
+
 
 def randomize(lower, upper):
     """Generate a random float in the range [min, max)
@@ -639,3 +811,8 @@ def randomize(lower, upper):
         :rtype: float
     """
     return lower + (random.random() * (upper - lower))
+
+
+if __name__ == "__main__":
+    sim = Simulator()
+    sim.test_reward()
