@@ -385,8 +385,10 @@ class Simulator(object):
 
         :param string scene: String representing what type of scene to build.
             Pick one from this list:
-                `barge_in`,
+                `dynamic_barge_in<_left|_top|_bottom>`,
+                `barge_in<_left|_top|_bottom>`,
                 `crossing`,
+                `overtaking`,
             If the argument is none of these, a random scene is built
         :return:
             :rtype: None
