@@ -34,6 +34,11 @@ class Simulator(object):
         # This should be at least 2 (used for calculating reward)
         self.last_action_capacity = 2
         self.last_action_ind = 0
+        # Used to determine if the success controller has failed. If a
+        # success controller isn't being used to initialize the scene, this
+        # has no effect.
+        self.overall_robot_goal = (0, 0)
+        self.last_dist = 10**6      # last distance to goal, starts huge
 
     def do_step(self, action_ind):
         """Run a step of the simulation taking in an action from an
@@ -99,6 +104,7 @@ class Simulator(object):
             failure_func = self.base_failure
         while not failure_func(pred):
             self.goals[self.robot_num] = (pred[0][0], pred[0][1])
+            print(pred)
             self.advance_simulation()
             pred, h_t = success_model(self.state().unsqueeze(0), h_t)
 
@@ -140,9 +146,14 @@ class Simulator(object):
         :return: whether or not the prediction has failed
             :rtype: bool
         """
-        r_rad = self.sim.getAgentRadius(self.robot_num)
-        _, _, sx, sy, corr = utils.get_coefs(prediction.unsqueeze(0))
-        return sx.item() > r_rad or sy.item() > r_rad
+        #r_rad = self.sim.getAgentRadius(self.robot_num)
+        mux, muy, sx, sy, corr = utils.get_coefs(prediction.unsqueeze(0))
+        d = self.dist((mux, muy), self.overall_robot_goal)
+        if d > self.last_dist:
+            return True
+        else:
+            self.last_dist = d
+            return False
 
     def state(self):
         """Compute the state that will be fed to the DQN. This is composed
@@ -438,6 +449,9 @@ class Simulator(object):
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
+            # Used to determine if success controller has failed
+            self.overall_robot_goal = (robot_pos[0] + randomize(4, 5),
+                                       robot_pos[1])
 
             hum_perb = 0.1  # Random perturbation to add to human positions
             if scene.startswith("barge_in"):
@@ -517,6 +531,8 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (-pos[0], pos[1]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (-goal[0], goal[1])
+                self.overall_robot_goal = (-self.overall_robot_goal[0],
+                                           self.overall_robot_goal[1])
             elif scene.endswith("top"):   # flip x and y coordinates
                 for obs in self.obstacles:
                     for i, vert in enumerate(obs):
@@ -526,6 +542,8 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (pos[1], pos[0]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (goal[1], goal[0])
+                self.overall_robot_goal = (self.overall_robot_goal[1],
+                                           self.overall_robot_goal[0])
             elif scene.endswith("bottom"):
                 # flip x and y coordinates
                 # then negate new y
@@ -537,6 +555,8 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (pos[1], -pos[0]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (goal[1], -goal[0])
+                self.overall_robot_goal = (self.overall_robot_goal[1],
+                                           -self.overall_robot_goal[0])
             for obs in self.obstacles:
                 self.sim.addObstacle(obs)
         elif scene == "crossing":   # Build crossing scene
@@ -566,6 +586,8 @@ class Simulator(object):
                                                randomize(0.15, 0.25),
                                                randomize(1.5, 2.0), (0, 0))
             self.goals.append(pos1)     # Robot has no explicit goal at first
+            # Used to determine if success controller has failed.
+            self.overall_robot_goal = hum_goal
             # Human to overtake
             self.agents.append(self.robot_num)
 
