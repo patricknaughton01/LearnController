@@ -19,7 +19,7 @@ def parse_args():
     parser.add_argument("--seed", type=int, default=1234)
     parser.add_argument("--num_lstms", type=int, default=1)
     parser.add_argument("--dist_thres", type=float, default=1.0)
-    parser.add_argument("--dropout", type=float, default=0)
+    parser.add_argument("--dropout", type=float, default=0.1)
     parser.add_argument("--tao", type=float, default=1.0)
     parser.add_argument("--length_scale", type=float, default=0)
     parser.add_argument("--T", type=int, default=100)
