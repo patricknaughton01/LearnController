@@ -28,7 +28,7 @@ def main():
         args.seed,
         str(args.bootstrap),
         args.M)
-    data_path = "barge_in_final_states_1.p"
+    data_path = "final_state_data/barge_in_final_states_updated.p"
 
     if not os.path.exists(log_path):
         os.makedirs(log_path)

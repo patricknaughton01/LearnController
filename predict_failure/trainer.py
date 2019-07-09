@@ -23,12 +23,16 @@ class Trainer(object):
                                     lr=config.get('learning_rate', 0.001),
                                     weight_decay=config.get('weight_decay', 0))
         self.config = config
+        # Note, we can't really use batches because each training example
+        # has a different number of humans (so the dimensions won't match
+        # on the occupancy maps or states). Therefore, the batch size has
+        # to be set to one.
         self.train_loader = DataLoader(
-            self.train_data, batch_size=config['batch_size'], shuffle=True,
+            self.train_data, batch_size=1, shuffle=True,
             num_workers=4
         )
         self.val_loader = DataLoader(
-            self.val_data, batch_size=config['batch_size'], shuffle=True,
+            self.val_data, batch_size=1, shuffle=True,
             num_workers=4
         )
 

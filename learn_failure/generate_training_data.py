@@ -41,7 +41,7 @@ def main():
         try:
             print("{}/{}".format(i, args.num_episodes), end="\r")
             sim = Simulator(scene=random.choice(scenes))
-            init_state = sim.state()[sim.robot_num]
+            init_state = sim.state()
             h_t = None
             for t in range(timesteps):
                 action, h_t = model.select_action(

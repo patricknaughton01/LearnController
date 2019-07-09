@@ -50,7 +50,7 @@ class Controller(nn.Module):
             :rtype: tensor
 
         """
-        state = state.reshape((1, *state.shape))
+        #state = state.reshape((1, *state.shape))
         size = state.shape
 
         # print("size", size) # [8, 6, 61]
