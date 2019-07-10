@@ -83,7 +83,8 @@ class Trainer(object):
         sim = simulator.Simulator(scene=scene, file=out_file)
         # Try to execute success controller until it fails
         if self.success_model is not None:
-            sim.forward_simulate(self.success_model)
+            sim.forward_simulate(self.success_model, max_ts=self.config[
+                'success_max_ts'])
         h_t = None
         curr_state = sim.state()
         total_reward = torch.zeros((1, 1), dtype=torch.float)

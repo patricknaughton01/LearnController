@@ -19,7 +19,7 @@ import os
 # In[2]:
 
 def main():
-    data_type = 'dynamic_barge_in'
+    data_type = 'overtaking'
     directory = 'learn_failure/'
     parent_path = directory  + data_type + '_*.txt'
     print(parent_path)
@@ -204,7 +204,8 @@ def main():
     if args.animate:
         ani = animation.FuncAnimation(fig, animate, interval=100,
                                       fargs=(fig, episode, colors,
-                                             -2.5, 7.5, 4, -1))
+                                             -5, 5, 5, -5), repeat=True,
+                                      frames=episode.shape[0])
         if args.save:
             ani.save(args.animation_name)
     else:

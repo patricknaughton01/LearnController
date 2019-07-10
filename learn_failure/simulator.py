@@ -28,8 +28,9 @@ class Simulator(object):
         self.obs_width = 0.05
         self.file = file
         self.max_dim = max_dim
-        if scene is not None:
-            self.build_scene(scene)
+        if self.scene is None:
+            self.scene = "random"
+        self.build_scene(self.scene)
         self.last_actions = []
         # This should be at least 2 (used for calculating reward)
         self.last_action_capacity = 2
@@ -82,7 +83,7 @@ class Simulator(object):
         )
         self.advance_simulation()
 
-    def forward_simulate(self, success_model, failure_func=None):
+    def forward_simulate(self, success_model, max_ts=100, failure_func=None):
         """Simulates the beginning of the scenario by using the predictions of
         the success_model (a neural network which takes in the state of the
         robot and predicts a mux, muy, sx, sy, and correlation for the
@@ -91,6 +92,8 @@ class Simulator(object):
         :param torch.nn.Module success_model: a neural network which takes in
             the state of the robot and predicts a mux, muy, sx, sy, and
             correlation for the next state
+        :param int max_tx: The maximum number of timesteps the
+            `success_model` is allowed to run before it is cut off
         :param function failure_func: function that returns a boolean value
             and takes in the prediction made by the network. It should
             return True iff the model is making poor predictions/thinks that
@@ -102,11 +105,13 @@ class Simulator(object):
         pred, h_t = success_model(self.state().unsqueeze(0), h_t)
         if failure_func is None:
             failure_func = self.base_failure
-        while not failure_func(pred):
+        i = 0
+        while not failure_func(pred) and i < max_ts:
             self.goals[self.robot_num] = (pred[0][0], pred[0][1])
-            print(pred)
             self.advance_simulation()
             pred, h_t = success_model(self.state().unsqueeze(0), h_t)
+            i += 1
+        print("Finished success simulation")
 
     def advance_simulation(self):
         """Advance the simulation by moving all the agents towards their
@@ -840,3 +845,4 @@ def randomize(lower, upper):
 if __name__ == "__main__":
     sim = Simulator()
     sim.test_reward()
+    print(sim.state())

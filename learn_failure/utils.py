@@ -43,6 +43,7 @@ def parse_args():
     parser.add_argument("--record", type=bool, default=False)
     parser.add_argument("--num_episodes", type=int, default=1)
     parser.add_argument("--success_path", type=str, default="")
+    parser.add_argument("--success_max_ts", type=int, default=100)
     return parser.parse_args()
 
 def get_weight_decay(tao, length_scale, N, dropout):
