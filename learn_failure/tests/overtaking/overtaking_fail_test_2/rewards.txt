@@ -1,0 +1,21 @@
+python test.py --scene overtaking --num_episodes 10 --success_path /home/patricknaughton01/Downloads/LearnControllers/learn_failure/learn_general_controller/log/simulate_overtaking/seed_1234_bootstrap_False_M_5/model_m_0.tar --success_max_ts 50 --max_timesteps 50
+Finished success simulation after 50 steps
+Reward:  -20.450000762939453
+Finished success simulation after 50 steps
+Reward:  -0.679999828338623
+Finished success simulation after 50 steps
+Reward:  -1.6099998950958252
+Finished success simulation after 50 steps
+Reward:  -11.109999656677246
+Finished success simulation after 50 steps
+Reward:  -3.869999885559082
+Finished success simulation after 50 steps
+Reward:  -0.10999999940395355
+Finished success simulation after 50 steps
+Reward:  -2.9799997806549072
+Finished success simulation after 50 steps
+Reward:  -12.420000076293945
+Finished success simulation after 50 steps
+Reward:  -7.869999885559082
+Finished success simulation after 50 steps
+Reward:  -16.389999389648438

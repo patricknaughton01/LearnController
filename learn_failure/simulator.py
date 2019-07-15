@@ -92,7 +92,7 @@ class Simulator(object):
         :param torch.nn.Module success_model: a neural network which takes in
             the state of the robot and predicts a mux, muy, sx, sy, and
             correlation for the next state
-        :param int max_tx: The maximum number of timesteps the
+        :param int max_ts: The maximum number of timesteps the
             `success_model` is allowed to run before it is cut off
         :param function failure_func: function that returns a boolean value
             and takes in the prediction made by the network. It should
@@ -111,7 +111,7 @@ class Simulator(object):
             self.advance_simulation()
             pred, h_t = success_model(self.state().unsqueeze(0), h_t)
             i += 1
-        print("Finished success simulation")
+        print("Finished success simulation after {} steps".format(i))
 
     def advance_simulation(self):
         """Advance the simulation by moving all the agents towards their
