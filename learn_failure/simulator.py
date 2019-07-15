@@ -286,9 +286,11 @@ class Simulator(object):
         if len(self.last_actions) > 0 and self.last_actions[prev_action_ind] \
                 != 0:
             total += -0.01
-        # Encourage smooth trajectories by penalizing changing actions
+        # Encourage smooth trajectories by penalizing changing actions,
+        # except for starting up if the robot was previously stopped
         if len(self.last_actions) > 1 and self.last_actions[prev_action_ind] \
-                != self.last_actions[prev2_action_ind]:
+                != self.last_actions[prev2_action_ind] and \
+                self.last_actions[prev2_action_ind] != 0:
             total += -0.01
         return torch.tensor([[total]], dtype=torch.float), False
 
