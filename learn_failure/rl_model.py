@@ -61,7 +61,7 @@ class Controller(nn.Module):
         :param tensor h_t: Hidden state of rnn
         :return: The q values for each of the 33 possible actions, the hidden
             state values for the rnn.
-            :rtype: tensor, tensor
+            :rtype: tuple (tensor, tensor)
 
         """
         state = state.reshape((1, *state.shape))
