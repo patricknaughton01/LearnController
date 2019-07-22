@@ -9,7 +9,9 @@ from simulator import Simulator
 
 def main():
     args = parse_args()
-    model_path = "dynamic_barge_in/model.tar"
+    model_path = "/home/patricknaughton01/Downloads/LearnControllers" \
+                 "/learn_failure/tests/dynamic_barge/dynamic_barge_in/model" \
+                 ".tar"
     scene = args.scene
     timesteps = args.max_timesteps
     epsilon = 0.05

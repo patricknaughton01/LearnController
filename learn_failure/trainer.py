@@ -122,11 +122,11 @@ class Trainer(object):
                     break
                 elif loss < self.min_loss:
                     self.min_loss = loss
-                if (self.cumulative_timesteps % self.target_update == 0
-                        or self.cumulative_timesteps % print_every == 0):
+                if self.cumulative_timesteps % self.target_update == 0:
                     self.target_model.load_state_dict(
                         self.policy_model.state_dict()
                     )
+                if self.cumulative_timesteps % print_every == 0:
                     print("Timestep: ", self.cumulative_timesteps)
                     print("Loss: ", loss)
                     f = open(loss_file_name, "a")

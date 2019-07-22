@@ -48,10 +48,10 @@ def main():
     try:
         trainer.run(args.scene)
         torch.save({'state_dict': model.state_dict()},
-                   path + "/model.tar")
+                   path + "/model_2.tar")
     except KeyboardInterrupt:
         torch.save({'state_dict': model.state_dict()},
-                   path + "/model.tar")
+                   path + "/model_2.tar")
 
 
 if __name__ == "__main__":
