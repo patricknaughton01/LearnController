@@ -39,6 +39,7 @@ class Trainer(object):
         self.converge_thresh = self.config["converge_thresh"]
         self.record = self.config["record"]
         self.num_episodes = self.config["num_episodes"]
+        self.tau = self.config["tau"]   # Control strength of soft update
         self.min_loss = 10.0**6
 
     def run(self, scene="barge_in"):
@@ -107,10 +108,15 @@ class Trainer(object):
                     curr_state, torch.zeros((1, 256)), torch.zeros((1, 256)),
                     action, next_state, reward
                 )
-            #curr_state = next_state
+            curr_state = next_state
             total_reward += reward
             if self.cumulative_timesteps > 10 * self.batch_size:
                 loss = self.optimize_model()
+                # Soft update of target network
+                for t_p, p_p in zip(self.target_model.parameters(),
+                                    self.policy_model.parameters()):
+                    t_p.data.copy_(self.tau * p_p.data + (1.0 - self.tau) *
+                                   t_p.data)
                 loss_file_name = scene + "/loss.txt"
                 # If loss is decreasing but by less than x%, we have converged
                 if (loss < self.min_loss
@@ -122,10 +128,6 @@ class Trainer(object):
                     break
                 elif loss < self.min_loss:
                     self.min_loss = loss
-                if self.cumulative_timesteps % self.target_update == 0:
-                    self.target_model.load_state_dict(
-                        self.policy_model.state_dict()
-                    )
                 if self.cumulative_timesteps % print_every == 0:
                     print("Timestep: ", self.cumulative_timesteps)
                     print("Loss: ", loss)
