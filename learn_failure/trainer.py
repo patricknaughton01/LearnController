@@ -107,11 +107,12 @@ class Trainer(object):
                     curr_state, torch.zeros((1, 256)), torch.zeros((1, 256)),
                     action, next_state, reward
                 )
-            #curr_state = next_state
+            curr_state = next_state
             total_reward += reward
             if self.cumulative_timesteps > 10 * self.batch_size:
                 loss = self.optimize_model()
-                loss_file_name = scene + "/loss.txt"
+                loss_file_name = scene + "/loss_" + self.config["name"] + \
+                                 ".txt"
                 # If loss is decreasing but by less than x%, we have converged
                 if (loss < self.min_loss
                         and (((self.min_loss - loss)/self.min_loss)
