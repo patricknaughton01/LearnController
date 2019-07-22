@@ -9,7 +9,7 @@ from simulator import Simulator
 
 def main():
     args = parse_args()
-    model_path = "tests/overtaking/overtaking_model/model.tar"
+    model_path = "dynamic_barge_in/model.tar"
     scene = args.scene
     timesteps = args.max_timesteps
     epsilon = 0.05

@@ -20,7 +20,7 @@ import os
 
 def main():
     data_type = 'dynamic_barge_in'
-    directory = 'learn_failure/tests/overtaking/overtaking_fail_test_2/'
+    directory = 'learn_failure/'
     parent_path = directory  + data_type + '_*.txt'
     print(parent_path)
 
@@ -175,7 +175,7 @@ def main():
 
 
     # visualization of the data
-    idx = 2
+    idx = 0
 
     episode = states_array[idx]
     n = int((episode.shape[1] - 4) / 5)
