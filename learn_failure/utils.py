@@ -45,6 +45,7 @@ def parse_args():
     parser.add_argument("--success_path", type=str, default="")
     parser.add_argument("--success_max_ts", type=int, default=100)
     parser.add_argument("--tau", type=float, default=0.001)
+    parser.add_argument("--name", type=str, default="")
     return parser.parse_args()
 
 def get_weight_decay(tao, length_scale, N, dropout):

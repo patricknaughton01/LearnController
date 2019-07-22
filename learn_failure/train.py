@@ -43,15 +43,16 @@ def main():
     print(model)
     trainer = Trainer(model, config, success_model=success_model)
     path = log_path + "/" + args.scene
+    file_name = path + "/model_" + args.name + ".tar"
     if not os.path.exists(path):
         os.makedirs(path)
     try:
         trainer.run(args.scene)
         torch.save({'state_dict': model.state_dict()},
-                   path + "/model_2.tar")
+                   file_name)
     except KeyboardInterrupt:
         torch.save({'state_dict': model.state_dict()},
-                   path + "/model_2.tar")
+                   file_name)
 
 
 if __name__ == "__main__":

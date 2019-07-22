@@ -117,7 +117,8 @@ class Trainer(object):
                                     self.policy_model.parameters()):
                     t_p.data.copy_(self.tau * p_p.data + (1.0 - self.tau) *
                                    t_p.data)
-                loss_file_name = scene + "/loss.txt"
+                loss_file_name = scene + "/loss_" + self.config["name"] + \
+                                 ".txt"
                 # If loss is decreasing but by less than x%, we have converged
                 if (loss < self.min_loss
                         and (((self.min_loss - loss)/self.min_loss)
