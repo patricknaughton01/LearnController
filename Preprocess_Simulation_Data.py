@@ -19,19 +19,27 @@ import os
 # In[2]:
 
 def main():
-    data_type = 'do_nothing'
-    directory = 'learn_failure/'
-    parent_path = directory  + data_type + '_*.txt'
-    print(parent_path)
-
     parser = argparse.ArgumentParser(description="Pre-process simulation data")
     parser.add_argument('--animate', action="store_true",
                         help="animate the playback")
-    parser.add_argument('--save', type=bool, default=False,
+    parser.add_argument('--save', action="store_true",
                         help="save the animation")
     parser.add_argument('--animation_name', type=str, default="animation.mp4",
                         help="filename to save the animation as")
+    parser.add_argument("--data_type", type=str, default="sf_trajectory",
+                        help="filename prefix to display")
+    parser.add_argument("--directory", type=str,
+                       default="learn_failure/tests/social_forces"
+                               "/dynamic_barge_in_test_1/",
+                       help="directory to find the trajectory files.")
+    parser.add_argument("--i", type=int, default=0, help="index of "
+                                                         "trajectory to "
+                                                         "display")
     args = parser.parse_args()
+    data_type = args.data_type
+    directory = args.directory
+    parent_path = directory + "/" + data_type + '_*.txt'
+    print(parent_path)
 
     # In[3]:
 
@@ -175,12 +183,14 @@ def main():
 
 
     # visualization of the data
-    idx = 2
+    idx = args.i
 
     episode = states_array[idx]
     n = int((episode.shape[1] - 4) / 5)
     print(n)
-    colors = [np.random.rand(3) for _ in range(n)]
+    colors = [np.array([1, 0, 0])]
+    for i in range(n-1):
+        colors.append(np.array([0, 0, i/(n-1)]))
     # colors = [np.random.rand(3)]
     print(colors)
 
