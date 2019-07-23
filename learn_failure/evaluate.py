@@ -29,7 +29,7 @@ def main():
     times_list = []
     collisions_list = []
     intrusions_list = []
-    out = open(args.out_path, "a")
+    out = open(args.out_path, "w")
     out.write("dist\tang_dist\ttime\tcoll\tintrusion\n")
     for path in file_paths:
         try:

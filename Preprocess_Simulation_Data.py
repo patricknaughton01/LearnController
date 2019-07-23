@@ -19,7 +19,7 @@ import os
 # In[2]:
 
 def main():
-    data_type = 'dynamic_barge_in'
+    data_type = 'do_nothing'
     directory = 'learn_failure/'
     parent_path = directory  + data_type + '_*.txt'
     print(parent_path)
