@@ -29,17 +29,23 @@ def main():
                        model_type=args.model_type)  # model_type = crossing
     model.load_state_dict(torch.load(model_path)["state_dict"])
     model.eval()
+    total_loss = 0
     with torch.no_grad():
         for example in data:
             batch_of_one = example[0].unsqueeze(0)
-            pred = utils.get_coefs(model(batch_of_one))
+            pred = model(batch_of_one)
             actual = example[1]
+            loss, _ = utils.neg_2d_gaussian_likelihood(pred,
+                                                       actual.unsqueeze(0))
+            total_loss += loss.item()
             #print("Prediction: {}, Actual: {}".format(pred, actual))
-            for t in pred:
+            coefs = utils.get_coefs(pred)
+            for t in coefs:
                 out.write(str(t.item()) + "\t")
             for val in actual:
                 out.write(str(val.item()) + "\t")
             out.write("\n")
+    print("Average loss: ", total_loss / len(data))
 
 
 
