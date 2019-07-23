@@ -175,7 +175,7 @@ def main():
 
 
     # visualization of the data
-    idx = 4
+    idx = 0
 
     episode = states_array[idx]
     n = int((episode.shape[1] - 4) / 5)

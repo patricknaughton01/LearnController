@@ -25,7 +25,7 @@ class Simulator(object):
         self.agents = []
         self.goals = []
         self.scene = scene
-        self.obs_width = 0.05
+        self.obs_width = 0.0000001
         self.file = file
         self.max_dim = max_dim
         if self.scene is None:

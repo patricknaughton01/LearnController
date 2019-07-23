@@ -465,3 +465,14 @@ def rotate(state, kinematics='unicycle'):
                                 reshape((batch, -1))], dim=1), 2, dim=1, keepdim=True)
     new_state = torch.cat([dg, v_pref, theta, radius, vx, vy, px1, py1, vx1, vy1, radius1, da, radius_sum], dim=1)
     return new_state
+
+def dist(p1, p2):
+    """Calculate the distance between p1 and p2
+
+    :param tuple p1: (x, y) of p1.
+    :param tuple p2: (x, y) of p2.
+    :return: The Euclidean distance between the two points.
+        :rtype: float
+
+    """
+    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5

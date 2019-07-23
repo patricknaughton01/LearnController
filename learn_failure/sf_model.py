@@ -13,6 +13,7 @@ import math
 # Used to conveniently find the nearest point on a polygon to the robot
 from shapely.geometry import Point, Polygon
 from shapely.ops import nearest_points
+from utils import dist
 
 
 def main():
@@ -84,10 +85,6 @@ def main():
             sim.advance_simulation()
         if record:
             file.close()
-
-
-def dist(p1, p2):
-    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
 
 
 if __name__ == "__main__":
