@@ -19,7 +19,7 @@ import os
 # In[2]:
 
 def main():
-    data_type = 'dynamic_barge_in'
+    data_type = 'sf_trajectory'
     directory = 'learn_failure/'
     parent_path = directory  + data_type + '_*.txt'
     print(parent_path)
@@ -175,7 +175,7 @@ def main():
 
 
     # visualization of the data
-    idx = 0
+    idx = 4
 
     episode = states_array[idx]
     n = int((episode.shape[1] - 4) / 5)
