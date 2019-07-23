@@ -6,6 +6,7 @@ import pickle
 import configparser
 import utils
 import torch
+import matplotlib.pyplot as plt
 
 from predict_model import Controller
 from dataset import Dataset
@@ -13,11 +14,14 @@ from dataset import Dataset
 
 def main():
     args = utils.parse_args()
-    model_path = "log/simulate_crossing/predictor_2/model_m_0.tar"
-    data_path = "barge_in_final_states_test.p"
+    model_path = "log/simulate_crossing/predictor_3/model_m_0.tar"
+    data_path = "final_state_data/barge_in_final_states_updated.p"
 
     f = open(data_path, "rb")
     data = Dataset(pickle.load(f))
+
+    out = open("test_output.txt", "w")
+    out.write("mux\tmuy\tsx\tsy\tcorr\tax\tay\n")
 
     model_config = configparser.RawConfigParser()
     model_config.read(args.model_config)
@@ -30,7 +34,13 @@ def main():
             batch_of_one = example[0].unsqueeze(0)
             pred = utils.get_coefs(model(batch_of_one))
             actual = example[1]
-            print("Prediction: {}, Actual: {}".format(pred, actual))
+            #print("Prediction: {}, Actual: {}".format(pred, actual))
+            for t in pred:
+                out.write(str(t.item()) + "\t")
+            for val in actual:
+                out.write(str(val.item()) + "\t")
+            out.write("\n")
+
 
 
 if __name__ == "__main__":
