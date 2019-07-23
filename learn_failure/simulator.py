@@ -127,7 +127,7 @@ class Simulator(object):
             vec = (g[0] - p[0], g[1] - p[1])
             mag_mul = (vec[0]**2 + vec[1]**2)**0.5
             # check for division by 0/reaching the goal
-            if mag_mul > self.sim.getAgentRadius(agent)/2.0:
+            if mag_mul > self.sim.getAgentRadius(agent)/10.0:
                 mag_mul = self.sim.getAgentMaxSpeed(agent)/mag_mul
             # We've reached the goal (and this isn't the robot) so generate
             # a new one
