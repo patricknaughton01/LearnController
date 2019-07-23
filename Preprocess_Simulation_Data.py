@@ -19,13 +19,13 @@ import os
 # In[2]:
 
 def main():
-    data_type = 'sf_trajectory'
+    data_type = 'dynamic_barge_in'
     directory = 'learn_failure/'
     parent_path = directory  + data_type + '_*.txt'
     print(parent_path)
 
     parser = argparse.ArgumentParser(description="Pre-process simulation data")
-    parser.add_argument('--animate', type=bool, default=False,
+    parser.add_argument('--animate', action="store_true",
                         help="animate the playback")
     parser.add_argument('--save', type=bool, default=False,
                         help="save the animation")
@@ -175,7 +175,7 @@ def main():
 
 
     # visualization of the data
-    idx = 0
+    idx = 2
 
     episode = states_array[idx]
     n = int((episode.shape[1] - 4) / 5)
@@ -243,10 +243,10 @@ def animate(frame, fig, episode, colors, left, right, top, bottom):
     for i in range(n):
         if i == 0:
             x_idx, y_idx = 0, 1
-            radius = episode[0, 4]
+            radius = max(episode[0, 4], 0.01)
         else:
             x_idx, y_idx = 9 + (i - 1) * 5, 9 + (i - 1) * 5 + 1
-            radius = episode[0, 13 + (i - 1) * 5]
+            radius = max(episode[0, 13 + (i - 1) * 5], 0.01)
         # print('radius is %.4f' % radius)
         #plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
 
