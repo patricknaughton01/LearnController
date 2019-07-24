@@ -31,6 +31,7 @@ def parse_args():
     parser.add_argument("--data_path", type=str, default="data")
     parser.add_argument("--model_type", type=str, default="crossing")
     parser.add_argument("--model_config", type=str, default="configs/model.config")
+    parser.add_argument("--model_path", type=str, default="")
     parser.add_argument("--test_percent", type=float, default=0.1)
     parser.add_argument("--video_name", type=str, default="")
     parser.add_argument("--scene", type=str, default="barge_in")

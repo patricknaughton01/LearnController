@@ -1,6 +1,7 @@
 import torch
 import learn_general_controller.model
 import configparser
+import argparse
 
 from rl_model import Controller
 from utils import *
@@ -9,7 +10,10 @@ from simulator import Simulator
 
 def main():
     args = parse_args()
-    model_path = "dynamic_barge_in/model_soft_update_0.tar"
+    model_path = args.model_path
+    if model_path == "":
+        print("You must provide a model to test for test.py")
+        return
     scene = args.scene
     timesteps = args.max_timesteps
     epsilon = 0.05

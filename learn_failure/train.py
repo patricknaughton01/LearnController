@@ -39,6 +39,13 @@ def main():
     model_config = configparser.RawConfigParser()
     model_config.read(args.model_config)
     model = rl_model.Controller(model_config, model_type=args.model_type)
+    # This allows us to suspend training and start with the model that gets
+    # saved instead of having to start over every time
+    if args.model_path != "":
+        try:
+            model.load_state_dict(torch.load(args.model_path)["state_dict"])
+        except IOError:
+            print("Couldn't open file {}".format(args.model_path))
     model.train()
     print(model)
     trainer = Trainer(model, config, success_model=success_model)
