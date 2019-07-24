@@ -310,45 +310,49 @@ class Simulator(object):
         """Adds the current state of the robot to this simulator's file for
         viewing later.
 
-        :return: None
+        :return: String that was written to the file
+            :rtype: str
         """
         rpos = self.sim.getAgentPosition(self.robot_num)
         rvel = self.sim.getAgentVelocity(self.robot_num)
         rrad = self.sim.getAgentRadius(self.robot_num)
         v_pref = self.sim.getAgentMaxSpeed(self.robot_num)
         theta = math.atan2(rvel[1], rvel[0])
-        self.file.write(str(self.sim.getGlobalTime()) + " ")
-        self.file.write("(" + str(rpos[0]) + "," + str(rpos[1]) + ") ")
-        self.file.write("(" + str(rvel[0]) + "," + str(rvel[1]) + ") ")
-        self.file.write(str(rrad) + " ")
-        self.file.write("(" + str(rpos[0]) + "," + str(rpos[1]) + ") ")
-        self.file.write(str(v_pref) + " ")
-        self.file.write(str(theta) + " ")
+        return_str = ""
+        return_str += str(self.sim.getGlobalTime()) + " "
+        return_str += "(" + str(rpos[0]) + "," + str(rpos[1]) + ") "
+        return_str += "(" + str(rvel[0]) + "," + str(rvel[1]) + ") "
+        return_str += str(rrad) + " "
+        return_str += "(" + str(rpos[0]) + "," + str(rpos[1]) + ") "
+        return_str += str(v_pref) + " "
+        return_str += str(theta) + " "
         for agent in self.agents:
             if agent != self.robot_num: # We already wrote out the robot
                 pos = self.sim.getAgentPosition(agent)
                 vel = self.sim.getAgentVelocity(agent)
                 rad = self.sim.getAgentRadius(agent)
-                self.file.write("(" + str(pos[0]) + "," + str(pos[1]) + ") ")
-                self.file.write("(" + str(vel[0]) + "," + str(vel[1]) + ") ")
-                self.file.write(str(rad) + " ")
+                return_str += "(" + str(pos[0]) + "," + str(pos[1]) + ") "
+                return_str += "(" + str(vel[0]) + "," + str(vel[1]) + ") "
+                return_str += str(rad) + " "
         for obs in self.obstacles:
             if len(obs) > 1:
                 # Polygonal obstacle
                 o = Polygon(obs)
                 p = Point(rpos)
                 p1, p2 = nearest_points(o, p)
-                self.file.write("(" + str(p1.x) + "," + str(p1.y) + ") ")
-                self.file.write("(0,0) ")
-                self.file.write(str(self.obs_width) + " ")
+                return_str += "(" + str(p1.x) + "," + str(p1.y) + ") "
+                return_str += "(0,0) "
+                return_str += str(self.obs_width) + " "
             else:
                 # Point obstacle
-                self.file.write(
+                return_str += \
                     "(" + str(obs[0][0]) + "," +str(obs[0][1]) + ") "
-                )
-                self.file.write("(0,0) ")
-                self.file.write(str(self.obs_width) + " ")
-        self.file.write("\n")
+                return_str += "(0,0) "
+                return_str += str(self.obs_width) + " "
+        return_str += "\n"
+        if self.file is not None:
+            self.file.write(return_str)
+        return return_str
 
     def get_state_arr(self):
         """Calculate the state of the robot and all the obstacles in the scene.

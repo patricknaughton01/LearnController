@@ -42,6 +42,8 @@ def main():
             print("{}/{}".format(i, args.num_episodes), end="\r")
             sim = Simulator(scene=random.choice(scenes))
             init_state = sim.state()
+            orig_agents = [(sim.sim.getAgentPosition(a),
+                            sim.sim.getAgentRadius(a)) for a in sim.agents]
             h_t = None
             for t in range(timesteps):
                 action, h_t = model.select_action(
@@ -51,7 +53,8 @@ def main():
             # Map the initial state to the final position of the robot - this
             # will serve as training data for another network.
             final_map.append(
-                (init_state, sim.sim.getAgentPosition(sim.robot_num))
+                (init_state, sim.sim.getAgentPosition(sim.robot_num),
+                 orig_agents, sim.obstacles)
             )
         except KeyboardInterrupt:
             break
