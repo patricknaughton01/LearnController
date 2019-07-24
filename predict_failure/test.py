@@ -14,14 +14,17 @@ from dataset import Dataset
 
 def main():
     args = utils.parse_args()
-    model_path = "log/simulate_crossing/predictor_3/model_m_0.tar"
-    data_path = "final_state_data/barge_in_final_states_updated.p"
+    model_path = args.model_path
+    data_path = args.data_path
+    if model_path == "" or data_path == "":
+        print("You must specify both a model_path and data_path")
+        return
 
     f = open(data_path, "rb")
     data = Dataset(pickle.load(f))
 
     out = open("test_output.txt", "w")
-    out.write("mux\tmuy\tsx\tsy\tcorr\tax\tay\n")
+    #out.write("mux\tmuy\tsx\tsy\tcorr\tax\tay\n")
 
     model_config = configparser.RawConfigParser()
     model_config.read(args.model_config)
@@ -45,6 +48,8 @@ def main():
             for val in actual:
                 out.write(str(val.item()) + "\t")
             out.write("\n")
+            out.write(str(example[2]) + "\n")
+            out.write(str(example[3]) + "\n")
     print("Average loss: ", total_loss / len(data))
 
 

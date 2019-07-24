@@ -28,8 +28,10 @@ class Dataset(data.Dataset):
         """Gets an item from the dataset
 
         :param item: Index of the example to get
-        :return: Tuple of the form (X, y)
-            :rtype: Two element tuple
+        :return: Tuple of the form (X, y, agents, obstacles)
+            :rtype: tuple
         """
         return (self.labeled_data[item][0],
-                torch.tensor(self.labeled_data[item][1]))
+                torch.tensor(self.labeled_data[item][1]),
+                self.labeled_data[item][2],
+                self.labeled_data[item][3])

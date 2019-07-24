@@ -15,7 +15,10 @@ from simulator import Simulator
 
 def main():
     args = utils.parse_args()
-    model_path = "tests/dynamic_barge/dynamic_barge_in/model.tar"
+    model_path = args.model_path
+    if model_path == "":
+        print("You must specify a model")
+        return
     scenes = [
         "dynamic_barge_in",
         "dynamic_barge_in_left",
@@ -34,7 +37,7 @@ def main():
                        model_type=args.model_type)  # model_type = crossing
     model.load_state_dict(torch.load(model_path)["state_dict"])
     model.eval()
-    out_path = args.scene + "_final_states.p"
+    out_path = args.name + "_final_states.p"
     out_file = open(out_path, "wb")
     final_map = []
     for i in range(args.num_episodes):
@@ -42,7 +45,8 @@ def main():
             print("{}/{}".format(i, args.num_episodes), end="\r")
             sim = Simulator(scene=random.choice(scenes))
             init_state = sim.state()
-            orig_agents = [(sim.sim.getAgentPosition(a),
+            orig_agents = [(sim.sim.getAgentPosition(a)[0],
+                            sim.sim.getAgentPosition(a)[1],
                             sim.sim.getAgentRadius(a)) for a in sim.agents]
             h_t = None
             for t in range(timesteps):
