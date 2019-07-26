@@ -83,7 +83,7 @@ class Trainer(object):
         train_l2_error = 0
         c = 1
 
-        for batch, labels in self.train_loader:
+        for batch, labels, _, _ in self.train_loader:
             pred_t = self.model(batch)
             loss, l2_error = self.criterion(pred_t, labels)
             c += 1
@@ -100,7 +100,7 @@ class Trainer(object):
         val_loss = 0
         val_l2_error = 0
         c = 1
-        for batch, labels in self.val_loader:
+        for batch, labels, _, _ in self.val_loader:
             with torch.no_grad():   # We won't back-propagate based on eval
                 pred_t = self.model(batch)
                 loss, l2_error = self.criterion(pred_t, labels)

@@ -18,12 +18,14 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate trajectories")
     parser.add_argument("path", type=str, help="Path to files containing "
                                                "trajectories", default=".")
+    parser.add_argument("data_type", type=str, help="Filename prefix",
+                        default="dynamic_barge_in")
     parser.add_argument("--out_path", type=str,
                         help="Path to save evaluations to", default="out.txt")
     parser.add_argument("-v", action="store_true", help="Provide verbose "
                                                         "output")
     args = parser.parse_args()
-    file_paths = glob.glob(args.path + "/*.txt")
+    file_paths = glob.glob(args.path + "/" + args.data_type + "*.txt")
     distances_list = []
     ang_distances_list = []
     times_list = []
