@@ -41,7 +41,7 @@ def main():
                 # Metrics for evaluating the trajectories
                 total_dist = 0.0
                 total_ang_dist = 0.0
-                time_spent = 0.0
+                time_spent = -1.0
                 collisions = 0
                 intrusions = 0
                 intrusion_thresh = 0.2
@@ -81,17 +81,25 @@ def main():
                 # has been there (within its radius/10.0) to see how long it
                 # took to reach its final position.
                 final_pos = None
+                stop_time = None
                 for i in range(len(lines)-1, -1, -1):
                     line = lines[i].split(" ")
                     if len(line) > 7 and final_pos is None:
                         final_pos = split_coordinates(line[1])
-                    elif final_pos is not None:
-                        d = dist(split_coordinates(line[1]), final_pos)
-                        if d > float(line[3])/10.0:
-                            # Time always starts at 0 so we just need this
-                            # timestamp
-                            time_spent = float(line[0])
-                            break
+                        stop_time = float(line[0])
+                    elif final_pos is not None and stop_time is not None:
+                        coors = split_coordinates(line[1])
+                        if coors is not None:
+                            d = dist(coors, final_pos)
+                            if d > float(line[3])/10.0:
+                                # Time always starts at 0 so we just need this
+                                # timestamp
+                                time_spent = stop_time
+                                break
+                            else:
+                                stop_time = float(line[0])
+                if time_spent < 0.0:
+                    time_spent = 0.0
                 if args.v:
                     print("\t".join([str(total_dist), str(total_ang_dist),
                                      str(time_spent), str(collisions),
@@ -147,7 +155,7 @@ def avg(vals):
         for v in vals:
             total += v
         return total / len(vals)
-    return None
+    return 0.0
 
 
 def std_dev(vals):
@@ -158,13 +166,13 @@ def std_dev(vals):
     :return: The (sample) standard deviation of the values in `vals`
         :rtype: float
     """
-    if len(vals) > 0:
+    if len(vals) > 1:
         mean = avg(vals)
         total = 0
         for v in vals:
             total += (v - mean) ** 2
         return math.sqrt(total / (len(vals) - 1))
-    return None
+    return 0.0
 
 
 def split_coordinates(str_coors):

@@ -30,7 +30,8 @@ def main():
     # Robot-pedestrian parameters
     arp, brp = 1.0, 1.0
     # Force weighting parameters
-    gamma, delta = 1.5, 1.0
+    gamma, delta = 1.0, 1.0
+    obj_thresh = 0.25
     for episode in range(episodes):
         print("Starting episode {}".format(episode))
         file = None
@@ -68,7 +69,8 @@ def main():
                     o_point = obs[0]
                 vx, vy = r_pos[0] - o_point[0], r_pos[1] - o_point[1]
                 distance += epsilon
-                mag = delta * aro * math.exp((r_rad - distance)/bro) / distance
+                mag = delta * aro * math.exp((r_rad + obj_thresh -
+                                              distance)/bro) / distance
                 fx += mag * vx
                 fy += mag * vy
             ts = sim.sim.getTimeStep()
