@@ -23,6 +23,17 @@ def main():
         os.makedirs(log_path)
     config['log_path'] = log_path
 
+    scenes = [
+        "dynamic_barge_in",
+        "dynamic_barge_in_left",
+        "dynamic_barge_in_top",
+        "dynamic_barge_in_bottom",
+        "barge_in",
+        "barge_in_left",
+        "barge_in_top",
+        "barge_in_bottom",
+    ]
+
     try:
         success_model_config = configparser.RawConfigParser()
         success_model_config.read("learn_general_controller/configs/model.config")
@@ -49,12 +60,12 @@ def main():
     model.train()
     print(model)
     trainer = Trainer(model, config, success_model=success_model)
-    path = log_path + "/" + args.scene
-    file_name = path + "/model_" + args.name + ".tar"
+    path = log_path
+    file_name = "model_" + args.name + ".tar"
     if not os.path.exists(path):
         os.makedirs(path)
     try:
-        trainer.run(args.scene)
+        trainer.run(scenes=scenes)
         torch.save({'state_dict': model.state_dict()},
                    file_name)
     except KeyboardInterrupt:

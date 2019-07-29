@@ -41,20 +41,23 @@ class Trainer(object):
         self.num_episodes = self.config["num_episodes"]
         self.min_loss = 10.0**6
 
-    def run(self, scene="barge_in"):
+    def run(self, scenes=None):
         """Run the trainer to train the policy_model such that it learns
         an optimal policy with respect to the reward given by the simulator.
 
-        :param str scene: The scene to use for training
+        :param list scenes: List of scenes to draw from for training
 
         :return: The reward of the last episode
             :rtype: float
 
         """
         # print('in run')
+        if scenes is None:
+            scenes = ["barge_in"]
         reward = 0
         for episode in range(1, self.num_episodes + 1):
-            reward = self.run_episode(scene=scene, record=self.record,
+            reward = self.run_episode(scene=random.choice(scenes),
+                                      record=self.record,
                                       key=episode)
             print("Ran episode {}\n\tGot reward {}".format(
                 episode, reward[0][0]
@@ -111,7 +114,7 @@ class Trainer(object):
             total_reward += reward
             if self.cumulative_timesteps > 10 * self.batch_size:
                 loss = self.optimize_model()
-                loss_file_name = scene + "/loss_" + self.config["name"] + \
+                loss_file_name = "loss_" + self.config["name"] + \
                                  ".txt"
                 # If loss is decreasing but by less than x%, we have converged
                 if (loss < self.min_loss

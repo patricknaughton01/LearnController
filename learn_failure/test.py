@@ -16,7 +16,7 @@ def main():
         return
     scene = args.scene
     timesteps = args.max_timesteps
-    epsilon = 0.05
+    epsilon = 0.0
     for i in range(args.num_episodes):
         out_path = args.scene + "_{}.txt".format(i)
         out_file = open(out_path, "w")
