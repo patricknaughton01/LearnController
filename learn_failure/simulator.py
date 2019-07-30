@@ -162,21 +162,21 @@ class Simulator(object):
             return False
 
     def state(self):
-        """Compute the state that will be fed to the DQN. This is composed
+        """Computes the state that will be fed to the DQN. This is composed
         of the robot's rotated and transformed state (see utils.py / ask
         Yash for what that does) and the occupancy map (same advice for how
         this is built).
 
-        :return: The tensor that can be given to the DQN's value estimation
-            network.
-            :rtype: tensor
+        :return: Tensor of state values for the robot relative to its
+            heading and the occupancy maps for every agent.
+            :rtype: tuple
         """
         state = np.array(self.get_state_arr())
-        # This dimensionally works, see lines 90 - 123 in
-        # `learn_general_controller` to see why / ask Yash.
         om = utils.build_occupancy_maps(utils.build_humans(state))
+        # We only have a batch of one so just get the first element of
+        # transform and rotate
         state = utils.transform_and_rotate(state.reshape((1, -1)))[0]
-        return torch.cat([state, om], dim=-1)
+        return torch.cat((state, om), dim=1)
 
     def reward(self):
         """Calculates the reward the robot receives.

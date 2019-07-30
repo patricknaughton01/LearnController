@@ -62,7 +62,6 @@ class Controller(nn.Module):
         :return: The q values for each of the 33 possible actions, the hidden
             state values for the rnn.
             :rtype: tuple (tensor, tensor)
-
         """
         state = state.reshape((1, *state.shape))
         size = state.shape

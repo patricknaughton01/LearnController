@@ -34,18 +34,21 @@ def main():
         #"barge_in_bottom",
     ]
 
-    try:
-        success_model_config = configparser.RawConfigParser()
-        success_model_config.read("learn_general_controller/configs/model.config")
-        success_model = learn_general_controller.model.Controller(
-            success_model_config,model_type=args.model_type
-        )
-        success_model.load_state_dict(
-            torch.load(args.success_path)["state_dict"])
-        success_model.eval()
-    except IOError:
+    if args.success_path != "":
+        try:
+            success_model_config = configparser.RawConfigParser()
+            success_model_config.read("learn_general_controller/configs/model.config")
+            success_model = learn_general_controller.model.Controller(
+                success_model_config,model_type=args.model_type
+            )
+            success_model.load_state_dict(
+                torch.load(args.success_path)["state_dict"])
+            success_model.eval()
+        except IOError:
+            success_model = None
+            print("Couldn't open file {}".format(args.success_path))
+    else:
         success_model = None
-        print("Couldn't open file {}".format(args.success_path))
 
     model_config = configparser.RawConfigParser()
     model_config.read(args.model_config)
