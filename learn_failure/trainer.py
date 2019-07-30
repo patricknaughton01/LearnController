@@ -95,7 +95,7 @@ class Trainer(object):
             action, h_t = self.policy_model.select_action(
                 sim.state(), h_t, epsilon=self.epsilon
             )
-            self.epsilon *= self.epsilon_decay
+            self.epsilon -= self.epsilon_decay
             if self.epsilon < 0.1:
                 self.epsilon = 0.1
             sim.do_step(action)

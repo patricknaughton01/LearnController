@@ -38,7 +38,8 @@ def parse_args():
     parser.add_argument("--max_timesteps", type=int, default=10**8)
     parser.add_argument("--gamma", type=float, default=0.9)
     parser.add_argument("--epsilon", type=float, default=1.0)
-    parser.add_argument("--epsilon_decay", type=float, default=0.9999907897)#0.99999769741)
+    parser.add_argument("--epsilon_decay", type=float,
+                        default=0.0000036)#0.9999907897)#0.99999769741)
     parser.add_argument("--target_update", type=int, default=10000)
     parser.add_argument("--converge_thresh", type=float, default=10**(-5))
     parser.add_argument("--record", type=bool, default=False)
