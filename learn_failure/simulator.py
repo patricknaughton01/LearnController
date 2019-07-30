@@ -24,6 +24,7 @@ class Simulator(object):
         self.robot_num = None
         self.agents = []
         self.goals = []
+        self.headings = []
         self.scene = scene
         self.obs_width = 0.0000001
         self.file = file
@@ -169,12 +170,11 @@ class Simulator(object):
         :return: The tensor that can be given to the DQN's value estimation
             network.
             :rtype: tensor
-
         """
         state = np.array(self.get_state_arr())
         # This dimensionally works, see lines 90 - 123 in
         # `learn_general_controller` to see why / ask Yash.
-        om = utils.build_occupancy_maps(utils.build_humans(state))[1:]
+        om = utils.build_occupancy_maps(utils.build_humans(state))
         state = utils.transform_and_rotate(state.reshape((1, -1)))[0]
         return torch.cat([state, om], dim=-1)
 
@@ -369,8 +369,7 @@ class Simulator(object):
 
         :return: Array with the state of all the obstacles in the scene plus
             the robot.
-            :rtype: array
-
+            :rtype: list
         """
         rpos = self.sim.getAgentPosition(self.robot_num)
         rvel = self.sim.getAgentVelocity(self.robot_num)
@@ -381,7 +380,8 @@ class Simulator(object):
         # position because we aren't using that goal as such, we are just
         # exploring.
         state = [
-            rpos[0], rpos[1], rvel[0], rvel[1], rrad, rpos[0], rpos[1],
+            rpos[0], rpos[1], rvel[0], rvel[1], rrad,
+            self.headings[self.robot_num], rpos[0], rpos[1],
             v_pref, theta
         ]
         for agent in self.agents:
@@ -389,17 +389,19 @@ class Simulator(object):
                 pos = self.sim.getAgentPosition(agent)
                 vel = self.sim.getAgentVelocity(agent)
                 rad = self.sim.getAgentRadius(agent)
-                state.extend([pos[0], pos[1], vel[0], vel[1], rad])
+                state.extend([pos[0], pos[1], vel[0], vel[1], rad,
+                              self.headings[agent]])
         for obs in self.obstacles:
             if len(obs) > 1:
                 # Polygonal obstacle
                 o = Polygon(obs)
                 p = Point(rpos)
                 p1, p2 = nearest_points(o, p)
-                state.extend([p1.x, p2.y, 0, 0, self.obs_width])
+                # Velocity and heading always 0 for obstacles
+                state.extend([p1.x, p2.y, 0, 0, self.obs_width, 0])
             else:
                 # Point obstacle
-                state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width])
+                state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width, 0])
         return state
 
     def build_scene(self, scene):
@@ -461,6 +463,7 @@ class Simulator(object):
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
+            self.headings.append(randomize(-math.pi/8, math.pi/8))
             # Used to determine if success controller has failed
             self.overall_robot_goal = (robot_pos[0] + randomize(4, 5),
                                        robot_pos[1])
@@ -532,6 +535,8 @@ class Simulator(object):
                         pos[0] - randomize(goal_min, goal_max),
                         pos[1] + randomize(-hum_perb, hum_perb)
                     ))
+                    self.headings.append(normalize(randomize(7*math.pi/8,
+                                                       9*math.pi/8)))
             # By default, builds a scene in which the robot barges in to the
             # right. If one of the following specific scenes is provided,
             if scene.endswith("left"):    # Negate x coordinate
@@ -543,6 +548,8 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (-pos[0], pos[1]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (-goal[0], goal[1])
+                for i, heading in enumerate(self.headings):
+                    self.headings[i] = normalize(heading + math.pi)
                 self.overall_robot_goal = (-self.overall_robot_goal[0],
                                            self.overall_robot_goal[1])
             elif scene.endswith("top"):   # flip x and y coordinates
@@ -554,6 +561,8 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (pos[1], pos[0]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (goal[1], goal[0])
+                for i, heading in enumerate(self.headings):
+                    self.headings[i] = normalize(heading + math.pi/2)
                 self.overall_robot_goal = (self.overall_robot_goal[1],
                                            self.overall_robot_goal[0])
             elif scene.endswith("bottom"):
@@ -567,6 +576,8 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (pos[1], -pos[0]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (goal[1], -goal[0])
+                for i, heading in enumerate(self.goals):
+                    self.headings[i] = normalize(heading - math.pi/2)
                 self.overall_robot_goal = (self.overall_robot_goal[1],
                                            -self.overall_robot_goal[0])
             for obs in self.obstacles:
@@ -580,6 +591,7 @@ class Simulator(object):
             )
             self.agents.append(self.robot_num)
             self.goals.append(position2)
+            self.headings.append(normalize(randomize(-math.pi/8, math.pi/8)))
 
             self.agents.append(
                 self.sim.addAgent(
@@ -588,6 +600,8 @@ class Simulator(object):
                 )
             )
             self.goals.append(position1)
+            self.headings.append(normalize(randomize(7 * math.pi/8,
+                                                     9 * math.pi/8)))
         elif scene == "overtaking":     # overtaking scene
             pos1 = (randomize(-2.0, -1.5), randomize(-2.0, -1.5))   # Robot
             # Human to overtake
@@ -600,36 +614,55 @@ class Simulator(object):
             self.goals.append(pos1)     # Robot has no explicit goal at first
             # Used to determine if success controller has failed.
             self.overall_robot_goal = hum_goal
-            # Human to overtake
             self.agents.append(self.robot_num)
-
+            self.headings.append(normalize(math.pi/4 + randomize(-math.pi/8,
+                math.pi/8)))
+            # Human to overtake
             self.agents.append(self.sim.addAgent(pos2, 15.0, 10, 5.0, 5.0,
                                                  randomize(0.15, 0.25),
                                                  randomize(0.2, 0.4), (0, 0)))
             self.goals.append(hum_goal)
+            self.headings.append(
+                normalize(math.pi / 4 + randomize(-math.pi / 8,
+                                                  math.pi / 8)))
             # Another human going the opposite way
             self.agents.append(self.sim.addAgent(hum_goal, 15.0, 10, 5.0, 5.0,
                                                  randomize(0.15, 0.25),
                                                  randomize(0.2, 0.4), (0, 0)))
             self.goals.append(pos2)
+            self.headings.append(
+                normalize(5 * math.pi / 4 + randomize(-math.pi / 8,
+                                                  math.pi / 8)))
 
             # Add other humans walking around in the middle of the path...
             self.agents.append(self.sim.addAgent(
                 (randomize(1.0, 2.0), randomize(-1.0, -2.0)), 15.0, 10, 5.0,
                 5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
             self.goals.append((randomize(-1.0, 0.0), randomize(0.0, 1.0)))
+            self.headings.append(
+                normalize(3 * math.pi / 4 + randomize(-math.pi / 8,
+                                                      math.pi / 8)))
             self.agents.append(self.sim.addAgent(
                 (randomize(0.0, 1.0), randomize(0.0, -1.0)), 15.0, 10, 5.0,
                 5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
             self.goals.append((randomize(-2.0, -1.0), randomize(1.0, 2.0)))
+            self.headings.append(
+                normalize(3 * math.pi / 4 + randomize(-math.pi / 8,
+                                                      math.pi / 8)))
             self.agents.append(self.sim.addAgent(
                 (randomize(-2.0, -1.0), randomize(1.0, 2.0)), 15.0, 10, 5.0,
                 5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
             self.goals.append((randomize(1.0, 2.0), randomize(-2.0, -1.0)))
+            self.headings.append(
+                normalize(-math.pi / 4 + randomize(-math.pi / 8,
+                                                      math.pi / 8)))
             self.agents.append(self.sim.addAgent(
                 (randomize(0.0, -1.0), randomize(0.0, 1.0)), 15.0, 10, 5.0,
                 5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
             self.goals.append((randomize(0.0, 1.0), randomize(0.0, -1.0)))
+            self.headings.append(
+                normalize(-math.pi / 4 + randomize(-math.pi / 8,
+                                                   math.pi / 8)))
         else:       # Build a random scene
             max_dim = self.max_dim    # Maximum x and y start/goal locations
             min_agents = 5
@@ -645,6 +678,7 @@ class Simulator(object):
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
+            self.headings.append(normalize(randomize(-math.pi, math.pi)))
             # For this, just create small square obstacles
             for i in range(num_obstacles):
                 pt = (max_dim * random.random(), max_dim * random.random())
@@ -665,6 +699,7 @@ class Simulator(object):
                 self.goals.append(
                     (max_dim * random.random(), max_dim * random.random())
                 )
+                self.headings.append(normalize(randomize(-math.pi, math.pi)))
         # Add in walls around the whole thing so robots don't just wander
         # off
         wall_left = [
@@ -696,18 +731,21 @@ class Simulator(object):
         self.obstacles.append(wall_bottom)
         self.sim.addObstacle(wall_bottom)
         if self.file is not None:
-            self.file.write("timestamp position0 velocity0 radius0 goal ")
+            self.file.write("timestamp position0 velocity0 radius0 "
+                            "heading0 goal ")
             self.file.write("pref_speed theta ")
             num = 1
-            for _ in self.agents:
+            for _ in range(len(self.agents) - 1):
                 self.file.write("position" + str(num) + " ")
                 self.file.write("velocity" + str(num) + " ")
                 self.file.write("radius" + str(num) + " ")
+                self.file.write("heading" + str(num) + " ")
                 num += 1
             for _ in self.obstacles:
                 self.file.write("position" + str(num) + " ")
                 self.file.write("velocity" + str(num) + " ")
                 self.file.write("radius" + str(num) + " ")
+                self.file.write("heading" + str(num) + " ")
                 num += 1
             self.file.write("\n")
         self.sim.processObstacles()
@@ -847,6 +885,20 @@ def randomize(lower, upper):
         :rtype: float
     """
     return lower + (random.random() * (upper - lower))
+
+
+def normalize(angle):
+    """Normalize the given angle so that it is in [-pi, pi]
+
+    :param float angle: Angle to normalize in radians.
+    :return: Noramlized angle
+        :rtype: float
+    """
+    while angle > math.pi:
+        angle -= 2 * math.pi
+    while angle < -math.pi:
+        angle += 2 * math.pi
+    return angle
 
 
 if __name__ == "__main__":

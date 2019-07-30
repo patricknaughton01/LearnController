@@ -239,8 +239,8 @@ def rotate(state, kinematics='unicycle'):
     Transform the coordinate to agent-centric.
     Input state tensor is of size (batch_size, state_length)
     """
-    # 'px', 'py', 'vx', 'vy', 'radius', 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1'
-    #  0     1      2     3      4        5     6      7         8       9     10      11     12       13
+    # 'px', 'py', 'vx', 'vy', 'radius', 'heading' 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1', 'heading1'
+    #  0     1      2     3      4          5      6      7         8       9     10      11     12     13      14        15
     batch = state.shape[0]
     dx = (state[:, 5] - state[:, 0]).reshape((batch, -1))
     dy = (state[:, 6] - state[:, 1]).reshape((batch, -1))
@@ -272,12 +272,13 @@ def rotate(state, kinematics='unicycle'):
 
 def transform_and_rotate(raw_states):
     # states shape: batch_size x dim
-    # 'px', 'py', 'vx', 'vy', 'radius', 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1', ..., 'radiusN'
-    #  0     1      2     3      4        5     6      7         8       9     10      11     12       13 , ...,
-    num_human = int((raw_states.shape[1] - 9) / 5)
-    self_state = raw_states[:, 0:9]
+    # 'px', 'py', 'vx', 'vy', 'radius', heading, 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1', heading1,  ..., 'radiusN'
+    #  0     1      2     3      4        5       6      7         8       9     10      11     12     13      14         15,  ...,
+    num_human = int((raw_states.shape[1] - 10) / 6)
+    self_state = raw_states[:, 0:10]
     # print("self_state.shape", self_state.shape)
-    human_states = [raw_states[:, 9 + i * 5 : 9 + (i + 1) * 5] for i in range(num_human)]
+    human_states = [raw_states[:, 10 + i * 6 : 10 + (i + 1) * 6] for i in
+                    range(num_human)]
     # print("human_states.shape", len(human_states))
     # print("human_states[0]",human_states[0].shape)
 
@@ -295,7 +296,7 @@ def transform_and_rotate(raw_states):
 
 def build_humans(states):
     #state shape: dim
-    num_human = int((states.shape[0] - 4) / 5)
+    num_human = int((states.shape[0] - 4) / 6)
     human_states = []
     for i in range(num_human):
         if i == 0:
@@ -304,13 +305,15 @@ def build_humans(states):
             vx = states[2]
             vy = states[3]
             radius = states[4]
+            heading = states[5]
         else:
-            px = states[9 + (i - 1) * 5]
-            py = states[10 + (i - 1) * 5]
-            vx = states[11 + (i - 1) * 5]
-            vy = states[12 + (i - 1) * 5]
-            radius = states[13 + (i - 1) * 5]
-        human_states.append(ObservableState(px, py, vx, vy, radius))
+            px = states[10 + (i - 1) * 5]
+            py = states[11 + (i - 1) * 5]
+            vx = states[12 + (i - 1) * 5]
+            vy = states[13 + (i - 1) * 5]
+            radius = states[14 + (i - 1) * 5]
+            heading = states[15 + (i - 1) * 5]
+        human_states.append(ObservableState(px, py, vx, vy, radius, heading))
     return human_states
 
 def build_occupancy_maps(human_states, config={}):
@@ -332,12 +335,12 @@ def build_occupancy_maps(human_states, config={}):
     :param human_states: State of all humans in the scene (Note, as we
         are using it, this includes the robot itself and the points on any
         obstacles which are closest to the robot. The format is
-        [x, y, vx, vy, rad]).
+        [x, y, vx, vy, rad, heading]).
     :param config: Configuration for the function to specify:
         om_channel_size
         cell_num
         cell_size
-    :return: tensor of shape (# human - 1, self.cell_num ** 2)
+    :return: tensor of shape (# human, self.cell_num ** 2)
     """
     om_channel_size = config.get('om_channel_size', 3)
     cell_num = config.get('cell_num', 4)
@@ -348,10 +351,10 @@ def build_occupancy_maps(human_states, config={}):
                                         for other_human in human_states if other_human != human], axis=0)
         other_px = other_humans[:, 0] - human.px
         other_py = other_humans[:, 1] - human.py
-        # new x-axis is in the direction of human's velocity
-        human_velocity_angle = np.arctan2(human.vy, human.vx)
+        # new x-axis is in the direction of human's heading
+        human_heading = human.heading
         other_human_orientation = np.arctan2(other_py, other_px)
-        rotation = other_human_orientation - human_velocity_angle
+        rotation = other_human_orientation - human_heading
         distance = np.linalg.norm([other_px, other_py], axis=0)
         other_px = np.cos(rotation) * distance
         other_py = np.sin(rotation) * distance
@@ -370,7 +373,7 @@ def build_occupancy_maps(human_states, config={}):
         else:
             # calculate relative velocity for other agents
             other_human_velocity_angles = np.arctan2(other_humans[:, 3], other_humans[:, 2])
-            rotation = other_human_velocity_angles - human_velocity_angle
+            rotation = other_human_velocity_angles - human_heading
             speed = np.linalg.norm(other_humans[:, 2:4], axis=1)
             other_vx = np.cos(rotation) * speed
             other_vy = np.sin(rotation) * speed
