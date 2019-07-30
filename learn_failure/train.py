@@ -25,13 +25,13 @@ def main():
 
     scenes = [
         "dynamic_barge_in",
-        #"dynamic_barge_in_left",
-        #"dynamic_barge_in_top",
-        #"dynamic_barge_in_bottom",
+        "dynamic_barge_in_left",
+        "dynamic_barge_in_top",
+        "dynamic_barge_in_bottom",
         "barge_in",
-        #"barge_in_left",
-        #"barge_in_top",
-        #"barge_in_bottom",
+        "barge_in_left",
+        "barge_in_top",
+        "barge_in_bottom",
     ]
 
     if args.success_path != "":

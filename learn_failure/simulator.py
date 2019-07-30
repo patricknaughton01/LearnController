@@ -41,6 +41,8 @@ class Simulator(object):
         # has no effect.
         self.overall_robot_goal = (0, 0)
         self.last_dist = 10**6      # last distance to goal, starts huge
+        self.rot_speed = (self.sim.getAgentMaxSpeed(self.robot_num) *
+                          math.pi / 16)
 
     def do_step(self, action_ind):
         """Run a step of the simulation taking in an action from an
@@ -62,20 +64,30 @@ class Simulator(object):
         #   0 => do nothing
         #   1-16 => set velocity to `robot_max_vel/2` at angle
         #       `(action_ind-1) * 2pi/16`
-        #   17-33 => velocity to `robot_max_vel` at angle
+        #   17-32 => velocity to `robot_max_vel` at angle
         #       `(action_ind-17) * 2pi/16`
+        #   33-34 => change heading by
         #   else => do nothing
         vel = (0, 0)
+        angle = self.headings[self.robot_num]
         if 1 <= action_ind <= 16:
+            angle += (action_ind - 1)*(math.pi / 8)
             vel = (
-                (robot_max_vel/2) * math.cos((action_ind - 1)*(math.pi / 8)),
-                (robot_max_vel/2) * math.sin((action_ind - 1)*(math.pi / 8))
+                (robot_max_vel/2) * math.cos(angle),
+                (robot_max_vel/2) * math.sin(angle)
             )
-        elif 17 <= action_ind <= 33:
+        elif 17 <= action_ind <= 32:
+            angle += (action_ind - 17)*(math.pi / 8)
             vel = (
-                robot_max_vel * math.cos((action_ind - 17)*(math.pi / 8)),
-                robot_max_vel * math.sin((action_ind - 17)*(math.pi / 8))
+                robot_max_vel * math.cos(angle),
+                robot_max_vel * math.sin(angle)
             )
+        elif action_ind == 33:
+            self.headings[self.robot_num] += self.rot_speed
+        elif action_ind == 34:
+            self.headings[self.robot_num] -= self.rot_speed
+        self.headings[self.robot_num] = normalize(self.headings[
+                                                      self.robot_num])
         # Set the robot's goal given the action that was selected
         ts = self.sim.getTimeStep()
         pos = self.sim.getAgentPosition(self.robot_num)
@@ -323,6 +335,7 @@ class Simulator(object):
         return_str += "(" + str(rpos[0]) + "," + str(rpos[1]) + ") "
         return_str += "(" + str(rvel[0]) + "," + str(rvel[1]) + ") "
         return_str += str(rrad) + " "
+        return_str += str(self.headings[self.robot_num]) + " "
         return_str += "(" + str(rpos[0]) + "," + str(rpos[1]) + ") "
         return_str += str(v_pref) + " "
         return_str += str(theta) + " "
@@ -334,6 +347,7 @@ class Simulator(object):
                 return_str += "(" + str(pos[0]) + "," + str(pos[1]) + ") "
                 return_str += "(" + str(vel[0]) + "," + str(vel[1]) + ") "
                 return_str += str(rad) + " "
+                return_str += str(self.headings[agent]) + " "
         for obs in self.obstacles:
             if len(obs) > 1:
                 # Polygonal obstacle
@@ -343,12 +357,14 @@ class Simulator(object):
                 return_str += "(" + str(p1.x) + "," + str(p1.y) + ") "
                 return_str += "(0,0) "
                 return_str += str(self.obs_width) + " "
+                return_str += "0 "
             else:
                 # Point obstacle
                 return_str += \
                     "(" + str(obs[0][0]) + "," +str(obs[0][1]) + ") "
                 return_str += "(0,0) "
                 return_str += str(self.obs_width) + " "
+                return_str += "0 "
         return_str += "\n"
         if self.file is not None:
             self.file.write(return_str)
@@ -576,7 +592,7 @@ class Simulator(object):
                     self.sim.setAgentPosition(agent, (pos[1], -pos[0]))
                 for i, goal in enumerate(self.goals):
                     self.goals[i] = (goal[1], -goal[0])
-                for i, heading in enumerate(self.goals):
+                for i, heading in enumerate(self.headings):
                     self.headings[i] = normalize(heading - math.pi/2)
                 self.overall_robot_goal = (self.overall_robot_goal[1],
                                            -self.overall_robot_goal[0])

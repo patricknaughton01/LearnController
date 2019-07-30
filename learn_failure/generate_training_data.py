@@ -47,7 +47,8 @@ def main():
             init_state = sim.state()
             orig_agents = [(sim.sim.getAgentPosition(a)[0],
                             sim.sim.getAgentPosition(a)[1],
-                            sim.sim.getAgentRadius(a)) for a in sim.agents]
+                            sim.sim.getAgentRadius(a),
+                            sim.headings[a]) for a in sim.agents]
             h_t = None
             for t in range(timesteps):
                 action, h_t = model.select_action(

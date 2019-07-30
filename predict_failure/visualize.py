@@ -43,7 +43,8 @@ def main():
             agents = []
             for m in matches:
                 m = m.lstrip("(").rstrip(")").split(", ")
-                agents.append(((float(m[0]), float(m[1])), float(m[2])))
+                agents.append(((float(m[0]), float(m[1])), float(m[2]),
+                               float(m[3])))
             matches = re.findall(r"\[[^\[\]]+?\]",
                                  lines[3*args.i+2].strip())
             # Build up the obstacles from sets of points
@@ -70,6 +71,13 @@ def main():
                                         color=agent_colors[i],
                                     linewidth=2.0, fill=False)
                 ax.add_patch(e)
+                hx = agents[i][0][0] + agents[i][1] * math.cos(agents[i][2])
+                hy = agents[i][0][1] + agents[i][1] * math.sin(agents[i][2])
+                h_width = 0.05
+                ax.add_patch(patches.Ellipse(
+                    (hx, hy), h_width * 2, h_width * 2,
+                    color=agent_colors[i], linewidth=2.0, fill=False
+                ))
             for i in range(len(obstacles)):
                 ax.add_patch(
                     patches.Polygon(obstacles[i], closed=True,

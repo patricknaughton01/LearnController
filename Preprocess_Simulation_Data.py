@@ -7,6 +7,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import argparse
+import math
 from matplotlib import patches
 import numpy as np
 from glob import glob
@@ -186,7 +187,7 @@ def main():
     idx = args.i
 
     episode = states_array[idx]
-    n = int((episode.shape[1] - 4) / 5)
+    n = int((episode.shape[1] - 4) / 6)
     print(n)
     colors = [np.array([1, 0, 0])]
     for i in range(n-1):
@@ -225,8 +226,8 @@ def main():
                     x_idx, y_idx = 0, 1
                     radius = episode[0, 4]
                 else:
-                    x_idx, y_idx = 9 + (i-1) * 5, 9 + (i-1) * 5 + 1
-                    radius = episode[0, 13 + (i-1) * 5]
+                    x_idx, y_idx = 10 + (i-1) * 6, 10 + (i-1) * 6 + 1
+                    radius = episode[0, 14 + (i-1) * 6]
                 # print('radius is %.4f' % radius)
                 plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
 
@@ -249,21 +250,29 @@ def animate(frame, fig, episode, colors, left, right, top, bottom):
     ax.clear()
     ax.set_xlim((left, right))
     ax.set_ylim((bottom, top))
-    n = int((episode.shape[1] - 4) / 5)
+    n = int((episode.shape[1] - 4) / 6)
     for i in range(n):
         if i == 0:
             x_idx, y_idx = 0, 1
             radius = max(episode[0, 4], 0.01)
+            heading = episode[frame, 5]
         else:
-            x_idx, y_idx = 9 + (i - 1) * 5, 9 + (i - 1) * 5 + 1
-            radius = max(episode[0, 13 + (i - 1) * 5], 0.01)
+            x_idx, y_idx = 10 + (i - 1) * 6, 10 + (i - 1) * 6 + 1
+            radius = max(episode[0, 14 + (i - 1) * 6], 0.01)
+            heading = episode[frame, 15 + (i - 1) * 6]
         # print('radius is %.4f' % radius)
         #plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
 
         e = patches.Ellipse((episode[frame, x_idx], episode[frame, y_idx]), radius * 2,
                             radius * 2, linewidth=2, fill=False, zorder=2,
                             color=colors[i])
+        hx = radius * math.cos(heading) + episode[frame, x_idx]
+        hy = radius * math.sin(heading) + episode[frame, y_idx]
+        heading_rad = 0.05
+        h = patches.Ellipse((hx, hy), heading_rad * 2, heading_rad * 2,
+                            linewidth=2, color=colors[i], fill=False)
         ax.add_patch(e)
+        ax.add_patch(h)
 
 if __name__ == "__main__":
     main()
