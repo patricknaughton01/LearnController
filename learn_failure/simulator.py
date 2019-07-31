@@ -718,7 +718,7 @@ class Simulator(object):
                 self.headings.append(normalize(randomize(-math.pi, math.pi)))
         # Add in walls around the whole thing so robots don't just wander
         # off
-        wall_left = [
+        """wall_left = [
             (-self.max_dim, -self.max_dim),
             (-self.max_dim, self.max_dim * 2),
             (-self.max_dim * 2, self.max_dim * 0.5)
@@ -745,8 +745,10 @@ class Simulator(object):
         self.obstacles.append(wall_top)
         self.sim.addObstacle(wall_top)
         self.obstacles.append(wall_bottom)
-        self.sim.addObstacle(wall_bottom)
+        self.sim.addObstacle(wall_bottom)"""
         if self.file is not None:
+            # First line is obstacles in the scene
+            self.file.write(str(self.obstacles))
             self.file.write("timestamp position0 velocity0 radius0 "
                             "heading0 goal ")
             self.file.write("pref_speed theta ")

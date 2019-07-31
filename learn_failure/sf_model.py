@@ -10,6 +10,8 @@ Awareness-Navigation in Crowded Environments"
 import utils
 import simulator
 import math
+import time
+import random
 # Used to conveniently find the nearest point on a polygon to the robot
 from shapely.geometry import Point, Polygon
 from shapely.ops import nearest_points
@@ -22,6 +24,9 @@ def main():
     episodes = args.num_episodes
     max_timesteps = args.max_timesteps
     record = args.record
+    if args.seed is None:
+        args.seed = time.time()
+    random.seed(args.seed)
     epsilon = 10**-10   # Numerical stability
     # Assume robot is isotropic ==> don't need lambda term
     # Also assume robot has mass of 1

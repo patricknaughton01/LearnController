@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument("--num", type=int, default=0)
     parser.add_argument("--kfold", type=int, default=5)
     parser.add_argument("--k", type=int, default=1)
-    parser.add_argument("--seed", type=int, default=1234)
+    parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--num_lstms", type=int, default=1)
     parser.add_argument("--dist_thres", type=float, default=1.0)
     parser.add_argument("--dropout", type=float, default=0.1)

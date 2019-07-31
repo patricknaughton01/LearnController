@@ -79,11 +79,10 @@ def main():
                     color=agent_colors[i], linewidth=2.0, fill=False
                 ))
             for i in range(len(obstacles)):
-                ax.add_patch(
-                    patches.Polygon(obstacles[i], closed=True,
-                                    color=obstacle_color, fill=False,
-                                    linewidth=2.0)
-                )
+                ax.add_patch(patches.Polygon(
+                    obstacles[i], closed=True, color=obstacle_color,
+                    fill=False, linewidth=2.0
+                ))
             # Show actual endpoint of robot
             dot_size = 0.05
             actual_color = (0.2, 0.72, 0)

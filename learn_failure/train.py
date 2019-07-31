@@ -58,6 +58,7 @@ def main():
     if args.model_path != "":
         try:
             model.load_state_dict(torch.load(args.model_path)["state_dict"])
+            print("Loaded starting model from {}".format(args.model_path))
         except IOError:
             print("Couldn't open file {}".format(args.model_path))
     model.train()
