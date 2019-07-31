@@ -696,6 +696,8 @@ class Simulator(object):
         self.obstacles.append(wall_bottom)
         self.sim.addObstacle(wall_bottom)"""
         if self.file is not None:
+            # First line is obstacles in the scene
+            self.file.write(str(self.obstacles))
             self.file.write("timestamp position0 velocity0 radius0 goal ")
             self.file.write("pref_speed theta ")
             num = 1

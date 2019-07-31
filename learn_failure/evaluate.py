@@ -36,6 +36,7 @@ def main():
     for path in file_paths:
         try:
             file = open(path, "r")
+            file.readline()     # We don't care about the line of obstacles
             lines = file.readlines()
             if len(lines) > 2:
                 # Metrics for evaluating the trajectories

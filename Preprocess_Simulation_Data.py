@@ -7,6 +7,8 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import argparse
+
+import re
 from matplotlib import patches
 import numpy as np
 from glob import glob
@@ -15,10 +17,11 @@ import warnings
 warnings.filterwarnings("ignore")
 import os
 
-
+obstacles = []
 # In[2]:
 
 def main():
+    global obstacles
     parser = argparse.ArgumentParser(description="Pre-process simulation data")
     parser.add_argument('--animate', action="store_true",
                         help="animate the playback")
@@ -47,6 +50,7 @@ def main():
     seq_lengths = []
     files = glob(parent_path)
     files.sort(key=lambda x: int(x.split('/')[-1].split('.')[-2].split('_')[-1]))
+    obstacle_strs = []
     for path in files:
         # print(path)
         if 'obstacles' in path:
@@ -54,7 +58,9 @@ def main():
         # print('preprocessing %s' % path)
         with open(path, 'r') as file:
             cur_states = []
-            for i, line in enumerate(file):
+            obstacle_strs.append(file.readline().strip())
+            lines = file.readlines()
+            for i, line in enumerate(lines):
                 # print('line')
                 # print(line)
 
@@ -184,6 +190,7 @@ def main():
 
     # visualization of the data
     idx = args.i
+    obs_str = obstacle_strs[idx]
 
     episode = states_array[idx]
     n = int((episode.shape[1] - 4) / 5)
@@ -198,6 +205,22 @@ def main():
     ax = fig.add_subplot(111)
     ax.axis('equal')
     T = episode.shape[0]
+
+    matches = re.findall(r"\[[^\[\]]+?\]", obs_str)
+    # Build up the obstacles from sets of points
+    for m in matches:
+        points = re.findall(r"\(([0-9\-.+e]+, [0-9\-.+e]+)\)", m)
+        obstacle = []
+        for p in points:
+            tmp = p.split(", ")
+            obstacle.append((float(tmp[0]), float(tmp[1])))
+        obstacles.append(obstacle)
+    obstacle_color = (0.0, 0.0, 0.0)
+    for i in range(len(obstacles)):
+        ax.add_patch(patches.Polygon(
+            obstacles[i], closed=True, color=obstacle_color,
+            fill=False, linewidth=2.0
+        ))
     # plt.hold(True)
 
     # ## check if obstacle exists
@@ -244,9 +267,16 @@ def main():
 
 
 def animate(frame, fig, episode, colors, left, right, top, bottom):
+    global obstacles
     ax = fig.get_axes()[0]
     ax.axis('equal')
     ax.clear()
+    obstacle_color = (0.0, 0.0, 0.0)
+    for i in range(len(obstacles)):
+        ax.add_patch(patches.Polygon(
+            obstacles[i], closed=True, color=obstacle_color,
+            fill=False, linewidth=2.0
+        ))
     ax.set_xlim((left, right))
     ax.set_ylim((bottom, top))
     n = int((episode.shape[1] - 4) / 5)
