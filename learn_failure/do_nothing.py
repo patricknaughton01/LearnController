@@ -5,6 +5,8 @@ when it simply does nothing.
 
 import simulator
 import utils
+import time
+import random
 
 
 def main():
@@ -12,6 +14,9 @@ def main():
     max_timesteps = args.max_timesteps
     num_episodes = args.num_episodes
     scene = args.scene
+    if args.seed is None:
+        args.seed = time.time()
+    random.seed(args.seed)
     for episode in range(num_episodes):
         file = None
         if args.record:

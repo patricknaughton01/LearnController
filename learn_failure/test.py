@@ -2,6 +2,8 @@ import torch
 import learn_general_controller.model
 import configparser
 import argparse
+import random
+import time
 
 from rl_model import Controller
 from utils import *
@@ -14,6 +16,9 @@ def main():
     if model_path == "":
         print("You must provide a model to test for test.py")
         return
+    if args.seed is None:
+        args.seed = time.time()
+    random.seed(args.seed)
     scene = args.scene
     timesteps = args.max_timesteps
     epsilon = 0.0
