@@ -21,7 +21,7 @@ def main():
     random.seed(args.seed)
     scene = args.scene
     timesteps = args.max_timesteps
-    epsilon = 0.0
+    epsilon = args.epsilon
     for i in range(args.num_episodes):
         out_path = args.scene + "_{}.txt".format(i)
         out_file = open(out_path, "w")
