@@ -257,7 +257,7 @@ def rotate(state, kinematics='unicycle'):
     else:
         # set theta to be zero since it's not used
         theta = torch.zeros_like(v_pref)"""
-    heading = state[:, 5]
+    heading = state[:, 5:6]
     vx1 = (state[:, 12] * torch.cos(rot) + state[:, 13] * torch.sin(
         rot)).reshape((batch, -1))
     vy1 = (state[:, 13] * torch.cos(rot) - state[:, 12] * torch.sin(
