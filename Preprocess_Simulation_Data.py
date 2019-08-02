@@ -35,6 +35,10 @@ def main():
                        default="learn_failure/tests/social_forces"
                                "/dynamic_barge_in_test_1/",
                        help="directory to find the trajectory files.")
+    parser.add_argument("--stride", type=int, default=1, help="how many "
+                                                              "frames to "
+                                                              "advance each "
+                                                              "time")
     parser.add_argument("--i", type=int, default=0, help="index of "
                                                          "trajectory to "
                                                          "display")
@@ -43,6 +47,8 @@ def main():
     directory = args.directory
     parent_path = directory + "/" + data_type + '_*.txt'
     print(parent_path)
+    if args.stride < 1:
+        args.stride = 1
 
     # In[3]:
 
@@ -125,7 +131,7 @@ def main():
     # In[5]:
 
 
-    save_path = '/home/patricknaughton01/Downloads/LearnControllers/learn_failure/simulate_' + data_type.lower()
+    save_path = 'learn_failure/simulate_' + data_type.lower()
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     print('save path is: %s' % save_path)
@@ -242,7 +248,7 @@ def main():
         if args.save:
             ani.save(args.animation_name)
     else:
-        for t in range(T):
+        for t in range(0, T, args.stride):
             for i in range(n):
                 if i == 0:
                     x_idx, y_idx = 0, 1

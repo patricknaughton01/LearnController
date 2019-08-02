@@ -60,7 +60,8 @@ def main():
             fig = plt.figure(figsize=(15, 10))
             ax = fig.add_subplot(111)
             ax.axis('equal')
-            agent_colors = [(1.0, 0.0, 0.0)]
+            agent_colors = [(0.2, 0.72, 0)]
+            dot_size = 0.05
             for i in range(len(agents) - 1):
                 agent_colors.append((0.0, 0.1, i/(len(agents) - 1)))
             obstacle_color = (0.0, 0.0, 0.0)
@@ -70,14 +71,17 @@ def main():
                                         color=agent_colors[i],
                                     linewidth=2.0, fill=False)
                 ax.add_patch(e)
+                ax.add_patch(patches.Ellipse(
+                    agents[i][0], dot_size, dot_size,
+                    color=agent_colors[i], fill=True
+                ))
             for i in range(len(obstacles)):
                 ax.add_patch(patches.Polygon(
                     obstacles[i], closed=True, color=obstacle_color,
                     fill=False, linewidth=2.0
                 ))
             # Show actual endpoint of robot
-            dot_size = 0.05
-            actual_color = (0.2, 0.72, 0)
+            actual_color = (1.0, 0.0, 0.0)
             ax.add_patch(
                 patches.Ellipse((pred[5], pred[6]), 2 * agents[0][1],
                                2 * agents[0][1], color=actual_color,
