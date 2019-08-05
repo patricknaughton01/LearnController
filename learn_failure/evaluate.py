@@ -51,7 +51,7 @@ def main():
                     line = lines[i+1].strip().split(" ")
                     # Check and make sure we have all the parameters for the
                     # robot
-                    if len(last_line) >= 7 and len(line) >= 7:
+                    if len(last_line) >= 8 and len(line) >= 8:
                         last_pos = split_coordinates(last_line[1])
                         r_pos = split_coordinates(line[1])
                         total_dist += dist(last_pos, r_pos)
@@ -66,7 +66,7 @@ def main():
                         r_rad = float(line[3])
                         # Examine all agents and obstacles to check for
                         # collisions and/or intrusions
-                        for j in range(7, len(line), 3):
+                        for j in range(8, len(line), 4):
                             try:
                                 obs_pos = split_coordinates(line[j])
                                 obs_rad = float(line[j+2])
@@ -85,7 +85,7 @@ def main():
                 stop_time = None
                 for i in range(len(lines)-1, -1, -1):
                     line = lines[i].split(" ")
-                    if len(line) > 7 and final_pos is None:
+                    if len(line) > 8 and final_pos is None:
                         final_pos = split_coordinates(line[1])
                         stop_time = float(line[0])
                     elif final_pos is not None and stop_time is not None:

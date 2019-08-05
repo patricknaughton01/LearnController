@@ -357,14 +357,14 @@ class Simulator(object):
                 return_str += "(" + str(p1.x) + "," + str(p1.y) + ") "
                 return_str += "(0,0) "
                 return_str += str(self.obs_width) + " "
-                return_str += "0 "
+                return_str += str(self.headings[self.robot_num]) + " "
             else:
                 # Point obstacle
                 return_str += \
                     "(" + str(obs[0][0]) + "," +str(obs[0][1]) + ") "
                 return_str += "(0,0) "
                 return_str += str(self.obs_width) + " "
-                return_str += "0 "
+                return_str += str(self.headings[self.robot_num]) + " "
         return_str += "\n"
         if self.file is not None:
             self.file.write(return_str)
@@ -413,11 +413,14 @@ class Simulator(object):
                 o = Polygon(obs)
                 p = Point(rpos)
                 p1, p2 = nearest_points(o, p)
-                # Velocity and heading always 0 for obstacles
-                state.extend([p1.x, p2.y, 0, 0, self.obs_width, 0])
+                # Velocity is always 0 for obstacles
+                # Heading is same as robot's
+                state.extend([p1.x, p2.y, 0, 0, self.obs_width,
+                              self.headings[self.robot_num]])
             else:
                 # Point obstacle
-                state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width, 0])
+                state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width,
+                              self.headings[self.robot_num]])
         return state
 
     def build_scene(self, scene):

@@ -62,6 +62,9 @@ class Trainer(object):
             print("Ran episode {}\n\tGot reward {}".format(
                 episode, reward[0][0]
             ))
+            f = open("reward_{}.txt".format(self.config["name"]), "a")
+            f.write("{} {}\n".format(self.cumulative_timesteps, reward[0][0]))
+            f.close()
         return reward
 
     def run_episode(self, record=False, key=0, print_every=100,

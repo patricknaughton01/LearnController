@@ -253,14 +253,22 @@ def main():
                 if i == 0:
                     x_idx, y_idx = 0, 1
                     radius = episode[0, 4]
+                    heading = episode[t, 5]
                 else:
                     x_idx, y_idx = 10 + (i-1) * 6, 10 + (i-1) * 6 + 1
                     radius = episode[0, 14 + (i-1) * 6]
+                    heading = episode[t, 15 + (i - 1) * 6]
                 # print('radius is %.4f' % radius)
                 plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
 
                 e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2, radius * 2, linewidth=2, fill=False, zorder=2, color=colors[i])
                 ax.add_patch(e)
+                hx = radius * math.cos(heading) + episode[t, x_idx]
+                hy = radius * math.sin(heading) + episode[t, y_idx]
+                heading_rad = 0.05
+                h = patches.Ellipse((hx, hy), heading_rad * 2, heading_rad * 2,
+                                    linewidth=2, color=colors[i], fill=False)
+                ax.add_patch(h)
 
 
     legends = ['agent %d' % i for i in range(n)]
