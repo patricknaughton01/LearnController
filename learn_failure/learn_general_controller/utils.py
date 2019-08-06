@@ -33,6 +33,8 @@ def parse_args():
     parser.add_argument("--model_config", type=str, default="configs/model.config")
     parser.add_argument("--test_percent", type=float, default=0.1)
     parser.add_argument("--video_name", type=str, default="")
+    parser.add_argument("--scene", type=str, default="random")
+    parser.add_argument("--model_path", type=str, default="")
     return parser.parse_args()
 
 def get_weight_decay(tao, length_scale, N, dropout):
@@ -260,10 +262,12 @@ def transform_and_rotate(raw_states):
     # states shape: batch_size x dim
     # 'px', 'py', 'vx', 'vy', 'radius', 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1', ..., 'radiusN'
     #  0     1      2     3      4        5     6      7         8       9     10      11     12       13 , ...,
-    num_human = int((raw_states.shape[1] - 9) / 5)
+    num_human = int((raw_states.shape[1] - 4) / 5)
     self_state = raw_states[:, 0:9]
     # print("self_state.shape", self_state.shape)
-    human_states = [raw_states[:, 9 + i * 5 : 9 + (i + 1) * 5] for i in range(num_human)]
+    human_states = [raw_states[:, 9 + i * 5 : 9 + (i + 1) * 5] for i in
+                    range(num_human - 1)]
+    human_states.insert(0, self_state[:, :5])
     # print("human_states.shape", len(human_states))
     # print("human_states[0]",human_states[0].shape)
 
