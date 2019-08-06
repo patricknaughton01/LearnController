@@ -44,25 +44,27 @@ def main():
         try:
             print("{}/{}".format(i, args.num_episodes), end="\r")
             sim = Simulator(scene=random.choice(scenes))
-            init_state = sim.state()
-            orig_agents = [(sim.sim.getAgentPosition(a)[0],
-                            sim.sim.getAgentPosition(a)[1],
-                            sim.sim.getAgentRadius(a),
-                            sim.headings[a]) for a in sim.agents]
             h_t = None
+            trajectory = []
             for t in range(timesteps):
                 action, h_t = model.select_action(
                     sim.state(), h_t, epsilon=epsilon
                 )
+                state = sim.state()
+                agents = [(sim.sim.getAgentPosition(a)[0],
+                                sim.sim.getAgentPosition(a)[1],
+                                sim.sim.getAgentRadius(a),
+                                sim.headings[a]) for a in sim.agents]
                 sim.do_step(action)
-            # Map the initial state to the final position of the robot - this
-            # will serve as training data for another network.
-            final_map.append(
-                (init_state, sim.sim.getAgentPosition(sim.robot_num),
-                 orig_agents, sim.obstacles)
-            )
+                # Map each state to the resulting location
+                trajectory.append(
+                    (state, sim.sim.getAgentPosition(sim.robot_num),
+                     agents, sim.obstacles)
+                )
+            final_map.append(trajectory)
         except KeyboardInterrupt:
             break
+    print()
     pickle.dump(final_map, out_file)
     out_file.close()
 
