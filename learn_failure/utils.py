@@ -520,3 +520,52 @@ def dist(p1, p2):
 
     """
     return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
+
+def avg(vals):
+    """Computes the average of the numerical values in `vals`.
+
+    :param iterable vals: iterable of numerical values to average.
+    :return: The numerical average of the values in `vals`
+        :rtype: float
+    """
+    if len(vals) > 0:
+        total = 0
+        for v in vals:
+            total += v
+        return total / len(vals)
+    return 0.0
+
+
+def std_dev(vals):
+    """Computes the (sample) standard deviation of the numerical values in
+    `vals`.
+
+    :param iterable vals: Numerical values to find the standard deviation of
+    :return: The (sample) standard deviation of the values in `vals`
+        :rtype: float
+    """
+    if len(vals) > 1:
+        mean = avg(vals)
+        total = 0
+        for v in vals:
+            total += (v - mean) ** 2
+        return (total / (len(vals) - 1))**0.5
+    return 0.0
+
+
+def cov(x, y):
+    """Computes the (sample) covariance between the values in x and y.
+
+    :param iterable x: list of numerical values
+    :param iterable y: list of numerical values (same len as x)
+    :return: The (sample) covariance between the values in x and y
+        :rtype: float
+    """
+    if len(x) == len(y) and len(x) > 1:
+        x_bar = avg(x)
+        y_bar = avg(y)
+        acc = 0
+        for i in range(len(x)):
+            acc += (x[i] - x_bar) * (y[i] - y_bar)
+        return acc / (len(x) - 1)
+    return None

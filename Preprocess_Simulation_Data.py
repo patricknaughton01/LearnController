@@ -201,7 +201,7 @@ def main():
     episode = states_array[idx]
     n = int((episode.shape[1] - 4) / 6)
     print(n)
-    colors = [np.array([1, 0, 0])]
+    colors = [np.array([0.2, 0.72, 0.0])]
     for i in range(n-1):
         colors.append(np.array([0, 0, i/(n-1)]))
     # colors = [np.random.rand(3)]
@@ -249,26 +249,8 @@ def main():
             ani.save(args.animation_name)
     else:
         for t in range(0, T, args.stride):
-            for i in range(n):
-                if i == 0:
-                    x_idx, y_idx = 0, 1
-                    radius = episode[0, 4]
-                    heading = episode[t, 5]
-                else:
-                    x_idx, y_idx = 10 + (i-1) * 6, 10 + (i-1) * 6 + 1
-                    radius = episode[0, 14 + (i-1) * 6]
-                    heading = episode[t, 15 + (i - 1) * 6]
-                # print('radius is %.4f' % radius)
-                plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
-
-                e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2, radius * 2, linewidth=2, fill=False, zorder=2, color=colors[i])
-                ax.add_patch(e)
-                hx = radius * math.cos(heading) + episode[t, x_idx]
-                hy = radius * math.sin(heading) + episode[t, y_idx]
-                heading_rad = 0.05
-                h = patches.Ellipse((hx, hy), heading_rad * 2, heading_rad * 2,
-                                    linewidth=2, color=colors[i], fill=False)
-                ax.add_patch(h)
+            add_patches(t, n, episode, colors, ax)
+        add_patches(T-1, n, episode, colors, ax)
 
 
     legends = ['agent %d' % i for i in range(n)]
@@ -278,6 +260,31 @@ def main():
     # plt.ylim((min_lim, max_lim))
     plt.legend(legends)
     plt.show()
+
+
+def add_patches(t, n, episode, colors, ax):
+    for i in range(n):
+        if i == 0:
+            x_idx, y_idx = 0, 1
+            radius = episode[0, 4]
+            heading = episode[t, 5]
+        else:
+            x_idx, y_idx = 10 + (i - 1) * 6, 10 + (i - 1) * 6 + 1
+            radius = episode[0, 14 + (i - 1) * 6]
+            heading = episode[t, 15 + (i - 1) * 6]
+        # print('radius is %.4f' % radius)
+        plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
+
+        e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2,
+                            radius * 2, linewidth=2, fill=False, zorder=2,
+                            color=colors[i])
+        ax.add_patch(e)
+        hx = radius * math.cos(heading) + episode[t, x_idx]
+        hy = radius * math.sin(heading) + episode[t, y_idx]
+        heading_rad = 0.05
+        h = patches.Ellipse((hx, hy), heading_rad * 2, heading_rad * 2,
+                            linewidth=2, color=colors[i], fill=False)
+        ax.add_patch(h)
 
 
 def animate(frame, fig, episode, colors, left, right, top, bottom):

@@ -11,6 +11,7 @@ import torch
 import numpy as np
 import random
 import copy
+import learn_general_controller.utils as old_utils
 # Used to conveniently find the nearest point on a polygon to the robot
 from shapely.geometry import Point, Polygon
 from shapely.ops import nearest_points
@@ -96,7 +97,8 @@ class Simulator(object):
         )
         self.advance_simulation()
 
-    def forward_simulate(self, success_model, max_ts=100, failure_func=None):
+    def forward_simulate(self, success_model, samples=20, max_ts=100,
+                         failure_func=None):
         """Simulates the beginning of the scenario by using the predictions of
         the success_model (a neural network which takes in the state of the
         robot and predicts a mux, muy, sx, sy, and correlation for the
@@ -113,18 +115,43 @@ class Simulator(object):
             the controller will no longer be successful
         :return: None
         """
-        success_model.eval()
-        h_t = None
-        pred, h_t = success_model(self.state().unsqueeze(0), h_t)
-        if failure_func is None:
-            failure_func = self.base_failure
-        i = 0
-        while not failure_func(pred) and i < max_ts:
-            self.goals[self.robot_num] = (pred[0][0], pred[0][1])
-            self.advance_simulation()
-            pred, h_t = success_model(self.state().unsqueeze(0), h_t)
-            i += 1
-        print("Finished success simulation after {} steps".format(i))
+        with torch.no_grad():
+            # Even though we're evaluating it, we need the model to be in
+            # train mode so that dropout layers still work
+            success_model.train()
+            pred, h_t = None, None
+            if failure_func is None:
+                failure_func = self.base_failure
+            i = 0
+            f = open("std_devs.txt", "w")
+            while not failure_func(pred) and i < max_ts:
+                mx, my, sx, sy, rho, h_t = self.get_succ_prediction(
+                    success_model, self.success_state(), h_t, samples)
+                #f.write("{} {}\n".format(sx, sy))
+                self.goals[self.robot_num] = (mx, my)
+                self.advance_simulation()
+                i += 1
+            f.close()
+            print("Finished success simulation after {} steps".format(i))
+
+    @staticmethod
+    def get_succ_prediction(model, state, h_t, samples):
+        x = []
+        y = []
+        model.train()
+        next_h_t = None
+        with torch.no_grad():
+            for i in range(samples):
+                pred, next_h_t = model(state, h_t)
+                pred = utils.get_coefs(pred.unsqueeze(0))
+                x.append(pred[0].item())
+                y.append(pred[1].item())
+            mx = utils.avg(x)
+            my = utils.avg(y)
+            sx = utils.std_dev(x)
+            sy = utils.std_dev(y)
+            cov = utils.cov(x, y)
+            return mx, my, sx, sy, cov / (sx * sy), next_h_t
 
     def advance_simulation(self):
         """Advance the simulation by moving all the agents towards their
@@ -165,6 +192,7 @@ class Simulator(object):
             :rtype: bool
         """
         #r_rad = self.sim.getAgentRadius(self.robot_num)
+        return False
         mux, muy, sx, sy, corr = utils.get_coefs(prediction.unsqueeze(0))
         d = self.dist((mux, muy), self.overall_robot_goal)
         if d > self.last_dist:
@@ -181,7 +209,7 @@ class Simulator(object):
 
         :return: Tensor of state values for the robot relative to its
             heading and the occupancy maps for every agent.
-            :rtype: tuple
+            :rtype: Tensor
         """
         state = np.array(self.get_state_arr())
         om = utils.build_occupancy_maps(utils.build_humans(state))
@@ -374,9 +402,9 @@ class Simulator(object):
         """Calculate the state of the robot and all the obstacles in the scene.
         Takes the form of
         [
-            robot pos, robot vel, robot rad, robot goal, robot v_pref,
-            robot theta,
-            obs1 position, obs1 vel, obs1 rad,
+            robot pos, robot vel, robot rad, robot goal, robot heading, robot
+            v_pref, robot theta,
+            obs1 position, obs1 vel, obs1 rad, obs1 heading,
             obs2...
             ...
         ]
@@ -421,6 +449,73 @@ class Simulator(object):
                 # Point obstacle
                 state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width,
                               self.headings[self.robot_num]])
+        return state
+
+    def success_state(self):
+        """Computes the state that will be fed to the success model. This is
+        composed of the robot's rotated and transformed state (see utils.py
+        / ask Yash for what that does) and the occupancy map (same advice
+        for how this is built).
+
+        :return: Tensor of state values for the robot relative to its
+            velocity and the occupancy maps for every agent.
+            :rtype: Tensor
+        """
+        state = np.array(self.get_success_state_arr())
+        om = old_utils.build_occupancy_maps(old_utils.build_humans(state))
+        # We only have a batch of one so just get the first element of
+        # transform and rotate
+        state = old_utils.transform_and_rotate(state.reshape((1, -1)))[0]
+        return torch.cat((state, om), dim=1).unsqueeze(0)
+
+    def get_success_state_arr(self):
+        """Calculate the state of the robot and all the obstacles in the
+        scene such that the success controller can interpret it.
+        Takes the form of
+        [
+            robot pos, robot vel, robot rad, robot goal, robot v_pref,
+            robot theta,
+            obs1 position, obs1 vel, obs1 rad,
+            obs2...
+            ...
+        ]
+        Note that none of these are tuples, if the value is a vector (like
+        position) its elements are just listed out.
+
+        :return: Array with the state of all the obstacles in the scene plus
+            the robot.
+            :rtype: list
+        """
+        rpos = self.sim.getAgentPosition(self.robot_num)
+        rvel = self.sim.getAgentVelocity(self.robot_num)
+        rrad = self.sim.getAgentRadius(self.robot_num)
+        v_pref = self.sim.getAgentMaxSpeed(self.robot_num)
+        theta = math.atan2(rvel[1], rvel[0])
+        # Robot's state entry. Note that goal is listed as the robot's current
+        # position because we aren't using that goal as such, we are just
+        # exploring.
+        state = [
+            rpos[0], rpos[1], rvel[0], rvel[1], rrad, rpos[0], rpos[1],
+            v_pref, theta
+        ]
+        for agent in self.agents:
+            if agent != self.robot_num:  # We already accounted for the robot
+                pos = self.sim.getAgentPosition(agent)
+                vel = self.sim.getAgentVelocity(agent)
+                rad = self.sim.getAgentRadius(agent)
+                state.extend([pos[0], pos[1], vel[0], vel[1], rad])
+        for obs in self.obstacles:
+            if len(obs) > 1:
+                # Polygonal obstacle
+                o = Polygon(obs)
+                p = Point(rpos)
+                p1, p2 = nearest_points(o, p)
+                # Velocity is always 0 for obstacles
+                # Heading is same as robot's
+                state.extend([p1.x, p2.y, 0, 0, self.obs_width])
+            else:
+                # Point obstacle
+                state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width])
         return state
 
     def build_scene(self, scene):
