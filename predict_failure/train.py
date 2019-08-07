@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import pickle
 import os
+import time
 from utils import *
 from predict_model import *
 from trainer import Trainer
@@ -19,6 +20,8 @@ def main():
     print('config')
     print(config)
 
+    if args.seed is None:
+        args.seed = int(time.time())
     if args.seed > 0:
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)

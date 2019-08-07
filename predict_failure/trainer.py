@@ -78,33 +78,55 @@ class Trainer(object):
 
     def train_one_epoch(self):
         self.model.train()  # sets the model to train mode
-
         train_loss = 0
         train_l2_error = 0
         c = 1
-
-        for batch, labels, _, _ in self.train_loader:
-            pred_t = self.model(batch)
-            loss, l2_error = self.criterion(pred_t, labels)
-            c += 1
+        for batch in self.train_loader:
+            loss, l2_err = self.train_one_trajectory(batch)
             train_loss += loss.item()
-            train_l2_error += l2_error.item()
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-
+            train_l2_error += l2_err.item()
         return train_loss/c, train_l2_error/c
+
+    def train_one_trajectory(self, trajectory):
+        h_t = None
+        outputs = []
+        for step in trajectory:
+            pred_t, h_t = self.model(step[0], h_t)
+            outputs.append(pred_t)
+        outputs = torch.stack(outputs)
+        targets = [torch.cat(s[1]) for s in trajectory]
+        targets = torch.stack(targets)
+        t_shape = targets.shape
+        targets = targets.view(t_shape[0], 1, t_shape[1]).float()
+        loss, l2_error = self.criterion(outputs, targets)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        return loss / len(trajectory), l2_error / len(trajectory)
 
     def eval_one_epoch(self):
         self.model.eval()   # Put model in eval mode
         val_loss = 0
         val_l2_error = 0
         c = 1
-        for batch, labels, _, _ in self.val_loader:
+        for batch in self.val_loader:
             with torch.no_grad():   # We won't back-propagate based on eval
-                pred_t = self.model(batch)
-                loss, l2_error = self.criterion(pred_t, labels)
-                c += 1
+                loss, l2_error = self.eval_one_trajectory(batch)
                 val_loss += loss.item()
                 val_l2_error += l2_error.item()
         return val_loss / c, val_l2_error / c
+
+    def eval_one_trajectory(self, trajectory):
+        with torch.no_grad():
+            h_t = None
+            outputs = []
+            for step in trajectory:
+                pred_t, h_t = self.model(step[0], h_t)
+                outputs.append(pred_t)
+            outputs = torch.stack(outputs)
+            targets = [torch.cat(s[1]) for s in trajectory]
+            targets = torch.stack(targets)
+            t_shape = targets.shape
+            targets = targets.view(t_shape[0], 1, t_shape[1]).float()
+            loss, l2_error = self.criterion(outputs, targets)
+            return loss / len(trajectory), l2_error / len(trajectory)

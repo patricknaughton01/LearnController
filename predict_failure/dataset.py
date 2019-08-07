@@ -31,7 +31,4 @@ class Dataset(data.Dataset):
         :return: Tuple of the form (X, y, agents, obstacles)
             :rtype: tuple
         """
-        return (self.labeled_data[item][0],
-                torch.tensor(self.labeled_data[item][1]),
-                self.labeled_data[item][2],
-                self.labeled_data[item][3])
+        return self.labeled_data[item]

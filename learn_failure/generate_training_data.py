@@ -37,7 +37,7 @@ def main():
                        model_type=args.model_type)  # model_type = crossing
     model.load_state_dict(torch.load(model_path)["state_dict"])
     model.eval()
-    out_path = args.name + "_final_states.p"
+    out_path = args.name + "_states.p"
     out_file = open(out_path, "wb")
     final_map = []
     for i in range(args.num_episodes):

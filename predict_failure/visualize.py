@@ -32,6 +32,9 @@ def main():
         file = open(args.path, "r")
         lines = file.readlines()
         print("Total recorded tests: {}".format(int(len(lines)/3)))
+        fig = plt.figure(figsize=(15, 10))
+        ax = fig.add_subplot(111)
+        ax.axis('equal')
         if 0 <= args.i < len(lines)/3:
             # Convert all the parameters of the prediction/actual result
             # back into floats
@@ -39,7 +42,8 @@ def main():
             # Separate out all the triples and convert them back into tuples
             # of the form ((pos), rad)
             matches = re.findall(r"(\([0-9\-.+e]+, [0-9\-.+e]+, "
-                                r"[0-9\-.+e]+\))", lines[3*args.i+1].strip())
+                                r"[0-9\-.+e]+, [0-9\-.+e]+\))",
+                                 lines[3*args.i+1].strip())
             agents = []
             for m in matches:
                 m = m.lstrip("(").rstrip(")").split(", ")
@@ -58,9 +62,6 @@ def main():
                 obstacles.append(obstacle)
             # Display all the agents and obstacles, as well as the
             # prediction and actual result.
-            fig = plt.figure(figsize=(15, 10))
-            ax = fig.add_subplot(111)
-            ax.axis('equal')
             agent_colors = [(0.2, 0.72, 0)]
             dot_size = 0.05
             for i in range(len(agents) - 1):
@@ -89,18 +90,18 @@ def main():
                     fill=False, linewidth=2.0
                 ))
             # Show actual endpoint of robot
-            actual_color = (1.0, 0.0, 0.0)
-            ax.add_patch(
+            actual_color = (0.3, 1.0, 0)
+            """ax.add_patch(
                 patches.Ellipse((pred[5], pred[6]), 2 * agents[0][1],
                                2 * agents[0][1], color=actual_color,
-                               fill=False, linewidth=2.0)
-            )
+                               fill=True, linewidth=2.0)
+            )"""
             ax.add_patch(patches.Ellipse(
                 (pred[5], pred[6]), dot_size, dot_size, color=actual_color,
                 fill=True
             ))
             # Draw error ellipse for prediction
-            pred_color = (0.44, 1.0, 0.8)
+            pred_color = (0.2, 0.72, 0)
             cov = pred[4] * pred[3] * pred[2]   # cov = corr * sx * sy
             # Build covariance matrix
             cov_mat = np.array([[pred[2]**2, cov], [cov, pred[3]**2]])
@@ -116,13 +117,13 @@ def main():
             ax.add_patch(patches.Ellipse(
                 (pred[0], pred[1]), 2 * math.sqrt(magic_num * eig[0][ind]),
                 2 * math.sqrt(magic_num * eig[0][1-ind]), angle=ang,
-                fill=False, color=pred_color, linewidth=2.0
+                fill=False, color=actual_color, linewidth=2.0, linestyle="--"
             ))
             # Put a small point at the mean
-            ax.add_patch(patches.Ellipse(
+            """ax.add_patch(patches.Ellipse(
                 (pred[0], pred[1]), dot_size, dot_size, fill=True,
-                color=pred_color
-            ))
+                color=actual_color
+            ))"""
             plt.xlim((-5, 5))
             plt.ylim((-5, 5))
             plt.show()

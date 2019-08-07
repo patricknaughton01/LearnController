@@ -16,14 +16,13 @@ def main():
     args = utils.parse_args()
     model_path = args.model_path
     data_path = args.data_path
+    record = args.record
     if model_path == "" or data_path == "":
         print("You must specify both a model_path and data_path")
         return
 
     f = open(data_path, "rb")
     data = Dataset(pickle.load(f))
-
-    out = open("test_output.txt", "w")
     #out.write("mux\tmuy\tsx\tsy\tcorr\tax\tay\n")
 
     model_config = configparser.RawConfigParser()
@@ -34,22 +33,28 @@ def main():
     model.eval()
     total_loss = 0
     with torch.no_grad():
-        for example in data:
-            batch_of_one = example[0].unsqueeze(0)
-            pred = model(batch_of_one)
-            actual = example[1]
-            loss, _ = utils.neg_2d_gaussian_likelihood(pred,
-                                                       actual.unsqueeze(0))
-            total_loss += loss.item()
-            #print("Prediction: {}, Actual: {}".format(pred, actual))
-            coefs = utils.get_coefs(pred)
-            for t in coefs:
-                out.write(str(t.item()) + "\t")
-            for val in actual:
-                out.write(str(val.item()) + "\t")
-            out.write("\n")
-            out.write(str(example[2]) + "\n")
-            out.write(str(example[3]) + "\n")
+        for i, trajectory in enumerate(data):
+            h_t = None
+            if record:
+                out = open("test_output_{}.txt".format(i), "w")
+            for step in trajectory:
+                batch_of_one = step[0].unsqueeze(0)
+                pred, h_t = model(batch_of_one, h_t)
+                actual = torch.tensor(step[1])
+                pred = pred.unsqueeze(0)
+                loss, _ = utils.neg_2d_gaussian_likelihood(
+                    pred, actual.view(1, 1, -1)
+                )
+                total_loss += loss.item()
+                #print("Prediction: {}, Actual: {}".format(pred, actual))
+                coefs = utils.get_coefs(pred)
+                for t in coefs:
+                    out.write(str(t.item()) + "\t")
+                for val in actual:
+                    out.write(str(val.item()) + "\t")
+                out.write("\n")
+                out.write(str(step[2]) + "\n")
+                out.write(str(step[3]) + "\n")
     print("Average loss: ", total_loss / len(data))
 
 

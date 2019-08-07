@@ -19,19 +19,31 @@ def mlp(input_dim, mlp_dims, last_relu=False, dropout=0):
 class Controller(nn.Module):
     def __init__(self, config, model_type='crossing'):
         super().__init__()
-        self.self_state_dim = config.getint(model_type, 'self_state_dim') #6
+        self.self_state_dim = config.getint(model_type, 'self_state_dim') #5
         # print('config.get(model_type, mlp1_dims)')
         # print(config.get(model_type, 'mlp1_dims').split(', '))
-        mlp1_dims = [int(x) for x in config.get(model_type, 'mlp1_dims').split(', ')] #[80]
+        mlp1_dims = [int(x) for x in config.get(
+            model_type, 'mlp1_dims').split(', ')] #[80]
         # print("mlp1_dims", mlp1_dims)
         self.global_state_dim = mlp1_dims[-1]  # 80
 
-        input_dim = self.self_state_dim + config.getint(model_type, 'other_state_dim') + config.getint('om', 'cell_num') ** 2 * config.getint('om', 'om_channel_size')
-        # other_state_dim = 7;  cell_num = 4(to be squared); om_channel_size = 3; input_dim = 61
-        self.mlp1 = mlp(input_dim, mlp1_dims, last_relu=True, dropout=config.getfloat(model_type, 'dropout')) #141 [61, 80]
+        input_dim = (self.self_state_dim
+                     + config.getint(model_type, 'other_state_dim')
+                     + config.getint('om', 'cell_num') ** 2
+                     * config.getint('om', 'om_channel_size'))
+        # other_state_dim = 7;  cell_num = 4(to be squared); om_channel_size
+        #  = 3; input_dim = 60
+        self.mlp1 = mlp(
+            input_dim, mlp1_dims, last_relu=True,
+            dropout=config.getfloat(model_type, 'dropout')
+        ) #141 [61, 80]
 
-        mlp2_dims = [int(x) for x in config.get(model_type, 'mlp2_dims').split(', ')] #120
-        self.mlp2 = mlp(mlp1_dims[-1], mlp2_dims, dropout=config.getfloat(model_type, 'dropout')) #200 [80, 120]
+        mlp2_dims = [int(x) for x in config.get(
+            model_type, 'mlp2_dims').split(', ')] #120
+        self.mlp2 = mlp(
+            mlp1_dims[-1], mlp2_dims,
+            dropout=config.getfloat(model_type, 'dropout')
+        ) #200 [80, 120]
         self.with_global_state = config.get(model_type,
                                             'with_global_state')  # true
 
@@ -43,20 +55,29 @@ class Controller(nn.Module):
                                  attention_dims)  # [160, 64, 32, 1]
         else:
             self.attention = mlp(mlp1_dims[-1], attention_dims)
-        mlp3_dims = [int(x) for x in config.get(model_type, 'mlp3_dims').split(', ')] # 128, 64, 5
+
+        rnn_input_dim = mlp2_dims[-1] + self.self_state_dim  # 86
+
+        rnn_hidden_dim = config.getint(model_type, 'rnn_hidden_dim')  # 256
+        self.rnn_cell = nn.LSTMCell(input_size=rnn_input_dim,
+                                    hidden_size=rnn_hidden_dim)
+
+        mlp3_dims = [int(x) for x in config.get(
+            model_type, 'mlp3_dims').split(', ')] # 128, 64, 5
         self.mlp3 = mlp(
-            mlp2_dims[-1] + self.self_state_dim, mlp3_dims,
+            rnn_hidden_dim, mlp3_dims,
             dropout=config.getfloat(model_type, 'dropout')
         ) # [126, 128, 64, 5]
         self.attention_weights = None
 
-    def forward(self, state):
+    def forward(self, state, h_t=None):
         """First transform the world coordinates to self-centric
         coordinates and then do forward computation. Computes mus, sigmas,
         and correlation of distribution of final states.
 
         :param tensor state: tensor of shape (batch_size, # of humans,
             length of a rotated state)
+        :param tensor h_t: tensor of shape
         :return: The predicted mus, sigmas, and correlation as a final state
             given some initial state
             :rtype: tensor
@@ -101,5 +122,6 @@ class Controller(nn.Module):
         # size
         #joint_state = torch.cat([batch_state, mlp2_output], dim=1)
         joint_state = torch.cat([self_state, weighted_feature], dim=1)
-        pred_t = self.mlp3(joint_state)
-        return pred_t
+        h_t = self.rnn_cell(joint_state, h_t)
+        pred_t = self.mlp3(h_t[0])
+        return pred_t, h_t
