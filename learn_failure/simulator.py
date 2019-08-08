@@ -249,12 +249,15 @@ class Simulator(object):
                 if dist < r_rad + a_rad:
                     total += col_reward
                 elif dist < r_rad + a_rad + close_thresh:
-                    total += close_reward
+                    total += close_reward + close_reward / dist
                 pred_pos = (a_pos[0] + a_vel[0] * ts,
                             a_pos[1] + a_vel[1] * ts)
                 # Check for predicted collisions
                 if self.dist(pred_robot_pos, pred_pos) < r_rad + a_rad:
                     total += pred_mul * col_reward
+                elif self.dist(pred_robot_pos, pred_pos) < r_rad + a_rad + \
+                        close_thresh:
+                    total += pred_mul * close_reward
                 # Check for right hand rule violations (see
                 # https://arxiv.org/pdf/1703.08862.pdf for more details)
                 # Note the precise sizes of all the zones are determined by
