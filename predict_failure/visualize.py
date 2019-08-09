@@ -27,6 +27,7 @@ def main():
     parser.add_argument("path", type=str, help="path to the file to visualize")
     parser.add_argument("--i", type=int, help="index of visualization to "
                                               "display", default=0)
+    parser.add_argument("--noaxis", action="store_true", help="display axis?")
     args = parser.parse_args()
     try:
         file = open(args.path, "r")
@@ -96,9 +97,9 @@ def main():
                                2 * agents[0][1], color=actual_color,
                                fill=True, linewidth=2.0)
             )"""
-            ax.add_patch(patches.Ellipse(
-                (pred[5], pred[6]), dot_size, dot_size, color=actual_color,
-                fill=True
+            ax.add_patch(patches.Rectangle(
+                (pred[5] - dot_size/2, pred[6] - dot_size/2), dot_size,
+                dot_size, color=(0, 0, 0), fill=True
             ))
             # Draw error ellipse for prediction
             pred_color = (0.2, 0.72, 0)
@@ -124,6 +125,8 @@ def main():
                 (pred[0], pred[1]), dot_size, dot_size, fill=True,
                 color=actual_color
             ))"""
+            if args.noaxis:
+                plt.axis('off')
             plt.xlim((-5, 5))
             plt.ylim((-5, 5))
             plt.show()
