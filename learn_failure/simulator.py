@@ -285,7 +285,7 @@ class Simulator(object):
                 cross_max_dist = 4 * r_rad
                 # Penalty for violating one of these rules. Same weight for
                 # all rules right now
-                social_reward = -0.02
+                social_reward = -0.0
                 # Check both relative position of the other agent as well as
                 # the angle between the agent's and robot's velocities
                 if ovtk_min_x <= x_rel <= ovtk_max_x and ovtk_min_y <= \
