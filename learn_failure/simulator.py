@@ -287,7 +287,7 @@ class Simulator(object):
                 # all rules right now
                 # Can only incur a social penalty if the robot is moving
                 if utils.dist(r_vel, (0.0, 0.0)) > 0.0:
-                    social_reward = -0.02
+                    social_reward = 0.0
                 else:
                     social_reward = 0.0
                 # Check both relative position of the other agent as well as
