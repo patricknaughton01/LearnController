@@ -178,8 +178,8 @@ class Trainer(object):
         loss_value = total_loss.data[0].item()
         self.optimizer.zero_grad()
         total_loss.backward()
-        #for param in self.policy_model.parameters():
-        #    param.grad.data.clamp_(-1, 1)
+        for param in self.policy_model.parameters():
+            param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
         return loss_value
 
