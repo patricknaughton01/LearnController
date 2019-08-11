@@ -48,13 +48,14 @@ def main():
                 total_loss += loss.item()
                 #print("Prediction: {}, Actual: {}".format(pred, actual))
                 coefs = utils.get_coefs(pred)
-                for t in coefs:
-                    out.write(str(t.item()) + "\t")
-                for val in actual:
-                    out.write(str(val.item()) + "\t")
-                out.write("\n")
-                out.write(str(step[2]) + "\n")
-                out.write(str(step[3]) + "\n")
+                if record:
+                    for t in coefs:
+                        out.write(str(t.item()) + "\t")
+                    for val in actual:
+                        out.write(str(val.item()) + "\t")
+                    out.write("\n")
+                    out.write(str(step[2]) + "\n")
+                    out.write(str(step[3]) + "\n")
     print("Average loss: ", total_loss / len(data))
 
 

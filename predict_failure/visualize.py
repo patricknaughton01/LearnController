@@ -98,7 +98,8 @@ def main():
                                fill=True, linewidth=2.0)
             )"""
             ax.add_patch(patches.Rectangle(
-                (pred[5] - dot_size/2, pred[6] - dot_size/2), dot_size,
+                (agents[0][0][0] + pred[5] - dot_size/2, agents[0][0][1] +
+                 pred[6] - dot_size/2), dot_size,
                 dot_size, color=(0, 0, 0), fill=True
             ))
             # Draw error ellipse for prediction
@@ -115,8 +116,13 @@ def main():
             # Find angle of larger eigenvector in degrees
             ang = math.degrees(math.atan2(eig[1][1][ind], eig[1][0][ind]))
             magic_num = 5.991   # Used to get 95% confidence contour
+            # Add the robot's heading back to the dx dy prediction
+            r_ang = agents[0][2]
+            dx = pred[0] * math.cos(r_ang) - pred[1] * math.sin(r_ang)
+            dy = pred[0] * math.sin(r_ang) + pred[1] * math.cos(r_ang)
             ax.add_patch(patches.Ellipse(
-                (pred[0], pred[1]), 2 * math.sqrt(magic_num * eig[0][ind]),
+                (agents[0][0][0] + dx, agents[0][0][1] + dy),
+                2 * math.sqrt(magic_num * eig[0][ind]),
                 2 * math.sqrt(magic_num * eig[0][1-ind]), angle=ang,
                 fill=False, color=actual_color, linewidth=2.0, linestyle="--"
             ))

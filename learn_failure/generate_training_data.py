@@ -8,6 +8,7 @@ import torch
 import configparser
 import pickle
 import random
+import math
 
 from rl_model import Controller
 from simulator import Simulator
@@ -51,15 +52,22 @@ def main():
                     sim.state(), h_t, epsilon=epsilon
                 )
                 state = sim.state()
+                init_pos = sim.sim.getAgentPosition(sim.robot_num)
                 agents = [(sim.sim.getAgentPosition(a)[0],
                                 sim.sim.getAgentPosition(a)[1],
                                 sim.sim.getAgentRadius(a),
                                 sim.headings[a]) for a in sim.agents]
                 sim.do_step(action)
+                new_pos = sim.sim.getAgentPosition(sim.robot_num)
+                dx = new_pos[0] - init_pos[0]
+                dy = new_pos[1] - init_pos[1]
+                # Rotate dx and dy so they are wrt robot heading
+                r_head = sim.headings[sim.robot_num]
+                r_dx = dx * math.cos(r_head) + dy * math.sin(r_head)
+                r_dy = dy * math.cos(r_head) - dx * math.sin(r_head)
                 # Map each state to the resulting location
                 trajectory.append(
-                    (state, sim.sim.getAgentPosition(sim.robot_num),
-                     agents, sim.obstacles)
+                    (state, (r_dx, r_dy), agents, sim.obstacles)
                 )
             final_map.append(trajectory)
         except KeyboardInterrupt:
