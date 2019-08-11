@@ -40,17 +40,15 @@ class Controller(nn.Module):
             self.attention = mlp(mlp1_dims[-1] * 2, attention_dims) # [160, 64, 32, 1]
         else:
             self.attention = mlp(mlp1_dims[-1], attention_dims)
-        rnn_input_dim = mlp2_dims[-1] + self.self_state_dim # 86
-
-        rnn_hidden_dim = config.getint(model_type, 'rnn_hidden_dim') #256
-        self.rnn_cell = nn.LSTMCell(input_size=rnn_input_dim, hidden_size=rnn_hidden_dim)
+        mlp3_input_dim = mlp2_dims[-1] + self.self_state_dim # 86
 
         mlp3_dims = [int(x) for x in config.get(model_type, 'mlp3_dims').split(', ')] # 128, 64, 33
-        self.mlp3 = mlp(rnn_hidden_dim, mlp3_dims, dropout=config.getfloat(model_type, 'dropout')) # [256, 128, 64, 5]
+        self.mlp3 = mlp(mlp3_input_dim, mlp3_dims, dropout=config.getfloat(
+            model_type, 'dropout')) # [86, 128, 64, 5]
         self.attention_weights = None
         self.action_dim = mlp3_dims[len(mlp3_dims) - 1]
 
-    def forward(self, state, h_t=None):
+    def forward(self, state):
         """First transform the world coordinates to self-centric
         coordinates and then do forward computation. Computes the q values
         of 33 different discretized actions (16 different headings evenly
@@ -58,7 +56,6 @@ class Controller(nn.Module):
 
         :param tensor state: tensor of shape (batch_size, # of humans,
             length of a rotated state)
-        :param tensor h_t: Hidden state of rnn
         :return: The q values for each of the 33 possible actions, the hidden
             state values for the rnn.
             :rtype: tuple (tensor, tensor)
@@ -106,19 +103,17 @@ class Controller(nn.Module):
 
         # concatenate agent's state with global weighted humans' state
         joint_state = torch.cat([self_state, weighted_feature], dim=1)
-        h_t = self.rnn_cell(joint_state, h_t)
-        q = self.mlp3(h_t[0])
+        q = self.mlp3(joint_state)
         # print('pred_t',pred_t.shape)
         # print('h_t')
         # print(h_t)
-        return q, h_t
+        return q
 
-    def select_action(self, state, h_t=None, epsilon=0.1):
+    def select_action(self, state, epsilon=0.1):
         """Use the current DQN to select an action in an epsilon-greedy fashion.
 
         :param tensor state: The state characterized by the occupancy map. This
             comes directly from the simulation
-        :param tensor h_t: The hidden state of the rnn, if any.
         :param float epsilon: The chance we choose a random action instead of
             a greedy one.
         :return: 1x1 tensor with the index of the selected action
@@ -132,9 +127,9 @@ class Controller(nn.Module):
                 # on the max result is index of max element
                 #
                 # i.e., pick greedily
-                q, h_t = self.forward(state, h_t)
-                return q.max(1)[1].view(1, 1), h_t
+                q = self.forward(state)
+                return q.max(1)[1].view(1, 1)
         else:
             with torch.no_grad():
-                q, h_t = self.forward(state, h_t)
-                return torch.tensor([[random.randrange(self.action_dim)]]), h_t    #????????
+                q = self.forward(state)
+                return torch.tensor([[random.randrange(self.action_dim)]])

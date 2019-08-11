@@ -91,12 +91,11 @@ class Trainer(object):
         if self.success_model is not None:
             sim.forward_simulate(self.success_model, max_ts=self.config[
                 'success_max_ts'])
-        h_t = None
         curr_state = sim.state()
         total_reward = torch.zeros((1, 1), dtype=torch.float)
         for i in range(self.max_timesteps):
-            action, h_t = self.policy_model.select_action(
-                sim.state(), h_t, epsilon=self.epsilon
+            action = self.policy_model.select_action(
+                sim.state(), epsilon=self.epsilon
             )
             self.epsilon -= self.epsilon_decay
             if self.epsilon < 0.1:
@@ -104,15 +103,9 @@ class Trainer(object):
             sim.do_step(action)
             reward, _ = sim.reward()
             next_state = sim.state()
-            if h_t is not None:
-                self.memory.push(
-                    curr_state, h_t[0], h_t[1], action, next_state, reward
-                )
-            else:
-                self.memory.push(
-                    curr_state, torch.zeros((1, 256)), torch.zeros((1, 256)),
-                    action, next_state, reward
-                )
+            self.memory.push(
+                curr_state, action, next_state, reward
+            )
             curr_state = next_state
             total_reward += reward
             if self.cumulative_timesteps > 10 * self.batch_size:
@@ -123,7 +116,6 @@ class Trainer(object):
                 if (loss < self.min_loss
                         and (((self.min_loss - loss)/self.min_loss)
                              < self.converge_thresh)):
-
                     print("Timestep: ", self.cumulative_timesteps)
                     print("Loss: ", loss)
                     break
@@ -164,11 +156,11 @@ class Trainer(object):
         total_loss = Variable(torch.zeros(1), requires_grad=True).clone()
         for transition in transitions:
             state_action_value = self.policy_model(
-                transition.state, (transition.h_t, transition.c_t)
-            )[0].gather(1, transition.action)  #?
+                transition.state
+            ).gather(1, transition.action)  #?
             next_state_value = self.target_model(
-                transition.next_state, (transition.h_t, transition.c_t)
-            )[0].max(1)[0].detach()
+                transition.next_state
+            ).max(1)[0].detach()
             expected_state_action_val = ((next_state_value * self.gamma)
                 + transition.reward)
             total_loss += F.mse_loss(
@@ -178,8 +170,8 @@ class Trainer(object):
         loss_value = total_loss.data[0].item()
         self.optimizer.zero_grad()
         total_loss.backward()
-        for param in self.policy_model.parameters():
-            param.grad.data.clamp_(-1, 1)
+        #for param in self.policy_model.parameters():
+         #   param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
         return loss_value
 
@@ -187,7 +179,7 @@ class Trainer(object):
 # Store transitions from state to next_state via action and what reward
 # we received as well as the hidden state at that point
 Transition = namedtuple('Transition',
-    ('state', 'h_t', 'c_t', 'action', 'next_state', 'reward'))
+    ('state', 'action', 'next_state', 'reward'))
 
 
 class ReplayMemory(object):
