@@ -274,7 +274,7 @@ def rotate(state, kinematics='unicycle'):
         torch.cat([(state[:, 0] - state[:, 10]).reshape((batch, -1)),
                    (state[:, 1] - state[:, 11]).reshape((batch, -1))], dim=1),
         2, dim=1, keepdim=True)
-    new_state = torch.cat([v_pref, heading, radius, vx, vy, px1, py1, vx1, vy1,
+    new_state = torch.cat([v_pref, radius, vx, vy, px1, py1, vx1, vy1,
                            radius1, da, radius_sum], dim=1)
     return new_state
 
