@@ -55,8 +55,10 @@ def main():
                         last_pos = split_coordinates(last_line[1])
                         r_pos = split_coordinates(line[1])
                         total_dist += dist(last_pos, r_pos)
-                        last_theta = float(last_line[6])
-                        r_theta = float(line[6])
+                        last_vel = split_coordinates(last_line[2])
+                        r_vel = split_coordinates(line[2])
+                        last_theta = math.atan2(last_vel[1], last_vel[0])
+                        r_theta = math.atan2(r_vel[1], r_vel[0])
                         ang_diff = math.fabs(r_theta - last_theta)
                         # Normalize the angle change, i.e. pi ==> -pi should
                         # register as no angle change, not 2pi

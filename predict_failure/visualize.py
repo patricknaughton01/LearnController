@@ -115,7 +115,7 @@ def main():
                 ind = 1
             # Find angle of larger eigenvector in degrees
             ang = math.degrees(math.atan2(eig[1][1][ind], eig[1][0][ind]))
-            magic_num = 5.991   # Used to get 95% confidence contour
+            magic_num = 9.210   # Used to get 99% confidence contour
             # Add the robot's heading back to the dx dy prediction
             r_ang = agents[0][2]
             dx = pred[0] * math.cos(r_ang) - pred[1] * math.sin(r_ang)
