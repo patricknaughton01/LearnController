@@ -665,6 +665,7 @@ class Simulator(object):
                 for obs in self.obstacles:
                     for i, vert in enumerate(obs):
                         obs[i] = (-vert[0], vert[1])
+                    obs.reverse()  # Verticies must be in ccw order
                 for agent in self.agents:
                     pos = self.sim.getAgentPosition(agent)
                     self.sim.setAgentPosition(agent, (-pos[0], pos[1]))
@@ -678,6 +679,7 @@ class Simulator(object):
                 for obs in self.obstacles:
                     for i, vert in enumerate(obs):
                         obs[i] = (vert[1], vert[0])
+                    obs.reverse()     # Verticies must be in ccw order
                 for agent in self.agents:
                     pos = self.sim.getAgentPosition(agent)
                     self.sim.setAgentPosition(agent, (pos[1], pos[0]))
