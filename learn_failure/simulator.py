@@ -250,7 +250,7 @@ class Simulator(object):
                 if dist < r_rad + a_rad:
                     total += col_reward
                 elif dist < r_rad + a_rad + close_thresh:
-                    total += close_reward + close_reward / dist
+                    total += close_reward
                 pred_pos = (a_pos[0] + a_vel[0] * ts,
                             a_pos[1] + a_vel[1] * ts)
                 # Check for predicted collisions
