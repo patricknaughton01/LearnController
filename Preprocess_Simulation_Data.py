@@ -279,11 +279,11 @@ def add_patches(t, n, episode, colors, ax):
                             radius * 2, linewidth=2, fill=False, zorder=2,
                             color=colors[i])
         ax.add_patch(e)
-        hx = radius * math.cos(heading) + episode[t, x_idx]
-        hy = radius * math.sin(heading) + episode[t, y_idx]
-        heading_rad = 0.05
-        h = patches.Ellipse((hx, hy), heading_rad * 2, heading_rad * 2,
-                            linewidth=2, color=colors[i], fill=False)
+        hx = radius * math.cos(heading)
+        hy = radius * math.sin(heading)
+        heading_width = 0.1
+        h = patches.Arrow(episode[t, x_idx], episode[t, y_idx],
+                          hx, hy, color=colors[i], width=heading_width)
         ax.add_patch(h)
 
 
@@ -316,11 +316,11 @@ def animate(frame, fig, episode, colors, left, right, top, bottom):
         e = patches.Ellipse((episode[frame, x_idx], episode[frame, y_idx]), radius * 2,
                             radius * 2, linewidth=2, fill=False, zorder=2,
                             color=colors[i])
-        hx = radius * math.cos(heading) + episode[frame, x_idx]
-        hy = radius * math.sin(heading) + episode[frame, y_idx]
-        heading_rad = 0.05
-        h = patches.Ellipse((hx, hy), heading_rad * 2, heading_rad * 2,
-                            linewidth=2, color=colors[i], fill=False)
+        hx = radius * math.cos(heading)
+        hy = radius * math.sin(heading)
+        heading_width = 0.1
+        h = patches.Arrow(episode[frame, x_idx], episode[frame, y_idx],
+                          hx, hy, color=colors[i], width=heading_width)
         ax.add_patch(e)
         ax.add_patch(h)
 

@@ -74,13 +74,11 @@ def main():
                                         color=agent_colors[i],
                                     linewidth=2.0, fill=False)
                 ax.add_patch(e)
-                hx = agents[i][0][0] + agents[i][1] * math.cos(agents[i][2])
-                hy = agents[i][0][1] + agents[i][1] * math.sin(agents[i][2])
-                h_width = 0.05
-                ax.add_patch(patches.Ellipse(
-                    (hx, hy), h_width * 2, h_width * 2,
-                    color=agent_colors[i], linewidth=2.0, fill=False
-                ))
+                hx = agents[i][1] * math.cos(agents[i][2])
+                hy = agents[i][1] * math.sin(agents[i][2])
+                h_width = 0.1
+                ax.add_patch(patches.Arrow(agents[i][0][0], agents[i][0][1],
+                          hx, hy, color=agent_colors[i], width=h_width))
                 ax.add_patch(patches.Ellipse(
                     agents[i][0], dot_size, dot_size,
                     color=agent_colors[i], fill=True
