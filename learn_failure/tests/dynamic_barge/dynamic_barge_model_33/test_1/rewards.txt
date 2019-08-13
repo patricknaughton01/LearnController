@@ -1,0 +1,7 @@
+Reward:  -10.820003509521484
+Reward:  -34.26362228393555
+Reward:  -20.363542556762695
+Reward:  -64.37355041503906
+Reward:  -144.80909729003906
+
+Note: changed motion model in between so rewards are not very representative.

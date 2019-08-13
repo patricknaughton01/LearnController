@@ -22,6 +22,7 @@ def main():
     scene = args.scene
     timesteps = args.max_timesteps
     epsilon = args.epsilon
+    reward_file = open("rewards_{}.txt".format(args.scene), "w")
     for i in range(args.num_episodes):
         out_path = args.scene + "_{}.txt".format(i)
         out_file = open(out_path, "w")
@@ -63,7 +64,9 @@ def main():
                 reward -= 0.01
             total_reward += reward
         print("Reward: ", total_reward.item())
+        reward_file.write(str(total_reward.item()) + "\n")
         out_file.close()
+    reward_file.close()
 
 
 if __name__ == "__main__":
