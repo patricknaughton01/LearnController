@@ -210,6 +210,12 @@ def main():
     fig = plt.figure(figsize=(15, 10))
     ax = fig.add_subplot(111)
     ax.axis('equal')
+    top = 3
+    bottom = -1
+    left = -1
+    right = 3
+    plt.xlim((left, right))
+    plt.ylim((bottom, top))
     T = episode.shape[0]
 
     matches = re.findall(r"\[[^\[\]]+?\]", obs_str)
@@ -243,7 +249,8 @@ def main():
     if args.animate:
         ani = animation.FuncAnimation(fig, animate, interval=100,
                                       fargs=(fig, episode, colors,
-                                             -5, 5, 5, -5), repeat=True,
+                                             left, right, top, bottom),
+                                      repeat=True,
                                       frames=episode.shape[0])
         if args.save:
             ani.save(args.animation_name)
@@ -256,8 +263,6 @@ def main():
     legends = ['agent %d' % i for i in range(n)]
     # max_lim = np.max(episode)
     # min_lim = np.min(episode)
-    # plt.xlim((min_lim, max_lim))
-    # plt.ylim((min_lim, max_lim))
     plt.legend(legends)
     plt.show()
 
