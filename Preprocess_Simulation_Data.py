@@ -258,7 +258,24 @@ def main():
         for t in range(0, T, args.stride):
             add_patches(t, n, episode, colors, ax)
         add_patches(T-1, n, episode, colors, ax)
-
+        for t in range(1, T):
+            for i in range(n):
+                if i == 0:
+                    last_x = episode[t-1, 0]
+                    last_y = episode[t-1, 1]
+                    x = episode[t, 0]
+                    y = episode[t, 1]
+                else:
+                    last_x = episode[t-1, 10 + (i - 1) * 6]
+                    last_y = episode[t-1, 10 + (i - 1) * 6 + 1]
+                    x = episode[t, 10 + (i - 1) * 6]
+                    y = episode[t, 10 + (i - 1) * 6 + 1]
+                dx = x - last_x
+                dy = y - last_y
+                t_width = 0.01
+                ax.add_patch(patches.Arrow(
+                    last_x, last_y, dx, dy, width=t_width, color=colors[i]
+                ))
 
     legends = ['agent %d' % i for i in range(n)]
     # max_lim = np.max(episode)
@@ -278,7 +295,7 @@ def add_patches(t, n, episode, colors, ax):
             radius = episode[0, 14 + (i - 1) * 6]
             heading = episode[t, 15 + (i - 1) * 6]
         # print('radius is %.4f' % radius)
-        plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
+        #plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
 
         e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2,
                             radius * 2, linewidth=2, fill=False, zorder=2,
