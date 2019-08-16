@@ -42,6 +42,8 @@ def main():
     parser.add_argument("--i", type=int, default=0, help="index of "
                                                          "trajectory to "
                                                          "display")
+    parser.add_argument("-n", action="store_true", help="display "
+                                                                  "timestamps?")
     args = parser.parse_args()
     data_type = args.data_type
     directory = args.directory
@@ -256,26 +258,8 @@ def main():
             ani.save(args.animation_name)
     else:
         for t in range(0, T, args.stride):
-            add_patches(t, n, episode, colors, ax)
-        add_patches(T-1, n, episode, colors, ax)
-        for t in range(1, T):
-            for i in range(n):
-                if i == 0:
-                    last_x = episode[t-1, 0]
-                    last_y = episode[t-1, 1]
-                    x = episode[t, 0]
-                    y = episode[t, 1]
-                else:
-                    last_x = episode[t-1, 10 + (i - 1) * 6]
-                    last_y = episode[t-1, 10 + (i - 1) * 6 + 1]
-                    x = episode[t, 10 + (i - 1) * 6]
-                    y = episode[t, 10 + (i - 1) * 6 + 1]
-                dx = x - last_x
-                dy = y - last_y
-                t_width = 0.01
-                ax.add_patch(patches.Arrow(
-                    last_x, last_y, dx, dy, width=t_width, color=colors[i]
-                ))
+            add_patches(t, n, episode, colors, ax, numbers=args.n)
+        add_patches(T-1, n, episode, colors, ax, numbers=args.n)
 
     legends = ['agent %d' % i for i in range(n)]
     # max_lim = np.max(episode)
@@ -284,7 +268,7 @@ def main():
     plt.show()
 
 
-def add_patches(t, n, episode, colors, ax):
+def add_patches(t, n, episode, colors, ax, numbers=False):
     for i in range(n):
         if i == 0:
             x_idx, y_idx = 0, 1
@@ -295,11 +279,18 @@ def add_patches(t, n, episode, colors, ax):
             radius = episode[0, 14 + (i - 1) * 6]
             heading = episode[t, 15 + (i - 1) * 6]
         # print('radius is %.4f' % radius)
-        #plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
+        plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
 
         e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2,
                             radius * 2, linewidth=2, fill=False, zorder=2,
                             color=colors[i])
+        if numbers:
+            plt.text(
+                episode[t, x_idx] + (radius/2)*math.cos(heading + math.pi),
+                episode[t, y_idx] + (radius/2)*math.sin(heading + math.pi),
+                str(t/10.0), horizontalalignment='center',
+                verticalalignment="center", fontsize=radius*80
+            )
         ax.add_patch(e)
         hx = radius * math.cos(heading)
         hy = radius * math.sin(heading)
