@@ -32,7 +32,6 @@ class Simulator(object):
         self.max_dim = max_dim
         if self.scene is None:
             self.scene = "random"
-        self.build_scene(self.scene)
         self.last_actions = []
         # This should be at least 2 (used for calculating reward)
         self.last_action_capacity = 2
@@ -42,6 +41,7 @@ class Simulator(object):
         # has no effect.
         self.overall_robot_goal = (0, 0)
         self.last_dist = 10**6      # last distance to goal, starts huge
+        self.build_scene(self.scene)
         self.rot_speed = (self.sim.getAgentMaxSpeed(self.robot_num) *
                           math.pi / 16)
 
@@ -125,10 +125,14 @@ class Simulator(object):
             i = 0
             f = open("std_devs.txt", "w")
             while not failure_func(pred) and i < max_ts:
-                mx, my, sx, sy, rho, h_t = self.get_succ_prediction(
+                self.goals[self.robot_num] = self.overall_robot_goal
+                mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
+                    self.get_succ_prediction(
                     success_model, self.success_state(), h_t, samples)
-                #f.write("{} {}\n".format(sx, sy))
-                self.goals[self.robot_num] = (mx, my)
+                f.write("{} {} {} {} {} {}\n".format(sx, sy, rho, d_sx,
+                                                     d_sy, d_corr))
+                rpos = self.sim.getAgentPosition(self.robot_num)
+                self.goals[self.robot_num] = (rpos[0] + mx, rpos[1] + my)
                 self.advance_simulation()
                 i += 1
             f.close()
@@ -138,6 +142,9 @@ class Simulator(object):
     def get_succ_prediction(model, state, h_t, samples):
         x = []
         y = []
+        sx_list = []
+        sy_list = []
+        corr_list = []
         model.train()
         next_h_t = None
         with torch.no_grad():
@@ -146,12 +153,19 @@ class Simulator(object):
                 pred = utils.get_coefs(pred.unsqueeze(0))
                 x.append(pred[0].item())
                 y.append(pred[1].item())
+                sx_list.append(pred[2].item())
+                sy_list.append(pred[3].item())
+                corr_list.append(pred[4].item())
             mx = utils.avg(x)
             my = utils.avg(y)
             sx = utils.std_dev(x)
             sy = utils.std_dev(y)
             cov = utils.cov(x, y)
-            return mx, my, sx, sy, cov / (sx * sy), next_h_t
+            data_sx = utils.avg(sx_list)
+            data_sy = utils.avg(sy_list)
+            data_corr = utils.avg(corr_list)
+            return mx, my, sx, sy, cov / (sx * sy), data_sx, data_sy, \
+                   data_corr, next_h_t
 
     def advance_simulation(self):
         """Advance the simulation by moving all the agents towards their
@@ -193,7 +207,6 @@ class Simulator(object):
             :rtype: bool
         """
         #r_rad = self.sim.getAgentRadius(self.robot_num)
-        return False
         mux, muy, sx, sy, corr = utils.get_coefs(prediction.unsqueeze(0))
         d = self.dist((mux, muy), self.overall_robot_goal)
         if d > self.last_dist:
@@ -503,7 +516,8 @@ class Simulator(object):
         # position because we aren't using that goal as such, we are just
         # exploring.
         state = [
-            rpos[0], rpos[1], rvel[0], rvel[1], rrad, rpos[0], rpos[1],
+            rpos[0], rpos[1], rvel[0], rvel[1], rrad,
+            self.goals[self.robot_num][0], self.goals[self.robot_num][1],
             v_pref, theta
         ]
         for agent in self.agents:
@@ -575,8 +589,10 @@ class Simulator(object):
             self.obstacles.append(down_wall_vertices)
 
             # Add the robot
+            # x normally has -0.2 instead of -0.8 (we change it for the
+            # success model)
             robot_pos = (
-                wall_length - 0.2 + randomize(-0.1, 0.1), -0.15 + wall_width +
+                wall_length - 0.8 + randomize(-0.1, 0.1), -0.15 + wall_width +
                 wall_dist / 2.0 + randomize(-0.1, 0.1)
             )
             self.robot_num = self.sim.addAgent(
@@ -657,8 +673,10 @@ class Simulator(object):
                         pos[0] - randomize(goal_min, goal_max),
                         pos[1] + randomize(-hum_perb, hum_perb)
                     ))
-                    self.headings.append(normalize(randomize(7*math.pi/8,
-                                                       9*math.pi/8)))
+                    self.headings.append(normalize(randomize(-math.pi/8,
+                                                             math.pi/8)))
+                    #self.headings.append(normalize(randomize(7*math.pi/8,
+                     #                                  9*math.pi/8)))
             # By default, builds a scene in which the robot barges in to the
             # right. If one of the following specific scenes is provided,
             if scene.endswith("left"):    # Negate x coordinate
