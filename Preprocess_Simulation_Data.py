@@ -139,7 +139,7 @@ def main():
     # In[5]:
 
 
-    save_path = 'learn_failure/simulate_' + data_type.lower()
+    save_path = 'simulate_' + data_type.lower()
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     print('save path is: %s' % save_path)

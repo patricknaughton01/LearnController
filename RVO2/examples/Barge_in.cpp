@@ -284,17 +284,19 @@ void updateVisualization(RVO::RVOSimulator *sim, std::ofstream * file)
         
         -------------
         */
-        RVO::Vector2 up_closest_point(std::min(std::max(current_x, 0.0f), WALL_LENGTH), 2 * WALL_WIDTH + WALL_DIST);
-        RVO::Vector2 down_closest_point(std::min(std::max(current_x, 0.0f), WALL_LENGTH), 0);
+        RVO::Vector2 up_closest_point(std::min(std::max(current_x, 0.0f),
+            WALL_LENGTH), WALL_WIDTH + WALL_DIST);
+        RVO::Vector2 down_closest_point(std::min(std::max(current_x, 0.0f),
+            WALL_LENGTH), WALL_WIDTH);
         RVO::Vector2 static_vel(0, 0);
         /*
         *file << " " << up_closest_point << " " << static_vel << " " << WALL_WIDTH;
         *file << " " << down_closest_point << " " << static_vel << " " << WALL_WIDTH;
         */
         *file << " " << up_closest_point << " " << static_vel << " "
-            << 0.001f << 0.0f;
+            << 0.001f;
         *file << " " << down_closest_point << " " << static_vel << " "
-            << 0.001f << 0.0f;
+            << 0.001f;
     }
     
 	// std::cout << std::endl;
@@ -358,6 +360,22 @@ int main(int argc, char ** argv)
         RVO::RVOSimulator *sim = new RVO::RVOSimulator();
         /* Set up the scenario. */
         std::vector<std::vector<RVO::Vector2> > obstacles = setupScenario(sim);
+        *file << "[";
+        for (size_t j = 0; j<obstacles.size(); j++) {
+            *file << "[";
+            for (size_t k = 0; k < obstacles[j].size(); k++) {
+                (*file) << "(" << obstacles[j][k].x() << ", "
+                    << obstacles[j][k].y() << ")";
+                if(k < obstacles[j].size()-1){
+                    *file << ", ";
+                }
+            }
+            *file << "]";
+            if(j < obstacles.size()-1){
+                *file << ", ";
+            }
+        }
+        *file << "]" << std::endl;
         *file << "timestamp";
         for (size_t i = 0; i < sim->getNumAgents(); ++i) {
             *file << " position" << i << " velocity" << i << " radius" << i;
