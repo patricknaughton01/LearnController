@@ -197,18 +197,15 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
 
         sim->addAgent(robot_pos, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(1.5f, 2.0f));
         goals.push_back(robot_goal);
-        
+
         sim->addAgent(human_pos1, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
         goals.push_back(human_goal1);
 
         sim->addAgent(human_pos2, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
-        goals.push_back(human_goal2);
 
         sim->addAgent(human_pos3, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
-        goals.push_back(human_goal3);
 
         sim->addAgent(human_pos4, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
-        goals.push_back(human_goal4);
     }
     
 
@@ -257,7 +254,7 @@ void updateVisualization(RVO::RVOSimulator *sim, std::ofstream * file)
             current_x = position.x();
             float v_pref = sim-> getAgentMaxSpeed(i);
             float theta = atan2(velocity.y(), velocity.x());
-            *file << " " << goals[i] << " " << v_pref << " " << theta;
+            *file << " " << goals[i] << " " << v_pref << " "  << theta;
         } 
 	}
     if (VERTICAL_WALL) {
@@ -271,8 +268,14 @@ void updateVisualization(RVO::RVOSimulator *sim, std::ofstream * file)
         RVO::Vector2 left_closest_point(0, std::min(std::max(current_y, 0.0f), WALL_LENGTH));
         RVO::Vector2 right_closest_point(2 * WALL_WIDTH + WALL_DIST, std::min(std::max(current_y, 0.0f), WALL_LENGTH));
         RVO::Vector2 static_vel(0, 0);
+        /*
         *file << " " << left_closest_point << " " << static_vel << " " << WALL_WIDTH;
         *file << " " << right_closest_point << " " << static_vel << " " << WALL_WIDTH;
+        */
+        *file << " " << left_closest_point << " " << static_vel << " "
+            << 0.001f << 0.0f;
+        *file << " " << right_closest_point << " " << static_vel << " "
+            << 0.001f << 0.0f;
     }
     else {
         /*
@@ -284,8 +287,14 @@ void updateVisualization(RVO::RVOSimulator *sim, std::ofstream * file)
         RVO::Vector2 up_closest_point(std::min(std::max(current_x, 0.0f), WALL_LENGTH), 2 * WALL_WIDTH + WALL_DIST);
         RVO::Vector2 down_closest_point(std::min(std::max(current_x, 0.0f), WALL_LENGTH), 0);
         RVO::Vector2 static_vel(0, 0);
+        /*
         *file << " " << up_closest_point << " " << static_vel << " " << WALL_WIDTH;
         *file << " " << down_closest_point << " " << static_vel << " " << WALL_WIDTH;
+        */
+        *file << " " << up_closest_point << " " << static_vel << " "
+            << 0.001f << 0.0f;
+        *file << " " << down_closest_point << " " << static_vel << " "
+            << 0.001f << 0.0f;
     }
     
 	// std::cout << std::endl;
@@ -358,7 +367,8 @@ int main(int argc, char ** argv)
         }
         int num_agents = sim->getNumAgents();
         for (int i = 0; i < 2; ++i) {
-            *file << " position" << num_agents + i << " velocity" << num_agents + i << " radius" << num_agents + i;
+            *file << " position" << num_agents + i << " velocity"
+                << num_agents + i << " radius" << num_agents + i;
         }
             
         *file << std::endl;

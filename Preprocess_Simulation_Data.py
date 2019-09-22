@@ -19,9 +19,12 @@ import os
 
 obstacles = []
 # In[2]:
+terms_per_agent = 5
+initial_robot_terms = 4
+use_heading = False
 
 def main():
-    global obstacles
+    global obstacles, terms_per_agent, initial_robot_terms, use_heading
     parser = argparse.ArgumentParser(description="Pre-process simulation data")
     parser.add_argument('--animate', action="store_true",
                         help="animate the playback")
@@ -36,15 +39,18 @@ def main():
                                "/dynamic_barge_in_test_1/",
                        help="directory to find the trajectory files.")
     parser.add_argument("--stride", type=int, default=1, help="how many "
-                                                              "frames to "
-                                                              "advance each "
-                                                              "time")
+        "frames to advance each time")
     parser.add_argument("--i", type=int, default=0, help="index of "
                                                          "trajectory to "
                                                          "display")
     parser.add_argument("-n", action="store_true", help="display "
-                                                                  "timestamps?")
+        "timestamps?")
+    parser.add_argument("--heading", action="store_true", help="the input "
+        "file contains heading information")
     args = parser.parse_args()
+    if args.heading:
+        terms_per_agent = 6
+        use_heading = True
     data_type = args.data_type
     directory = args.directory
     parent_path = directory + "/" + data_type + '_*.txt'
@@ -126,7 +132,7 @@ def main():
         # print(states_array[i])
         # print('\n')
         # print(len(state[0]))
-        num_humans[i] = (len(state[0]) - 4) / 5
+        num_humans[i] = (len(state[0]) - initial_robot_terms) / terms_per_agent
         # print(num_humans[i])
 
 
@@ -201,7 +207,7 @@ def main():
     obs_str = obstacle_strs[idx]
 
     episode = states_array[idx]
-    n = int((episode.shape[1] - 4) / 6)
+    n = int((episode.shape[1] - initial_robot_terms) / terms_per_agent)
     print(n)
     colors = [np.array([0.2, 0.72, 0.0])]
     for i in range(n-1):
@@ -269,22 +275,29 @@ def main():
 
 
 def add_patches(t, n, episode, colors, ax, numbers=False):
+    global initial_robot_terms, terms_per_agent, use_heading
+    total_terms = initial_robot_terms + terms_per_agent
     for i in range(n):
         if i == 0:
             x_idx, y_idx = 0, 1
             radius = episode[0, 4]
-            heading = episode[t, 5]
+            if use_heading:
+                heading = episode[t, 5]
         else:
-            x_idx, y_idx = 10 + (i - 1) * 6, 10 + (i - 1) * 6 + 1
-            radius = episode[0, 14 + (i - 1) * 6]
-            heading = episode[t, 15 + (i - 1) * 6]
+            x_idx, y_idx = total_terms + (i - 1)  * terms_per_agent, \
+                           total_terms + (i - 1) * terms_per_agent + 1
+            radius = episode[0, total_terms+initial_robot_terms + (i - 1) *
+                             terms_per_agent]
+            if use_heading:
+                heading = episode[t, total_terms + initial_robot_terms + 1
+                                  + (i - 1) * terms_per_agent]
         # print('radius is %.4f' % radius)
         plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
 
         e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2,
                             radius * 2, linewidth=2, fill=False, zorder=2,
                             color=colors[i])
-        if numbers:
+        if use_heading and numbers:
             plt.text(
                 episode[t, x_idx] + (radius/2)*math.cos(heading + math.pi),
                 episode[t, y_idx] + (radius/2)*math.sin(heading + math.pi),
@@ -292,16 +305,18 @@ def add_patches(t, n, episode, colors, ax, numbers=False):
                 verticalalignment="center", fontsize=radius*80
             )
         ax.add_patch(e)
-        hx = radius * math.cos(heading)
-        hy = radius * math.sin(heading)
-        heading_width = 0.1
-        h = patches.Arrow(episode[t, x_idx], episode[t, y_idx],
-                          hx, hy, color=colors[i], width=heading_width)
-        ax.add_patch(h)
+        if use_heading:
+            hx = radius * math.cos(heading)
+            hy = radius * math.sin(heading)
+            heading_width = 0.1
+            h = patches.Arrow(episode[t, x_idx], episode[t, y_idx],
+                              hx, hy, color=colors[i], width=heading_width)
+            ax.add_patch(h)
 
 
 def animate(frame, fig, episode, colors, left, right, top, bottom):
-    global obstacles
+    global obstacles, use_heading, initial_robot_terms, terms_per_agent
+    total_terms = initial_robot_terms + terms_per_agent
     ax = fig.get_axes()[0]
     ax.axis('equal')
     ax.clear()
@@ -313,29 +328,34 @@ def animate(frame, fig, episode, colors, left, right, top, bottom):
         ))
     ax.set_xlim((left, right))
     ax.set_ylim((bottom, top))
-    n = int((episode.shape[1] - 4) / 6)
+    n = int((episode.shape[1] - initial_robot_terms) / terms_per_agent)
     for i in range(n):
         if i == 0:
             x_idx, y_idx = 0, 1
             radius = max(episode[0, 4], 0.01)
-            heading = episode[frame, 5]
+            if use_heading:
+                heading = episode[frame, 5]
         else:
-            x_idx, y_idx = 10 + (i - 1) * 6, 10 + (i - 1) * 6 + 1
-            radius = max(episode[0, 14 + (i - 1) * 6], 0.01)
-            heading = episode[frame, 15 + (i - 1) * 6]
+            x_idx, y_idx = total_terms + (i - 1) * terms_per_agent, \
+                           total_terms + (i - 1) * terms_per_agent + 1
+            radius = max(episode[0, total_terms + initial_robot_terms
+                                 + (i - 1) * terms_per_agent], 0.01)
+            if use_heading:
+                heading = episode[frame, 15 + (i - 1) * 6]
         # print('radius is %.4f' % radius)
         #plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
 
         e = patches.Ellipse((episode[frame, x_idx], episode[frame, y_idx]), radius * 2,
                             radius * 2, linewidth=2, fill=False, zorder=2,
                             color=colors[i])
-        hx = radius * math.cos(heading)
-        hy = radius * math.sin(heading)
-        heading_width = 0.1
-        h = patches.Arrow(episode[frame, x_idx], episode[frame, y_idx],
-                          hx, hy, color=colors[i], width=heading_width)
         ax.add_patch(e)
-        ax.add_patch(h)
+        if use_heading:
+            hx = radius * math.cos(heading)
+            hy = radius * math.sin(heading)
+            heading_width = 0.1
+            h = patches.Arrow(episode[frame, x_idx], episode[frame, y_idx],
+                              hx, hy, color=colors[i], width=heading_width)
+            ax.add_patch(h)
 
 if __name__ == "__main__":
     main()

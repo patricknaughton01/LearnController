@@ -597,7 +597,7 @@ class Simulator(object):
             )
             self.robot_num = self.sim.addAgent(
                 robot_pos,
-                1.0, 10, 5.0, 5.0, 0.22 + randomize(-0.1, 0.1), 1.5, (0, 0)
+                1.0, 10, 5.0, 5.0, 0.22, 1.5, (0, 0)
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
