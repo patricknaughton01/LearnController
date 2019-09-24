@@ -55,11 +55,20 @@ def main():
 
     model_config = configparser.RawConfigParser()
     model_config.read(args.model_config)
+    model_config[args.model_type]['dropout'] = str(args.dropout)
     # print('model_config')
     # print(args.model_config)
     for m in range(args.M):
         print('start training model %d ...' % m)
         model = Controller(model_config, model_type=args.model_type) # model_type = crossing
+        if args.model_path != "":   # Try to resume from a previous model
+            try:
+                model.load_state_dict(torch.load(args.model_path)[
+                                          "state_dict"])
+                print("Resuming from model at {}".format(args.model_path))
+            except IOError:
+                print("Could not load model to resume training at "
+                      "{} :(".format(args.model_path))
         print(model)
         trainer = Trainer(model, train_loader, val_loader, config)
         trainer.run()

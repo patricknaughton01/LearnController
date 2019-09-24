@@ -104,7 +104,8 @@ class Trainer(object):
                     occupancy_map = build_occupancy_maps(build_humans(cur_states[b]))
                     batch_occupancy_map.append(occupancy_map)
 
-                batch_occupancy_map = torch.stack(batch_occupancy_map)[:, 1:, :]
+                batch_occupancy_map = torch.stack(batch_occupancy_map)#[:,
+                # 1:, :]
                 state_t = torch.cat([cur_rotated_states, batch_occupancy_map], dim=-1)
 
                 #############################################
@@ -159,7 +160,8 @@ class Trainer(object):
                 for b in range(batch_size):
                     occupancy_map = build_occupancy_maps(build_humans(cur_states[b]))
                     batch_occupancy_map.append(occupancy_map)
-                batch_occupancy_map = torch.stack(batch_occupancy_map)[:, 1:, :]
+                batch_occupancy_map = torch.stack(batch_occupancy_map)#[:,
+                # 1:, :]
                 state_t = torch.cat([cur_rotated_states, batch_occupancy_map], dim=-1)
                 pred_t, h_t = self.model(state_t, h_t)
                 outputs.append(pred_t)
