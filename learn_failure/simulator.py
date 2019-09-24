@@ -512,12 +512,10 @@ class Simulator(object):
         rrad = self.sim.getAgentRadius(self.robot_num)
         v_pref = self.sim.getAgentMaxSpeed(self.robot_num)
         theta = math.atan2(rvel[1], rvel[0])
-        # Robot's state entry. Note that goal is listed as the robot's current
-        # position because we aren't using that goal as such, we are just
-        # exploring.
+        # Robot's state entry.
         state = [
             rpos[0], rpos[1], rvel[0], rvel[1], rrad,
-            self.goals[self.robot_num][0], self.goals[self.robot_num][1],
+            self.overall_robot_goal[0], self.overall_robot_goal[1],
             v_pref, theta
         ]
         for agent in self.agents:
@@ -556,6 +554,7 @@ class Simulator(object):
         """
         if (scene.startswith("barge_in")
                 or scene.startswith("dynamic_barge_in")):
+            success_trial = 'success' in scene
             num_people = 4
             # Walls
             wall_perturbation = 0.1 # Random range to add to wall verticies
@@ -589,11 +588,12 @@ class Simulator(object):
             self.obstacles.append(down_wall_vertices)
 
             # Add the robot
-            # x normally has -0.2 instead of -0.8 (we change it for the
-            # success model)
+            x_offset = -0.2
+            if success_trial:
+                x_offset = -0.8
             robot_pos = (
-                wall_length - 0.8 + randomize(-0.1, 0.1), -0.15 + wall_width +
-                wall_dist / 2.0 + randomize(-0.1, 0.1)
+                wall_length + x_offset + randomize(-0.1, 0.1),
+                -0.15 + wall_width +  wall_dist / 2.0 + randomize(-0.1, 0.1)
             )
             self.robot_num = self.sim.addAgent(
                 robot_pos,
@@ -654,6 +654,9 @@ class Simulator(object):
                 # from the robot
                 min_hum = 3
                 max_hum = 6
+                if success_trial:
+                    min_hum = 4
+                    max_hum = 4
                 max_hum_rad = 0.2
                 num_hum = random.randint(min_hum, max_hum)
                 for i in range(num_hum):
@@ -667,16 +670,23 @@ class Simulator(object):
                         pos, 1.0, 10, 5.0, 5.0, randomize(0.12, 0.22),
                         randomize(0.1, 0.4), (0, 0)
                     ))
-                    goal_min = 0.2
-                    goal_max = 0.5
+                    goal_min = -0.2
+                    goal_max = -0.5
+                    if success_trial:
+                        goal_min = 1.0
+                        goal_max = 2.5
                     self.goals.append((
-                        pos[0] - randomize(goal_min, goal_max),
+                        pos[0] + randomize(goal_min, goal_max),
                         pos[1] + randomize(-hum_perb, hum_perb)
                     ))
-                    self.headings.append(normalize(randomize(-math.pi/8,
-                                                             math.pi/8)))
-                    #self.headings.append(normalize(randomize(7*math.pi/8,
-                     #                                  9*math.pi/8)))
+                    if success_trial:
+                        self.headings.append(
+                            normalize(randomize(-math.pi/8, math.pi/8))
+                        )
+                    else:
+                        self.headings.append(
+                            normalize(randomize(7*math.pi/8, 9*math.pi/8))
+                        )
             # By default, builds a scene in which the robot barges in to the
             # right. If one of the following specific scenes is provided,
             if scene.endswith("left"):    # Negate x coordinate
@@ -842,36 +852,6 @@ class Simulator(object):
                     (max_dim * random.random(), max_dim * random.random())
                 )
                 self.headings.append(normalize(randomize(-math.pi, math.pi)))
-        # Add in walls around the whole thing so robots don't just wander
-        # off
-        """wall_left = [
-            (-self.max_dim, -self.max_dim),
-            (-self.max_dim, self.max_dim * 2),
-            (-self.max_dim * 2, self.max_dim * 0.5)
-        ]
-        wall_top = [
-            (-self.max_dim, self.max_dim * 2),
-            (self.max_dim * 2, self.max_dim * 2),
-            (self.max_dim * 0.5, self.max_dim * 3)
-        ]
-        wall_right = [
-            (self.max_dim * 2, self.max_dim * 2),
-            (self.max_dim * 2, -self.max_dim),
-            (self.max_dim * 3, self.max_dim *0.5)
-        ]
-        wall_bottom = [
-            (self.max_dim * 2, -self.max_dim),
-            (-self.max_dim, -self.max_dim),
-            (self.max_dim * 0.5, -self.max_dim * 2)
-        ]
-        self.obstacles.append(wall_left)
-        self.sim.addObstacle(wall_left)
-        self.obstacles.append(wall_right)
-        self.sim.addObstacle(wall_right)
-        self.obstacles.append(wall_top)
-        self.sim.addObstacle(wall_top)
-        self.obstacles.append(wall_bottom)
-        self.sim.addObstacle(wall_bottom)"""
         if self.file is not None:
             # First line is obstacles in the scene
             self.file.write(str(self.obstacles))

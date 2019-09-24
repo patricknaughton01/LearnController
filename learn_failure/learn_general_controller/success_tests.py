@@ -78,12 +78,10 @@ def succ_state(sim):
     rrad = sim.sim.getAgentRadius(sim.robot_num)
     v_pref = sim.sim.getAgentMaxSpeed(sim.robot_num)
     theta = math.atan2(rvel[1], rvel[0])
-    # Robot's state entry. Note that goal is listed as the robot's current
-    # position because we aren't using that goal as such, we are just
-    # exploring.
+    # Robot's state entry.
     state = [
         rpos[0], rpos[1], rvel[0], rvel[1], rrad,
-        rpos[0], rpos[1], v_pref, theta
+        sim.overall_robot_goal[0], sim.overall_robot_goal[1], v_pref, theta
     ]
     for agent in sim.agents:
         if agent != sim.robot_num:  # We already accounted for the robot
