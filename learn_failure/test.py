@@ -50,7 +50,7 @@ def main():
                 print("Couldn't open file at {}".format(args.success_path))
         if success_model is not None:
             sim.forward_simulate(success_model, max_ts=args.success_max_ts,
-                                 failure_func=lambda p : False)
+                                 failure_func=lambda p : False, key=str(i))
         h_t = None
         total_reward = torch.zeros((1, 1), dtype=torch.float)
         for t in range(timesteps):

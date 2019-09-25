@@ -1,0 +1,3 @@
+Comparing the uncertainties across many trials of familiar and unfamiliar
+problem instances to see if the absolute value of the uncertainty indicates
+anything.

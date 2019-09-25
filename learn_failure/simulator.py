@@ -98,7 +98,7 @@ class Simulator(object):
         self.advance_simulation()
 
     def forward_simulate(self, success_model, samples=20, max_ts=100,
-                         failure_func=None):
+                         failure_func=None, key="0"):
         """Simulates the beginning of the scenario by using the predictions of
         the success_model (a neural network which takes in the state of the
         robot and predicts a mux, muy, sx, sy, and correlation for the
@@ -107,12 +107,15 @@ class Simulator(object):
         :param torch.nn.Module success_model: a neural network which takes in
             the state of the robot and predicts a mux, muy, sx, sy, and
             correlation for the next state
+        :param int samples: The number of samples to take of the network's
+            output
         :param int max_ts: The maximum number of timesteps the
             `success_model` is allowed to run before it is cut off
         :param function failure_func: function that returns a boolean value
             and takes in the prediction made by the network. It should
             return True iff the model is making poor predictions/thinks that
             the controller will no longer be successful
+        :param string key: An identifier to append to the std_dev filename
         :return: None
         """
         with torch.no_grad():
@@ -123,7 +126,7 @@ class Simulator(object):
             if failure_func is None:
                 failure_func = self.base_failure
             i = 0
-            f = open("std_devs.txt", "w")
+            f = open("std_devs_{}.txt".format(key), "w")
             while not failure_func(pred) and i < max_ts:
                 self.goals[self.robot_num] = self.overall_robot_goal
                 mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
@@ -206,6 +209,7 @@ class Simulator(object):
         :return: whether or not the prediction has failed
             :rtype: bool
         """
+        return False
         #r_rad = self.sim.getAgentRadius(self.robot_num)
         mux, muy, sx, sy, corr = utils.get_coefs(prediction.unsqueeze(0))
         d = self.dist((mux, muy), self.overall_robot_goal)
