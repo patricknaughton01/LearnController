@@ -31,6 +31,10 @@ def main():
     mys = []
     dxs = []
     dys = []
+    txs = []
+    tys = []
+    squares = []
+    max_squares = []
     for name in files:
         mxbuff = [0] * args.w
         mybuff = [0] * args.w
@@ -45,6 +49,9 @@ def main():
         my = []
         dx = []
         dy = []
+        tx = []
+        ty = []
+        square = []
         with open(name, "r") as file:
             lines = file.readlines()
             for i, line in enumerate(lines):
@@ -54,7 +61,7 @@ def main():
                 mybuff[buff_ind] = float(line[1])
                 dxbuff[buff_ind] = float(line[3])
                 dybuff[buff_ind] = float(line[4])
-                last_ind = (buff_ind - 1 + args.w)%args.w
+                last_ind = (buff_ind + 1)%args.w
                 mx_sum += mxbuff[buff_ind] - mxbuff[last_ind]
                 my_sum += mybuff[buff_ind] - mybuff[last_ind]
                 dx_sum += dxbuff[buff_ind] - dxbuff[last_ind]
@@ -63,17 +70,26 @@ def main():
                 my.append(my_sum / args.w)
                 dx.append(dx_sum / args.w)
                 dy.append(mx_sum / args.w)
+                tx_sum = mx_sum + dx_sum
+                ty_sum = my_sum + dy_sum
+                tx.append(tx_sum / args.w)
+                ty.append(ty_sum / args.w)
+                square.append(tx_sum**2 + ty_sum**2)
             mxs.append(mx)
             mys.append(my)
             dxs.append(dx)
             dys.append(dy)
-    vals = [mxs, mys, dxs, dys]
-    names = ["mx", "my", "dx", "dy"]
+            txs.append(tx)
+            tys.append(ty)
+            squares.append(square)
+            max_squares.append([max(square)])
+    vals = [mxs, mys, dxs, dys, txs, tys, squares, max_squares]
+    names = ["mx", "my", "dx", "dy", "tx", "ty", "square", "max_squares"]
     for i, val in enumerate(vals):
         with open(names[i] + "_" + args.o, "w") as outfile:
             for j in range(len(val[0])):
                 for k in range(len(val)):
-                    outfile.write("{}, ".format(val[k][j]))
+                    outfile.write("{} ".format(val[k][j]))
                 outfile.write("\n")
 
 
