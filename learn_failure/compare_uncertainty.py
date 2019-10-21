@@ -57,15 +57,19 @@ def main():
             for i, line in enumerate(lines):
                 line = line.split(" ")
                 buff_ind = i%args.w
+                mx_sum -= mxbuff[buff_ind]
+                my_sum -= mybuff[buff_ind]
+                dx_sum -= dxbuff[buff_ind]
+                dy_sum -= dybuff[buff_ind]
                 mxbuff[buff_ind] = float(line[0])
                 mybuff[buff_ind] = float(line[1])
                 dxbuff[buff_ind] = float(line[3])
                 dybuff[buff_ind] = float(line[4])
-                last_ind = (buff_ind + 1)%args.w
-                mx_sum += mxbuff[buff_ind] - mxbuff[last_ind]
-                my_sum += mybuff[buff_ind] - mybuff[last_ind]
-                dx_sum += dxbuff[buff_ind] - dxbuff[last_ind]
-                dy_sum += dybuff[buff_ind] - dybuff[last_ind]
+                last_ind = buff_ind
+                mx_sum += mxbuff[buff_ind]
+                my_sum += mybuff[buff_ind]
+                dx_sum += dxbuff[buff_ind]
+                dy_sum += dybuff[buff_ind]
                 mx.append(mx_sum / args.w)
                 my.append(my_sum / args.w)
                 dx.append(dx_sum / args.w)
