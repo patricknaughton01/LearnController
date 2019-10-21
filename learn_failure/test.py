@@ -50,23 +50,30 @@ def main():
             except IOError:
                 success_model = None
                 print("Couldn't open file at {}".format(args.success_path))
+        success_ts = 0
         if success_model is not None:
-            sim.forward_simulate(success_model, max_ts=args.success_max_ts,
-                                 key=str(i))
-        h_t = None
-        total_reward = torch.zeros((1, 1), dtype=torch.float)
-        for t in range(timesteps):
-            action, h_t = model.select_action(
-                sim.state(), h_t, epsilon=epsilon
-            )
-            sim.do_step(action)
-            reward, _ = sim.reward()
-            # Penalize moving
-            if action.item() != 0:
-                reward -= 0.01
-            total_reward += reward
-        print("Reward: ", total_reward.item())
-        reward_file.write(str(total_reward.item()) + "\n")
+            success_ts = sim.forward_simulate(success_model,
+                max_ts=args.success_max_ts, key=str(i))
+        if success_ts < args.success_max_ts:
+            # We failed at some point
+            h_t = None
+            total_reward = torch.zeros((1, 1), dtype=torch.float)
+            for t in range(timesteps):
+                action, h_t = model.select_action(
+                    sim.state(), h_t, epsilon=epsilon
+                )
+                sim.do_step(action)
+                reward, _ = sim.reward()
+                # Penalize moving
+                if action.item() != 0:
+                    reward -= 0.01
+                total_reward += reward
+            print("Reward: ", total_reward.item())
+            reward_file.write(str(total_reward.item()) + "\n")
+        else:
+            # We succeeded
+            print("Success")
+            reward_file.write("-" + "\n")
         out_file.close()
     reward_file.close()
 

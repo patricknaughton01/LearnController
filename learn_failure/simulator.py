@@ -118,7 +118,8 @@ class Simulator(object):
             return True iff the model is making poor predictions/thinks that
             the controller will no longer be successful
         :param string key: An identifier to append to the std_dev filename
-        :return: None
+        :return: the number of timesteps before the success controller failed
+            :rtype: int
         """
         with torch.no_grad():
             # Even though we're evaluating it, we need the model to be in
@@ -144,6 +145,7 @@ class Simulator(object):
                 i += 1
             f.close()
             print("Finished success simulation after {} steps".format(i))
+            return i
 
     @staticmethod
     def get_succ_prediction(model, state, h_t, samples):
