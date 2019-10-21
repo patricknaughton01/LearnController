@@ -12,6 +12,8 @@ from simulator import Simulator
 
 def main():
     args = parse_args()
+    with open("command.txt", "w") as cfile:
+        cfile.write(str(args) + "\n")
     model_path = args.model_path
     if model_path == "":
         print("You must provide a model to test for test.py")
@@ -50,7 +52,7 @@ def main():
                 print("Couldn't open file at {}".format(args.success_path))
         if success_model is not None:
             sim.forward_simulate(success_model, max_ts=args.success_max_ts,
-                                 failure_func=lambda p : False, key=str(i))
+                                 key=str(i))
         h_t = None
         total_reward = torch.zeros((1, 1), dtype=torch.float)
         for t in range(timesteps):

@@ -65,7 +65,6 @@ def main():
                 mybuff[buff_ind] = float(line[1])
                 dxbuff[buff_ind] = float(line[3])
                 dybuff[buff_ind] = float(line[4])
-                last_ind = buff_ind
                 mx_sum += mxbuff[buff_ind]
                 my_sum += mybuff[buff_ind]
                 dx_sum += dxbuff[buff_ind]
@@ -76,9 +75,11 @@ def main():
                 dy.append(mx_sum / args.w)
                 tx_sum = mx_sum + dx_sum
                 ty_sum = my_sum + dy_sum
-                tx.append(tx_sum / args.w)
-                ty.append(ty_sum / args.w)
-                square.append(tx_sum**2 + ty_sum**2)
+                this_tx = tx_sum / args.w
+                this_ty = ty_sum / args.w
+                tx.append(this_tx)
+                ty.append(this_ty)
+                square.append(this_tx**2 + this_ty**2)
             mxs.append(mx)
             mys.append(my)
             dxs.append(dx)

@@ -44,6 +44,8 @@ class Simulator(object):
         self.build_scene(self.scene)
         self.rot_speed = (self.sim.getAgentMaxSpeed(self.robot_num) *
                           math.pi / 16)
+        self.uncertainties = [0.0] * 10
+        self.uncertainty_ind = 0
 
     def do_step(self, action_ind):
         """Run a step of the simulation taking in an action from an
@@ -123,15 +125,17 @@ class Simulator(object):
             # train mode so that dropout layers still work
             success_model.train()
             pred, h_t = None, None
+            uncertainty = 0.0
             if failure_func is None:
                 failure_func = self.base_failure
             i = 0
             f = open("std_devs_{}.txt".format(key), "w")
-            while not failure_func(pred) and i < max_ts:
+            while not failure_func(uncertainty) and i < max_ts:
                 self.goals[self.robot_num] = self.overall_robot_goal
                 mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
                     self.get_succ_prediction(
                     success_model, self.success_state(), h_t, samples)
+                uncertainty = (sx+d_sx)**2 + (sy+d_sy)**2
                 f.write("{} {} {} {} {} {}\n".format(sx, sy, rho, d_sx,
                                                      d_sy, d_corr))
                 rpos = self.sim.getAgentPosition(self.robot_num)
@@ -200,24 +204,22 @@ class Simulator(object):
         if self.file is not None:
             self.update_visualization()
 
-    def base_failure(self, prediction):
-        """Determines if the predictor has failed. Simply checks the standard
-        deviation of the prediction to see if it is larger than the radius
-        of the robot in either x or y.
+    def base_failure(self, uncertainty):
+        """Determines if the predictor has failed. Simply checks the
+        uncertainty passed in to determine whether or not it exceeds some
+        threshold.
 
-        :param tensor 1x5 prediction: prediction made by the success model
+        :param float uncertainty: uncertainty (total uncertainty) in the
+            success model
         :return: whether or not the prediction has failed
             :rtype: bool
         """
-        return False
-        #r_rad = self.sim.getAgentRadius(self.robot_num)
-        mux, muy, sx, sy, corr = utils.get_coefs(prediction.unsqueeze(0))
-        d = self.dist((mux, muy), self.overall_robot_goal)
-        if d > self.last_dist:
-            return True
-        else:
-            self.last_dist = d
-            return False
+        self.uncertainties[self.uncertainty_ind] = uncertainty
+        self.uncertainty_ind = (self.uncertainty_ind + 1 )%len(
+            self.uncertainties)
+        # 0.004 is a hard-coded threshold for now that was determined by
+        # analyzing multiple barge-in runs.
+        return utils.avg(self.uncertainties) > 0.004
 
     def state(self):
         """Computes the state that will be fed to the DQN. This is composed
@@ -556,9 +558,9 @@ class Simulator(object):
             :rtype: None
 
         """
+        success_trial = 'success' in scene
         if (scene.startswith("barge_in")
                 or scene.startswith("dynamic_barge_in")):
-            success_trial = 'success' in scene
             num_people = 4
             # Walls
             wall_perturbation = 0.1 # Random range to add to wall verticies
