@@ -66,6 +66,9 @@ def main():
     trainer = Trainer(model, config, success_model=success_model)
     path = log_path
     file_name = "model_" + args.name + ".tar"
+    with open("command_" + args.name, "w") as cfile:
+        cfile.write(str(args) + "\n")
+        cfile.write(str(model_config) + "\n")
     if not os.path.exists(path):
         os.makedirs(path)
     try:

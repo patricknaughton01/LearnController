@@ -44,7 +44,7 @@ class Simulator(object):
         self.build_scene(self.scene)
         self.rot_speed = (self.sim.getAgentMaxSpeed(self.robot_num) *
                           math.pi / 16)
-        self.uncertainties = [0.0] * 10
+        self.uncertainties = [0.0]
         self.uncertainty_ind = 0
 
     def do_step(self, action_ind):
