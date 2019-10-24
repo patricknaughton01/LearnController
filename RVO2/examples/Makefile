@@ -46,6 +46,10 @@ Blocks: Blocks.o
 	$(RM) Blocks
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -o $@ Blocks.o $(LIBS)
 
+Overtake: Overtake.o
+	$(RM) Overtake
+	$(CXX) $(INCLUDES) $(CXXFLAGS) -o $@ Overtake.o $(LIBS)
+
 Circle: Circle.o
 	$(RM) Circle
 	$(CXX) $(INCLUDES) $(CXXFLAGS) -o $@ Circle.o $(LIBS)
