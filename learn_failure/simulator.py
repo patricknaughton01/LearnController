@@ -762,8 +762,8 @@ class Simulator(object):
             self.goals.append(position1)
             self.headings.append(normalize(randomize(7 * math.pi/8,
                                                      9 * math.pi/8)))
-        elif scene == "overtaking":     # overtaking scene
-            pos1 = (randomize(-2.0, -1.5), randomize(-2.0, -1.5))   # Robot
+        elif scene.startswith("overtake"):     # overtaking scene
+            pos1 = (randomize(-2.0, -1.5), randomize(-2.0, -1.5))  # Robot
             # Human to overtake
             pos2 = (randomize(-1.0, -0.5), randomize(-1.0, -0.5))
             hum_goal = (randomize(2.0, 3.0), randomize(2.0, 3.0))
@@ -771,12 +771,13 @@ class Simulator(object):
             self.robot_num = self.sim.addAgent(pos1, 15.0, 10, 5.0, 5.0,
                                                randomize(0.15, 0.25),
                                                randomize(1.5, 2.0), (0, 0))
-            self.goals.append(pos1)     # Robot has no explicit goal at first
+            self.goals.append(pos1)  # Robot has no explicit goal at first
             # Used to determine if success controller has failed.
             self.overall_robot_goal = hum_goal
             self.agents.append(self.robot_num)
-            self.headings.append(normalize(math.pi/4 + randomize(-math.pi/8,
-                math.pi/8)))
+            self.headings.append(
+                normalize(math.pi / 4 + randomize(-math.pi / 8,
+                                                  math.pi / 8)))
             # Human to overtake
             self.agents.append(self.sim.addAgent(pos2, 15.0, 10, 5.0, 5.0,
                                                  randomize(0.15, 0.25),
@@ -792,37 +793,56 @@ class Simulator(object):
             self.goals.append(pos2)
             self.headings.append(
                 normalize(5 * math.pi / 4 + randomize(-math.pi / 8,
-                                                  math.pi / 8)))
+                                                      math.pi / 8)))
+            if not success_trial:
+                # Add other humans walking around in the middle of the path...
+                self.agents.append(self.sim.addAgent(
+                    (randomize(1.0, 2.0), randomize(-1.0, -2.0)), 15.0, 10, 5.0,
+                    5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
+                self.goals.append((randomize(-1.0, 0.0), randomize(0.0, 1.0)))
+                self.headings.append(
+                    normalize(3 * math.pi / 4 + randomize(-math.pi / 8,
+                                                          math.pi / 8)))
+                self.agents.append(self.sim.addAgent(
+                    (randomize(0.0, 1.0), randomize(0.0, -1.0)), 15.0, 10, 5.0,
+                    5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
+                self.goals.append((randomize(-2.0, -1.0), randomize(1.0, 2.0)))
+                self.headings.append(
+                    normalize(3 * math.pi / 4 + randomize(-math.pi / 8,
+                                                          math.pi / 8)))
+                self.agents.append(self.sim.addAgent(
+                    (randomize(-2.0, -1.0), randomize(1.0, 2.0)), 15.0, 10, 5.0,
+                    5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
+                self.goals.append((randomize(1.0, 2.0), randomize(-2.0, -1.0)))
+                self.headings.append(
+                    normalize(-math.pi / 4 + randomize(-math.pi / 8,
+                                                          math.pi / 8)))
+                self.agents.append(self.sim.addAgent(
+                    (randomize(0.0, -1.0), randomize(0.0, 1.0)), 15.0, 10, 5.0,
+                    5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
+                self.goals.append((randomize(0.0, 1.0), randomize(0.0, -1.0)))
+                self.headings.append(
+                    normalize(-math.pi / 4 + randomize(-math.pi / 8,
+                                                       math.pi / 8)))
+            else:
+                self.agents.append(self.sim.addAgent(
+                    (hum_goal[0] + randomize(0.5, 0.7),
+                     hum_goal[1] + randomize(0.5, 0.7)), 15.0, 10, 5.0, 5.0,
+                    randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)
+                ))
+                self.goals.append((pos1[0] + randomize(0.5, 0.7), pos1[1] +
+                                   randomize(0.5, 0.7)))
+                self.headings.append(normalize(randomize(-math.pi, math.pi)))
 
-            # Add other humans walking around in the middle of the path...
-            self.agents.append(self.sim.addAgent(
-                (randomize(1.0, 2.0), randomize(-1.0, -2.0)), 15.0, 10, 5.0,
-                5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
-            self.goals.append((randomize(-1.0, 0.0), randomize(0.0, 1.0)))
-            self.headings.append(
-                normalize(3 * math.pi / 4 + randomize(-math.pi / 8,
-                                                      math.pi / 8)))
-            self.agents.append(self.sim.addAgent(
-                (randomize(0.0, 1.0), randomize(0.0, -1.0)), 15.0, 10, 5.0,
-                5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
-            self.goals.append((randomize(-2.0, -1.0), randomize(1.0, 2.0)))
-            self.headings.append(
-                normalize(3 * math.pi / 4 + randomize(-math.pi / 8,
-                                                      math.pi / 8)))
-            self.agents.append(self.sim.addAgent(
-                (randomize(-2.0, -1.0), randomize(1.0, 2.0)), 15.0, 10, 5.0,
-                5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
-            self.goals.append((randomize(1.0, 2.0), randomize(-2.0, -1.0)))
-            self.headings.append(
-                normalize(-math.pi / 4 + randomize(-math.pi / 8,
-                                                      math.pi / 8)))
-            self.agents.append(self.sim.addAgent(
-                (randomize(0.0, -1.0), randomize(0.0, 1.0)), 15.0, 10, 5.0,
-                5.0, randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)))
-            self.goals.append((randomize(0.0, 1.0), randomize(0.0, -1.0)))
-            self.headings.append(
-                normalize(-math.pi / 4 + randomize(-math.pi / 8,
-                                                   math.pi / 8)))
+                self.agents.append(self.sim.addAgent(
+                    (pos1[0] + randomize(0.5, 0.7),
+                     pos1[1] + randomize(0.5, 0.7)), 15.0, 10, 5.0, 5.0,
+                    randomize(0.15, 0.25), randomize(1.5, 2.0), (0, 0)
+                ))
+                self.goals.append((hum_goal[0] + randomize(0.5, 0.7),
+                                   hum_goal[1] + randomize(0.5, 0.7)))
+                self.headings.append(normalize(randomize(-math.pi, math.pi)))
+
         else:       # Build a random scene
             max_dim = self.max_dim    # Maximum x and y start/goal locations
             min_agents = 5

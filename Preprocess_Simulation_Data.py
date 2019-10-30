@@ -219,7 +219,7 @@ def main():
     ax = fig.add_subplot(111)
     ax.axis('equal')
     top = 3
-    bottom = -1
+    bottom = -3
     left = -1
     right = 3
     plt.xlim((left, right))
