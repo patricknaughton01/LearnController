@@ -1,0 +1,21 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{Gal}{2016}]{uncertaintyindeeplearning}
+Gal, Y.
+\newblock 2016.
+\newblock {\em Uncertainty in deep learning}.
+\newblock Ph.D. Dissertation, PhD thesis, University of Cambridge.
+
+\bibitem[\protect\citeauthoryear{Likhachev and Stentz}{2008}]{ppcp}
+Likhachev, M., and Stentz, A.
+\newblock 2008.
+\newblock Probabilistic planning with clear preferences on missing information.
+\newblock {\em Lab Papers (GRASP)} ~25.
+
+\bibitem[\protect\citeauthoryear{Sutton and Barto}{1998}]{suttonandbarto}
+Sutton, R.~S., and Barto, A.~G.
+\newblock 1998.
+\newblock {\em Introduction to Reinforcement Learning}.
+\newblock Cambridge, MA, USA: MIT Press, 1st edition.
+
+\end{thebibliography}

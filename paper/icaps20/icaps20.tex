@@ -1,11 +1,59 @@
-\documentclass[letterpaper]{IEEEtran}
-
+\documentclass[letterpaper]{article}
+\usepackage{aaai20}
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage[hyphens]{url}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\urlstyle{rm}
+\def\UrlFont{\rm}
+\usepackage{graphicx}
+\frenchspacing
+\setlength{\pdfpagewidth}{8.5in}
+\setlength{\pdfpageheight}{11in}
+% Add additional packages here, but check
+% the list of disallowed packages
+% (including, but not limited to
+% authblk, caption, CJK, float, fullpage, geometry,
+% hyperref, layout, nameref, natbib, savetrees,
+% setspace, titlesec, tocbibind, ulem)
+% and illegal commands provided in the
+% common formatting errors document
+% included in the Author Kit before doing so.
+%
+% PDFINFO
+% You are required to complete the following
+% for pass-through to the PDF.
+% No LaTeX commands of any kind may be
+% entered. The parentheses and spaces
+% are an integral part of the
+% pdfinfo script and must not be removed.
+%
+\pdfinfo{
+	/Title (Type Your Paper Title Here in Mixed Case)
+	/Author (John Doe, Jane Doe)
+	/Keywords (Input your keywords in this optional area)
+}
+%
+% Section Numbers
+% Uncomment if you want to use section numbers
+% and change the 0 to a 1 or 2
+% \setcounter{secnumdepth}{0}
+% Title and Author Information Must Immediately Follow
+% the pdfinfo within the preamble
+%
 
-\title{Reinforcement learning for navigation}
-\date{\today}
-\author{Patrick Naughton}
+\title{Title}
+\author{Author 1 \ and Author 2\\
+Address line\\
+Address line\\
+\ And\\
+Author 3\\
+Address line\\
+Address line
+}
+
 
 \begin{document}
 	
@@ -74,10 +122,35 @@
 				
 				In order to compute this threshold, we create a training set of success examples for a given scene. This training set consists of many (1000) trial runs in which the robot successfully reaches its goal in a given scene, stored as time series data of the locations and velocities of the robot and each human. 
 				
-				The success controller network has the same architecture as that of the failure controller, except it only has five outputs instead of $35$. These outputs represent the expected next position of the robot, $(p_x, p_y)$, the logarithm of the standard deviation of this prediction $(log\sigma_x, log\sigma_y)$, and the inverse hyperbolic tangent of the correlation between the $x$ and $y$ prediction $(tanh^{-1}(\rho))$. 
+				The success controller network has the same architecture as that of the failure controller, except it only has five outputs instead of $35$. These outputs represent the expected next position of the robot, $(p_x, p_y)$, the logarithm of the standard deviation of this prediction $(log\sigma_x, log\sigma_y)$, and the inverse hyperbolic tangent of the correlation between the $x$ and $y$ prediction $(tanh^{-1}(\rho))$. This network is trained using a negative two-dimensional Gaussian log-likelihood loss where the target at each time step is the ground truth robot position at the next time step. This network is trained with a high dropout probability of $0.4$ for $300$ epochs. At testing time, to determine the uncertainty of the network's prediction, we add its data uncertainty to its model uncertainty. To compute these values, we simply run the robot's observed state through the network some number of times ($20$ in our specific case) to find the average standard deviation in the $x$ and $y$ directions reported by the network (data uncertainty) as well as the standard deviations of the target positions reported by the network for both the $x$ and $y$ directions (model uncertainty). These two values are summed to find the total uncertainty in each direction \cite{uncertaintyindeeplearning}. To find the square of the overall magnitude of this uncertainty we sum the squares of these individual components.
+				
+				At testing time, we simply see if this total uncertainty magnitude exceeds a precomputed threshold. To find this threshold, we simulated the success controller in $100$ cases similar to the training data set that allowed the robot to reach its goal, and $100$ cases in which the robot could not reach its goal due to human movement it the scene. Each trial ran for $100$ time steps. We then examined the maximum uncertainty realized in each of these trials by the success controller and chose a threshold that minimized the total number of erroneous categorizations (the sum of the number of familiar trials with higher uncertainty and unfamiliar trials with lower uncertainty). This threshold is then set for this specific success controller.
 			
 	\section{Experiments}
+		To test the effectiveness of our approach we ran three different types of trials for a \textit{barge-in} controller (working on some of them, as well as overtake). This controller applies to a scene in which a group of humans are standing at the end of a hallway and the robot would like to barge past them to reach a goal on the opposite side. In a successful execution of this controller, the humans will move out of the way for the robot to pass through. In an unsuccessful execution, the humans may remain stationary or may even move into the corridor, preventing the robot from passing. 
+		
+		We test first on an unfamiliar scene in which the humans move into the corridor the robot occupies. In one set of trials, we enable the discriminator and failure controller so that the robot will respond to the novel scene by transitioning to its contingency plan once it realizes that its original goal is infeasible (specifically, once it is suitably uncertain that it will reach its intended goal). If the robot's uncertainty never reaches this threshold after $100$ time steps, the trial is simply ended. The failure controller was run for $100$ time steps before being cut off. 
+		
+		(I haven't done this experiment yet but it should be quick, hopefully)In the next set of trials, we deactivated the discriminator such that the success controller would run until it was cut off after $100$ time steps. The robot then follows this policy and ignores its uncertainty throughout the trial.
+		
+		Finally, in the last set of trials we placed the robot in a familiar scene with the failure controller and discriminator activated. This was done to ensure that the robot does not aggressively trigger the failure controller: it should only be used when the robot is truly uncertain about its ability to reach the goal. These trials serve to verify that the uncertainty threshold is high enough: the robot will continue following its success controller as long as it is reasonably certain it can reach its goal. 
+		
 	\section{Results}
+		After carrying out $100$ of each type of trial, the overall paths produced in each run were rated according to:
+		\begin{itemize}
+			\item Path length: The total distance traveled by the robot. In general we would like the robot to move less when possible (find the shortest path when executing a success controller and minimize backwards progress when executing the failure controller).
+			\item Angular distance: The changes in heading the robot underwent. This is used to approximate the smoothness of the robot's path.
+			\item Collisions: The sum of the number of people the robot is in collision with in each time step. We place the highest priority on minimizing this value.
+			\item Intrusions: The sum of the number of people the robot intrudes on in each time step. An intrusion is defined as the robot being within $0.2m$ of a person. All other things equal, we would like to decrease the number of intrusions, but some number of them are acceptable if they are necessary to reach the goal.
+		\end{itemize}
+		
+		(Insert table of results)
+	
 	\section{Conclusion}
+	
+	% References and End of Paper
+	% These lines must be placed at the end of your paper
+	\bibliography{ref}
+	\bibliographystyle{aaai}
 	
 \end{document}
