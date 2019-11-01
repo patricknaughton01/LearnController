@@ -1,10 +1,43 @@
 \begin{thebibliography}{}
 
+\bibitem[\protect\citeauthoryear{Chen \bgroup et al\mbox.\egroup
+  }{2017}]{sociallyawarerl}
+Chen, Y.~F.; Everett, M.; Liu, M.; and How, J.~P.
+\newblock 2017.
+\newblock Socially aware motion planning with deep reinforcement learning.
+\newblock In {\em 2017 IEEE/RSJ International Conference on Intelligent Robots
+  and Systems (IROS)},  1343--1350.
+\newblock IEEE.
+
+\bibitem[\protect\citeauthoryear{Chen \bgroup et al\mbox.\egroup
+  }{2018}]{crowdawarerl}
+Chen, C.; Liu, Y.; Kreiss, S.; and Alahi, A.
+\newblock 2018.
+\newblock Crowd-robot interaction: Crowd-aware robot navigation with
+  attention-based deep reinforcement learning.
+\newblock {\em arXiv preprint arXiv:1809.08835}.
+
+\bibitem[\protect\citeauthoryear{Ferrer, Garrell, and Sanfeliu}{2013}]{sfm}
+Ferrer, G.; Garrell, A.; and Sanfeliu, A.
+\newblock 2013.
+\newblock Social-aware robot navigation in urban environments.
+\newblock In {\em 2013 European Conference on Mobile Robots},  331--336.
+\newblock IEEE.
+
 \bibitem[\protect\citeauthoryear{Gal}{2016}]{uncertaintyindeeplearning}
 Gal, Y.
 \newblock 2016.
 \newblock {\em Uncertainty in deep learning}.
 \newblock Ph.D. Dissertation, PhD thesis, University of Cambridge.
+
+\bibitem[\protect\citeauthoryear{Kretzschmar \bgroup et al\mbox.\egroup
+  }{2016}]{socialirl}
+Kretzschmar, H.; Spies, M.; Sprunk, C.; and Burgard, W.
+\newblock 2016.
+\newblock Socially compliant mobile robot navigation via inverse reinforcement
+  learning.
+\newblock {\em The International Journal of Robotics Research}
+  35(11):1289--1307.
 
 \bibitem[\protect\citeauthoryear{Likhachev and Stentz}{2008}]{ppcp}
 Likhachev, M., and Stentz, A.
@@ -12,10 +45,64 @@ Likhachev, M., and Stentz, A.
 \newblock Probabilistic planning with clear preferences on missing information.
 \newblock {\em Lab Papers (GRASP)} ~25.
 
+\bibitem[\protect\citeauthoryear{Mnih \bgroup et al\mbox.\egroup }{2013}]{dqn}
+Mnih, V.; Kavukcuoglu, K.; Silver, D.; Graves, A.; Antonoglou, I.; Wierstra,
+  D.; and Riedmiller, M.
+\newblock 2013.
+\newblock Playing atari with deep reinforcement learning.
+\newblock {\em arXiv preprint arXiv:1312.5602}.
+
+\bibitem[\protect\citeauthoryear{Mnih \bgroup et al\mbox.\egroup
+  }{2015}]{atarirl}
+Mnih, V.; Kavukcuoglu, K.; Silver, D.; Rusu, A.~A.; Veness, J.; Bellemare,
+  M.~G.; Graves, A.; Riedmiller, M.; Fidjeland, A.~K.; Ostrovski, G.; et~al.
+\newblock 2015.
+\newblock Human-level control through deep reinforcement learning.
+\newblock {\em Nature} 518(7540):529.
+
+\bibitem[\protect\citeauthoryear{Stüvel}{2017}]{pyrvo2}
+Stüvel, S.
+\newblock 2017.
+\newblock Python rvo2.
+\newblock \url{https://github.com/sybrenstuvel/Python-RVO2/}.
+
 \bibitem[\protect\citeauthoryear{Sutton and Barto}{1998}]{suttonandbarto}
 Sutton, R.~S., and Barto, A.~G.
 \newblock 1998.
 \newblock {\em Introduction to Reinforcement Learning}.
 \newblock Cambridge, MA, USA: MIT Press, 1st edition.
+
+\bibitem[\protect\citeauthoryear{Tai \bgroup et al\mbox.\egroup
+  }{2018}]{tai2018socially}
+Tai, L.; Zhang, J.; Liu, M.; and Burgard, W.
+\newblock 2018.
+\newblock Socially compliant navigation through raw depth inputs with
+  generative adversarial imitation learning.
+\newblock In {\em 2018 IEEE International Conference on Robotics and Automation
+  (ICRA)},  1111--1117.
+\newblock IEEE.
+
+\bibitem[\protect\citeauthoryear{Trautman \bgroup et al\mbox.\egroup
+  }{2013}]{caseforcoop}
+Trautman, P.; Ma, J.; Murray, R.; and Krause, A.
+\newblock 2013.
+\newblock Robot navigation in dense human crowds: the case for cooperation in:
+  Robotics and automation (icra).
+\newblock In {\em 2013 IEEE International Conference On},  2153--2160.
+
+\bibitem[\protect\citeauthoryear{Van Den~Berg \bgroup et al\mbox.\egroup
+  }{2011a}]{orca}
+Van Den~Berg, J.; Guy, S.~J.; Lin, M.; and Manocha, D.
+\newblock 2011a.
+\newblock Reciprocal n-body collision avoidance.
+\newblock In {\em Robotics research}. Springer.
+\newblock  3--19.
+
+\bibitem[\protect\citeauthoryear{van~den Berg \bgroup et al\mbox.\egroup
+  }{2011b}]{rvo2}
+van~den Berg, J.; Guy, S.~J.; Snape, J.; Lin, M.~C.; and Manocha, D.
+\newblock 2011b.
+\newblock Rvo2 library: Reciprocal collision avoidance for real-time
+  multi-agent simulation.
 
 \end{thebibliography}
