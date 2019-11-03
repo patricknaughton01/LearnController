@@ -1,9 +1,10 @@
 #!/bin/sh
 
 python train.py \
---num_epochs 300 \
+--num_epochs 500 \
 --print_every 10 \
 --M 1 \
 --train_data_name simulate_barge_in_0.1_patrick2 \
 --test_data_name simulate_barge_in_0.1_patrick2 \
---dropout 0.3
+--dropout 0.3 \
+--seed 987654
