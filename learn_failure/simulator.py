@@ -216,6 +216,7 @@ class Simulator(object):
         :return: whether or not the prediction has failed
             :rtype: bool
         """
+        return False
         self.uncertainties[self.uncertainty_ind] = uncertainty
         self.uncertainty_ind = (self.uncertainty_ind + 1 )%len(
             self.uncertainties)

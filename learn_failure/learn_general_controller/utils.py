@@ -3,7 +3,7 @@ import torch
 import argparse
 from functools import reduce
 from operator import mul
-from state import ObservableState
+from learn_general_controller.state import ObservableState
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Learn Controller")
