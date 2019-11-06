@@ -81,8 +81,8 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
 	// std::srand(static_cast<unsigned int>(std::time(NULL)));
 
 	/* Specify the global time step of the simulation. */
-	//sim->setTimeStep(0.25f);
-	sim->setTimeStep(0.1f);
+	sim->setTimeStep(0.25f);
+	//sim->setTimeStep(0.f);
 
 	/*
 	 * Add agents, specifying their start position, and store their goals on the
