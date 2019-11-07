@@ -7,4 +7,4 @@ python train.py \
 --train_data_name simulate_barge_in_0.25_patrick \
 --test_data_name simulate_barge_in_0.25_patrick \
 --dropout 0.4 \
---seed 252525
+--seed 25128

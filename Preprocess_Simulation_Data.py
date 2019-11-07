@@ -64,6 +64,7 @@ def main():
     seq_lengths = []
     files = glob(parent_path)
     files.sort(key=lambda x: int(x.split('/')[-1].split('.')[-2].split('_')[-1]))
+    print("Found {} files".format(len(files)))
     obstacle_strs = []
     for path in files:
         # print(path)
@@ -151,7 +152,7 @@ def main():
     # obstacle_files = glob(directory  + data_type + "_obstacles_*.txt")
     # obstacle_files.sort(key=lambda x: int(x.split('/')[-1].split('.')[-2].split('_')[-1]))
 
-    filt = seq_lengths < 400
+    filt = seq_lengths < 600
     # print(filt)
     # print(seq_lengths)
     seq_lengths = seq_lengths[filt]
@@ -219,9 +220,9 @@ def main():
     ax = fig.add_subplot(111)
     ax.axis('equal')
     top = 3
-    bottom = -3
+    bottom = -1
     left = -1
-    right = 3
+    right = 8
     plt.xlim((left, right))
     plt.ylim((bottom, top))
     T = episode.shape[0]
@@ -281,6 +282,10 @@ def add_patches(t, n, episode, colors, ax, numbers=False):
         if i == 0:
             x_idx, y_idx = 0, 1
             radius = episode[0, 4]
+            ax.add_patch(patches.Ellipse(
+                (episode[t, 6], episode[t, 7]), 0.1, 0.1, linewidth=2,
+                fill=True, zorder=1000, color=(0,1.0, 0)
+            ))
             if use_heading:
                 heading = episode[t, 5]
         else:
@@ -333,6 +338,10 @@ def animate(frame, fig, episode, colors, left, right, top, bottom):
         if i == 0:
             x_idx, y_idx = 0, 1
             radius = max(episode[0, 4], 0.01)
+            ax.add_patch(patches.Ellipse(
+                (episode[0, 6], episode[0, 7]), 0.1, 0.1, linewidth=2,
+                fill=True, zorder=1000, color=(0, 1.0, 0)
+            ))
             if use_heading:
                 heading = episode[frame, 5]
         else:

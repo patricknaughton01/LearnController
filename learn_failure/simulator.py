@@ -20,7 +20,7 @@ from shapely.ops import nearest_points
 class Simulator(object):
 
     def __init__(self, scene=None, file=None, max_dim=4):
-        self.sim = rvo2.PyRVOSimulator(0.1, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
+        self.sim = rvo2.PyRVOSimulator(0.25, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
         self.robot_num = None
         self.agents = []
@@ -190,16 +190,18 @@ class Simulator(object):
             vec = (g[0] - p[0], g[1] - p[1])
             mag_mul = (vec[0]**2 + vec[1]**2)**0.5
             # check for division by 0/reaching the goal
-            if mag_mul > 1e-2:
+            if mag_mul > 1e-5:
                 vec = (vec[0] / mag_mul, vec[1] / mag_mul)
             # We've reached the goal (and this isn't the robot) so generate
             # a new one
-            elif agent != self.robot_num:
+            """elif agent != self.robot_num:
                 self.goals[agent] = (
                     self.max_dim * random.random(),
                     self.max_dim * random.random()
-                )
+                )"""
+            #print(mag_mul)
             scale = min(mag_mul, self.sim.getAgentMaxSpeed(agent))
+            #scale = self.sim.getAgentMaxSpeed(agent)
             vec = (vec[0] * scale, vec[1] * scale)
             self.sim.setAgentPrefVelocity(agent, vec)
         self.sim.doStep()
@@ -394,7 +396,8 @@ class Simulator(object):
         return_str += "(" + str(rvel[0]) + "," + str(rvel[1]) + ") "
         return_str += str(rrad) + " "
         return_str += str(self.headings[self.robot_num]) + " "
-        return_str += "(" + str(rpos[0]) + "," + str(rpos[1]) + ") "
+        return_str += ("(" + str(self.overall_robot_goal[0])
+                       + "," + str(self.overall_robot_goal[1]) + ") ")
         return_str += str(v_pref) + " "
         return_str += str(theta) + " "
         for agent in self.agents:
@@ -606,7 +609,7 @@ class Simulator(object):
             )
             self.robot_num = self.sim.addAgent(
                 robot_pos,
-                1.0, 10, 5.0, 5.0, 0.22, 1.5, (0, 0)
+                1.0, 10, 5.0, 5.0, 0.22, 2.0, (0, 0)
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
@@ -677,17 +680,23 @@ class Simulator(object):
                     )
                     self.agents.append(self.sim.addAgent(
                         pos, 1.0, 10, 5.0, 5.0, randomize(0.12, 0.22),
-                        randomize(0.1, 0.4), (0, 0)
+                        randomize(0.1, 0.2), (0, 0)
                     ))
                     goal_min = -0.2
                     goal_max = -0.5
                     if success_trial:
                         goal_min = 1.0
                         goal_max = 2.5
-                    self.goals.append((
-                        pos[0] + randomize(goal_min, goal_max),
-                        pos[1] + randomize(-hum_perb, hum_perb)
-                    ))
+                        self.goals.append((
+                            pos[0] + randomize(goal_min, goal_max),
+                            pos[1] + random.choice([-1, 1]) +
+                                randomize(-hum_perb, hum_perb)
+                        ))
+                    else:
+                        self.goals.append((
+                            pos[0] + randomize(goal_min, goal_max),
+                            pos[1] + randomize(-hum_perb, hum_perb)
+                        ))
                     if success_trial:
                         self.headings.append(
                             normalize(randomize(-math.pi/8, math.pi/8))
