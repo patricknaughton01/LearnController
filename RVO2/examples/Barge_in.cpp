@@ -170,7 +170,8 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
 
         RVO::Vector2 robot_pos(randomize(1.0f, 1.5f),
                                randomize(-0.15f + wall_width + wall_dist / 2.0, wall_width + wall_dist / 2.0 + 0.15f));
-        RVO::Vector2 robot_goal(robot_pos.x() + randomize(4.0f, 5.0f), robot_pos.y());
+        RVO::Vector2 robot_goal(robot_pos.x() + randomize(4.0f, 5.0f),
+            robot_pos.y() + randomize(-1.0f, 1.0f));
 
         RVO::Vector2 human_pos1(randomize(wall_length + 0.2f, wall_length + 0.4f),
                                 randomize(wall_width + 0.1f, wall_width + wall_dist / NUM_PEOPLE - 0.1f));

@@ -282,12 +282,17 @@ def add_patches(t, n, episode, colors, ax, numbers=False):
         if i == 0:
             x_idx, y_idx = 0, 1
             radius = episode[0, 4]
-            ax.add_patch(patches.Ellipse(
-                (episode[t, 6], episode[t, 7]), 0.1, 0.1, linewidth=2,
-                fill=True, zorder=1000, color=(0,1.0, 0)
-            ))
             if use_heading:
                 heading = episode[t, 5]
+                ax.add_patch(patches.Ellipse(
+                    (episode[t, 6], episode[t, 7]), 0.1, 0.1, linewidth=2,
+                    fill=True, zorder=1000, color=(0,1.0, 0)
+                ))
+            else:
+                ax.add_patch(patches.Ellipse(
+                    (episode[t, 5], episode[t, 6]), 0.1, 0.1, linewidth=2,
+                    fill=True, zorder=1000, color=(0, 1.0, 0)
+                ))
         else:
             x_idx, y_idx = total_terms + (i - 1)  * terms_per_agent, \
                            total_terms + (i - 1) * terms_per_agent + 1
@@ -338,12 +343,17 @@ def animate(frame, fig, episode, colors, left, right, top, bottom):
         if i == 0:
             x_idx, y_idx = 0, 1
             radius = max(episode[0, 4], 0.01)
-            ax.add_patch(patches.Ellipse(
-                (episode[0, 6], episode[0, 7]), 0.1, 0.1, linewidth=2,
-                fill=True, zorder=1000, color=(0, 1.0, 0)
-            ))
             if use_heading:
                 heading = episode[frame, 5]
+                ax.add_patch(patches.Ellipse(
+                    (episode[0, 6], episode[0, 7]), 0.1, 0.1, linewidth=2,
+                    fill=True, zorder=1000, color=(0, 1.0, 0)
+                ))
+            else:
+                ax.add_patch(patches.Ellipse(
+                    (episode[0, 5], episode[0, 6]), 0.1, 0.1, linewidth=2,
+                    fill=True, zorder=1000, color=(0, 1.0, 0)
+                ))
         else:
             x_idx, y_idx = total_terms + (i - 1) * terms_per_agent, \
                            total_terms + (i - 1) * terms_per_agent + 1

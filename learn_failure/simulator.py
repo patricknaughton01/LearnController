@@ -124,7 +124,7 @@ class Simulator(object):
         with torch.no_grad():
             # Even though we're evaluating it, we need the model to be in
             # train mode so that dropout layers still work
-            success_model.train()
+            success_model.eval()
             pred, h_t = None, None
             uncertainty = 0.0
             if failure_func is None:
@@ -569,7 +569,7 @@ class Simulator(object):
                 or scene.startswith("dynamic_barge_in")):
             num_people = 4
             # Walls
-            wall_perturbation = 0.1 # Random range to add to wall verticies
+            wall_perturbation = 0.01 # Random range to add to wall verticies
             wall_width = 0.3
             wall_length = 2.0
             wall_dist = 1.5
@@ -604,7 +604,8 @@ class Simulator(object):
             if success_trial:
                 x_offset = -0.8
             robot_pos = (
-                wall_length + x_offset + randomize(-0.1, 0.1),
+                #wall_length + x_offset + randomize(-0.1, 0.1),
+                randomize(1.0, 1.5),
                 -0.15 + wall_width +  wall_dist / 2.0 + randomize(-0.1, 0.1)
             )
             self.robot_num = self.sim.addAgent(
@@ -662,46 +663,68 @@ class Simulator(object):
                                   vert[1] + hum_perb * random.random())
                     self.obstacles.append(hum)
             else:
-                # Make humans actual agents that move either towards or away
-                # from the robot
-                min_hum = 3
-                max_hum = 6
                 if success_trial:
-                    min_hum = 4
-                    max_hum = 4
-                max_hum_rad = 0.2
-                num_hum = random.randint(min_hum, max_hum)
-                for i in range(num_hum):
-                    # Stack humans in front of the passage
-                    pos = (
-                        wall_length+2*max_hum_rad + random.random() * hum_perb,
-                        wall_width+wall_dist+0.1 + random.random() * hum_perb
-                            - (max_hum_rad + hum_perb) * (max_hum/num_hum) * i
-                    )
-                    self.agents.append(self.sim.addAgent(
-                        pos, 1.0, 10, 5.0, 5.0, randomize(0.12, 0.22),
-                        randomize(0.1, 0.2), (0, 0)
-                    ))
-                    goal_min = -0.2
-                    goal_max = -0.5
-                    if success_trial:
-                        goal_min = 1.0
-                        goal_max = 2.5
-                        self.goals.append((
-                            pos[0] + randomize(goal_min, goal_max),
-                            pos[1] + random.choice([-1, 1]) +
-                                randomize(-hum_perb, hum_perb)
+                    num_people = 4
+                    pos1 = (randomize(wall_length + 0.2, wall_length + 0.4),
+                                randomize(wall_width + 0.1, wall_width +
+                                          wall_dist / num_people - 0.1))
+                    goal1 = (pos1[0] + randomize(1.0, 2.0),
+                             pos1[1] -randomize(0.3, 0.5))
+                    pos2 = (randomize(wall_length + 0.2, wall_length + 0.4),
+                            randomize(wall_width+wall_dist/num_people + 0.1,
+                                      wall_width
+                                      + wall_dist / num_people * 2 - 0.1))
+                    goal2 = (pos2[0] + randomize(1.2, 2.2),
+                             pos2[1] - randomize(0.4, 0.8))
+                    pos3 = (randomize(wall_length + 0.2, wall_length + 0.4),
+                            randomize(wall_width + wall_dist /
+                                      num_people * 2 + 0.1, wall_width +
+                                      wall_dist / num_people * 3 - 0.1))
+                    goal3 = (pos3[0] + randomize(1.2, 2.2),
+                             pos3[1] + randomize(0.4, 0.8))
+                    pos4 = (randomize(wall_length + 0.2, wall_length + 0.4),
+                            randomize(wall_width + wall_dist / num_people * 3
+                                      + 0.1, wall_width + wall_dist - 0.1))
+                    goal4 = (pos4[0] + randomize(1.0, 2.0),
+                             pos4[1] + randomize(0.3, 0.5))
+
+                    poses = [pos1, pos2, pos3, pos4]
+                    gs = [goal1, goal2, goal3, goal4]
+                    for p in poses:
+                        self.agents.append(self.sim.addAgent(
+                            p, 1.0, 10, 5.0, 5.0,
+                            randomize(0.12, 0.22),randomize(0.1, 0.4), (0, 0)
                         ))
-                    else:
+                        self.headings.append(randomize(-math.pi/8, math.pi/8))
+                    for g in gs:
+                        self.goals.append(g)
+                else:
+                    # Make humans actual agents that move either towards or
+                    # away from the robot
+                    min_hum = 3
+                    max_hum = 6
+                    max_hum_rad = 0.2
+                    num_hum = random.randint(min_hum, max_hum)
+                    for i in range(num_hum):
+                        # Stack humans in front of the passage
+                        pos = (
+                            wall_length+2*max_hum_rad
+                                + random.random() * hum_perb,
+                            wall_width+wall_dist+0.1
+                                + random.random() * hum_perb
+                                - 2*(max_hum_rad + hum_perb)
+                                * (max_hum/num_hum) * i
+                        )
+                        self.agents.append(self.sim.addAgent(
+                            pos, 1.0, 10, 5.0, 5.0, randomize(0.12, 0.22),
+                            randomize(0.1, 0.4), (0, 0)
+                        ))
+                        goal_min = -0.2
+                        goal_max = -0.5
                         self.goals.append((
                             pos[0] + randomize(goal_min, goal_max),
                             pos[1] + randomize(-hum_perb, hum_perb)
                         ))
-                    if success_trial:
-                        self.headings.append(
-                            normalize(randomize(-math.pi/8, math.pi/8))
-                        )
-                    else:
                         self.headings.append(
                             normalize(randomize(7*math.pi/8, 9*math.pi/8))
                         )

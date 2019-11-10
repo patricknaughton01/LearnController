@@ -53,7 +53,7 @@ def main():
         success_ts = 0
         if success_model is not None:
             success_ts = sim.forward_simulate(success_model,
-                max_ts=args.success_max_ts, key=str(i))
+                max_ts=args.success_max_ts, key=str(i), samples=2)
         if success_ts < args.success_max_ts:
             # We failed at some point
             h_t = None
