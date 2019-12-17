@@ -132,7 +132,6 @@ class Simulator(object):
             i = 0
             f = open("std_devs_{}.txt".format(key), "w")
             while not failure_func(uncertainty) and i < max_ts:
-                self.goals[self.robot_num] = self.overall_robot_goal
                 mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
                     self.get_succ_prediction(
                     success_model, self.success_state(), h_t, samples)
@@ -156,8 +155,9 @@ class Simulator(object):
         corr_list = []
         model.train()
         next_h_t = None
+        model.eval()
         with torch.no_grad():
-            for i in range(samples):
+            for i in range(1):
                 pred, next_h_t = model(state, h_t)
                 pred = utils.get_coefs(pred.unsqueeze(0))
                 x.append(pred[0].item())
@@ -173,7 +173,8 @@ class Simulator(object):
             data_sx = utils.avg(sx_list)
             data_sy = utils.avg(sy_list)
             data_corr = utils.avg(corr_list)
-            return mx, my, sx, sy, cov / (sx * sy), data_sx, data_sy, \
+            return mx, my, sx, sy, cov / (sx * sy + 1e-6), data_sx, \
+                   data_sy, \
                    data_corr, next_h_t
 
     def advance_simulation(self):
@@ -188,21 +189,21 @@ class Simulator(object):
             p = self.sim.getAgentPosition(agent)
             g = self.goals[agent]
             vec = (g[0] - p[0], g[1] - p[1])
-            mag_mul = (vec[0]**2 + vec[1]**2)**0.5
+            """mag_mul = (vec[0]**2 + vec[1]**2)**0.5
             # check for division by 0/reaching the goal
             if mag_mul > 1e-5:
                 vec = (vec[0] / mag_mul, vec[1] / mag_mul)
             # We've reached the goal (and this isn't the robot) so generate
             # a new one
-            """elif agent != self.robot_num:
+            """"""elif agent != self.robot_num:
                 self.goals[agent] = (
                     self.max_dim * random.random(),
                     self.max_dim * random.random()
                 )"""
             #print(mag_mul)
-            scale = min(mag_mul, self.sim.getAgentMaxSpeed(agent))
+            #scale = min(mag_mul, self.sim.getAgentMaxSpeed(agent))
             #scale = self.sim.getAgentMaxSpeed(agent)
-            vec = (vec[0] * scale, vec[1] * scale)
+            #vec = (vec[0] * scale, vec[1] * scale)
             self.sim.setAgentPrefVelocity(agent, vec)
         self.sim.doStep()
         if self.file is not None:

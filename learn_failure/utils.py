@@ -568,4 +568,4 @@ def cov(x, y):
         for i in range(len(x)):
             acc += (x[i] - x_bar) * (y[i] - y_bar)
         return acc / (len(x) - 1)
-    return None
+    return 0.0

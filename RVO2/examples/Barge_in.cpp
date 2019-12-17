@@ -400,6 +400,12 @@ int main(int argc, char ** argv)
             sim->doStep();
         }
         while (!reachedGoal(sim));
+        // Do 10 more steps
+        for(int i = 0; i<10; i++){
+            updateVisualization(sim, file);
+            setPreferredVelocities(sim);
+            sim->doStep();
+        }
         file->close();
         delete sim;
 
