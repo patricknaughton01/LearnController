@@ -243,6 +243,9 @@ def rotate(state, kinematics='unicycle'):
     # 'px', 'py', 'vx', 'vy', 'radius', 'heading' 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1', 'heading1'
     #  0     1      2     3      4          5      6      7         8       9     10      11     12     13      14        15
     batch = state.shape[0]
+    dx = (state[:, 6] - state[:, 0]).reshape((batch, -1))
+    dy = (state[:, 7] - state[:, 1]).reshape((batch, -1))
+    dg = torch.norm(torch.cat([dx, dy], dim=1), 2, dim=1, keepdim=True)
     rot = state[:, 5]
     v_pref = state[:, 8].reshape((batch, -1))
     # Rotate vel by rot *clockwise*
@@ -252,11 +255,11 @@ def rotate(state, kinematics='unicycle'):
           - state[:, 2] * torch.sin(rot)).reshape((batch, -1))
 
     radius = state[:, 4].reshape((batch, -1))
-    """if kinematics == 'unicycle':
+    if kinematics == 'unicycle':
         theta = (state[:, 9] - rot).reshape((batch, -1))
     else:
         # set theta to be zero since it's not used
-        theta = torch.zeros_like(v_pref)"""
+        theta = torch.zeros_like(v_pref)
     heading = state[:, 5:6]
     vx1 = (state[:, 12] * torch.cos(rot) + state[:, 13] * torch.sin(
         rot)).reshape((batch, -1))
@@ -274,8 +277,8 @@ def rotate(state, kinematics='unicycle'):
         torch.cat([(state[:, 0] - state[:, 10]).reshape((batch, -1)),
                    (state[:, 1] - state[:, 11]).reshape((batch, -1))], dim=1),
         2, dim=1, keepdim=True)
-    new_state = torch.cat([v_pref, radius, vx, vy, px1, py1, vx1, vy1,
-                           radius1, da, radius_sum], dim=1)
+    new_state = torch.cat([dg, v_pref, theta, radius, vx, vy, px1, py1, vx1,
+                           vy1, radius1, da, radius_sum], dim=1)
     return new_state
 
 def transform_and_rotate(raw_states):

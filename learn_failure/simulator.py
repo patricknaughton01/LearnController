@@ -156,6 +156,7 @@ class Simulator(object):
         model.train()
         next_h_t = None
         model.eval()
+        #print(state.size())
         with torch.no_grad():
             for i in range(1):
                 pred, next_h_t = model(state, h_t)
@@ -205,6 +206,9 @@ class Simulator(object):
             #scale = self.sim.getAgentMaxSpeed(agent)
             #vec = (vec[0] * scale, vec[1] * scale)
             self.sim.setAgentPrefVelocity(agent, vec)
+            if agent == self.robot_num:
+                self.sim.setAgentVelocity(self.robot_num, vec)
+                #print(vec)
         self.sim.doStep()
         if self.file is not None:
             self.update_visualization()
@@ -496,10 +500,12 @@ class Simulator(object):
             :rtype: Tensor
         """
         state = np.array(self.get_success_state_arr())
-        om = old_utils.build_occupancy_maps(old_utils.build_humans(state))
+        om = utils.build_occupancy_maps(utils.build_humans(state))
+        #print("OM: ", om.size())
         # We only have a batch of one so just get the first element of
         # transform and rotate
-        state = old_utils.transform_and_rotate(state.reshape((1, -1)))[0]
+        state = utils.transform_and_rotate(state.reshape((1, -1)))[0]
+        #print("State: ", state.size())
         return torch.cat((state, om), dim=1).unsqueeze(0)
 
     def get_success_state_arr(self):
@@ -528,15 +534,16 @@ class Simulator(object):
         # Robot's state entry.
         state = [
             rpos[0], rpos[1], rvel[0], rvel[1], rrad,
-            self.overall_robot_goal[0], self.overall_robot_goal[1],
-            v_pref, theta
+            self.headings[self.robot_num], self.overall_robot_goal[0],
+            self.overall_robot_goal[1], v_pref, theta
         ]
         for agent in self.agents:
             if agent != self.robot_num:  # We already accounted for the robot
                 pos = self.sim.getAgentPosition(agent)
                 vel = self.sim.getAgentVelocity(agent)
                 rad = self.sim.getAgentRadius(agent)
-                state.extend([pos[0], pos[1], vel[0], vel[1], rad])
+                state.extend([pos[0], pos[1], vel[0], vel[1], rad,
+                              self.headings[agent]])
         for obs in self.obstacles:
             if len(obs) > 1:
                 # Polygonal obstacle
@@ -545,10 +552,12 @@ class Simulator(object):
                 p1, p2 = nearest_points(o, p)
                 # Velocity is always 0 for obstacles
                 # Heading is same as robot's
-                state.extend([p1.x, p2.y, 0, 0, self.obs_width])
+                state.extend([p1.x, p2.y, 0, 0, self.obs_width,
+                              self.headings[self.robot_num]])
             else:
                 # Point obstacle
-                state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width])
+                state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width,
+                              self.headings[self.robot_num]])
         return state
 
     def build_scene(self, scene):

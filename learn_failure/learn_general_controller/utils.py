@@ -3,7 +3,7 @@ import torch
 import argparse
 from functools import reduce
 from operator import mul
-from learn_general_controller.state import ObservableState
+from state import ObservableState
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Learn Controller")
@@ -226,52 +226,86 @@ def rotate(state, kinematics='unicycle'):
     """
     Transform the coordinate to agent-centric.
     Input state tensor is of size (batch_size, state_length)
+    See `transform_and_rotate()`
     """
-    # 'px', 'py', 'vx', 'vy', 'radius', 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1'
-    #  0     1      2     3      4        5     6      7         8       9     10      11     12       13
+    # 'px', 'py', 'vx', 'vy', 'radius', 'heading' 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1', 'heading1'
+    #  0     1      2     3      4          5      6      7         8       9     10      11     12     13      14        15
     batch = state.shape[0]
-    dx = (state[:, 5] - state[:, 0]).reshape((batch, -1))
-    dy = (state[:, 6] - state[:, 1]).reshape((batch, -1))
-    rot = torch.atan2(state[:, 6] - state[:, 1], state[:, 5] - state[:, 0])
-
+    dx = (state[:, 6] - state[:, 0]).reshape((batch, -1))
+    dy = (state[:, 7] - state[:, 1]).reshape((batch, -1))
     dg = torch.norm(torch.cat([dx, dy], dim=1), 2, dim=1, keepdim=True)
-    v_pref = state[:, 7].reshape((batch, -1))
-    vx = (state[:, 2] * torch.cos(rot) + state[:, 3] * torch.sin(rot)).reshape((batch, -1))
-    vy = (state[:, 3] * torch.cos(rot) - state[:, 2] * torch.sin(rot)).reshape((batch, -1))
+    rot = state[:, 5]
+    v_pref = state[:, 8].reshape((batch, -1))
+    # Rotate vel by rot *clockwise*
+    vx = (state[:, 2] * torch.cos(rot)
+          + state[:, 3] * torch.sin(rot)).reshape((batch, -1))
+    vy = (state[:, 3] * torch.cos(rot)
+          - state[:, 2] * torch.sin(rot)).reshape((batch, -1))
 
     radius = state[:, 4].reshape((batch, -1))
     if kinematics == 'unicycle':
-        theta = (state[:, 8] - rot).reshape((batch, -1))
+        theta = (state[:, 9] - rot).reshape((batch, -1))
     else:
         # set theta to be zero since it's not used
         theta = torch.zeros_like(v_pref)
-    vx1 = (state[:, 11] * torch.cos(rot) + state[:, 12] * torch.sin(rot)).reshape((batch, -1))
-    vy1 = (state[:, 12] * torch.cos(rot) - state[:, 11] * torch.sin(rot)).reshape((batch, -1))
-    px1 = (state[:, 9] - state[:, 0]) * torch.cos(rot) + (state[:, 10] - state[:, 1]) * torch.sin(rot)
+    heading = state[:, 5:6]
+    vx1 = (state[:, 12] * torch.cos(rot) + state[:, 13] * torch.sin(
+        rot)).reshape((batch, -1))
+    vy1 = (state[:, 13] * torch.cos(rot) - state[:, 12] * torch.sin(
+        rot)).reshape((batch, -1))
+    px1 = ((state[:, 10] - state[:, 0]) * torch.cos(rot) +
+           (state[:, 11] - state[:, 1]) * torch.sin(rot))
     px1 = px1.reshape((batch, -1))
-    py1 = (state[:, 10] - state[:, 1]) * torch.cos(rot) - (state[:, 9] - state[:, 0]) * torch.sin(rot)
+    py1 = ((state[:, 11] - state[:, 1]) * torch.cos(rot) -
+           (state[:, 10] - state[:, 0]) * torch.sin(rot))
     py1 = py1.reshape((batch, -1))
-    radius1 = state[:, 13].reshape((batch, -1))
+    radius1 = state[:, 14].reshape((batch, -1))
     radius_sum = radius + radius1
-    da = torch.norm(torch.cat([(state[:, 0] - state[:, 9]).reshape((batch, -1)), (state[:, 1] - state[:, 10]).
-                                reshape((batch, -1))], dim=1), 2, dim=1, keepdim=True)
-    new_state = torch.cat([dg, v_pref, theta, radius, vx, vy, px1, py1, vx1, vy1, radius1, da, radius_sum], dim=1)
+    da = torch.norm(
+        torch.cat([(state[:, 0] - state[:, 10]).reshape((batch, -1)),
+                   (state[:, 1] - state[:, 11]).reshape((batch, -1))], dim=1),
+        2, dim=1, keepdim=True)
+    new_state = torch.cat([dg, v_pref, theta, radius, vx, vy, px1, py1, vx1,
+                           vy1, radius1, da, radius_sum], dim=1)
     return new_state
     
 def transform_and_rotate(raw_states):
+    """Transforms and rotates the raw states which represent the humans in the
+    scene. The result is for each human in the scene, convert the positions
+    and velocities such that they are robot centric (origin at the center
+    point of the robot and x-axis along the robot's heading).
+
+    :param ndarray raw_states: State of all humans in the scene (Note, as we
+        are using it, this includes the robot itself and the points on any
+        obstacles which are closest to the robot. The format is
+        [x, y, vx, vy, rad, heading]) (The first entry will also have gx,
+        gy, robot s_pref, robot theta). Will have dimension batch_size x (10
+        + (num_hum - 1) * 6
+    :return: Tensor where each row is a modified version of the state vector
+        with respect to each human presented in
+        https://arxiv.org/pdf/1809.08835.pdf (Equation 3). We don't include
+        the distance to the goal because since this is a failure controller
+        there is no goal. There is one row for each human (including the
+        robot) which contains [v_pref (robot), theta (robot), radius (
+        robot), vx (robot), vy (robot), px, py, vx, vy, radius, dist (robot
+        to this human), radius_sum (human radius + robot radius)] (the
+        attributes that are not labeled robot apply to the person in question).
+        :rtype: Tensor
+    """
     # states shape: batch_size x dim
-    # 'px', 'py', 'vx', 'vy', 'radius', 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1', ..., 'radiusN'
-    #  0     1      2     3      4        5     6      7         8       9     10      11     12       13 , ...,
-    num_human = int((raw_states.shape[1] - 4) / 5)
-    self_state = raw_states[:, 0:9]
+    # 'px', 'py', 'vx', 'vy', 'radius', heading, 'gx', 'gy', 'v_pref', 'theta', 'px1', 'py1', 'vx1', 'vy1', 'radius1', heading1,  ..., 'radiusN'
+    #  0     1      2     3      4        5       6      7         8       9     10      11     12     13      14         15,  ...,
+    num_human = int((raw_states.shape[1] - 4) / 6)
+    self_state = raw_states[:, 0:10]
     # print("self_state.shape", self_state.shape)
-    human_states = [raw_states[:, 9 + i * 5 : 9 + (i + 1) * 5] for i in
-                    range(num_human - 1)]
-    human_states.insert(0, self_state[:, :5])
+    human_states = [raw_states[:, 10 + i * 6 : 10 + (i + 1) * 6] for i in
+                    range(num_human-1)]
+    human_states.insert(0, self_state[:, :6])
     # print("human_states.shape", len(human_states))
     # print("human_states[0]",human_states[0].shape)
 
-    cur_states = torch.stack([torch.Tensor(np.concatenate((self_state, human_state), axis=1)) for human_state in human_states])
+    cur_states = torch.stack([torch.from_numpy(np.concatenate((self_state,
+                                                      human_state), axis=1)) for human_state in human_states])
     # print("cur_states.shape", cur_states.shape)
     cur_states = cur_states.transpose(0, 1).contiguous()
     # print("cur_states.shape new", cur_states.shape)
@@ -281,11 +315,11 @@ def transform_and_rotate(raw_states):
 
     rotated_states = rotate(cur_states.view(-1, dim)).view(batch_size, num_human, -1)
     # print("cur_states.view(-1, dim).shape", cur_states.view(-1, dim).shape)
-    return rotated_states # [8, 6, 13]    
+    return rotated_states.float() # [8, 6, 13]
 
 def build_humans(states):
     #state shape: dim 
-    num_human = int((states.shape[0] - 4) / 5)
+    num_human = int((states.shape[0] - 4) / 6)
     human_states = []
     for i in range(num_human):
         if i == 0:
@@ -294,19 +328,42 @@ def build_humans(states):
             vx = states[2]
             vy = states[3]
             radius = states[4]
+            heading = states[5]
         else:
-            px = states[9 + (i - 1) * 5]
-            py = states[10 + (i - 1) * 5]
-            vx = states[11 + (i - 1) * 5]
-            vy = states[12 + (i - 1) * 5]
-            radius = states[13 + (i - 1) * 5]
-        human_states.append(ObservableState(px, py, vx, vy, radius))
+            px = states[10 + (i - 1) * 5]
+            py = states[11 + (i - 1) * 5]
+            vx = states[12 + (i - 1) * 5]
+            vy = states[13 + (i - 1) * 5]
+            radius = states[14 + (i - 1) * 5]
+            heading = states[15 + (i - 1) * 5]
+        human_states.append(ObservableState(px, py, vx, vy, radius, heading))
     return human_states
 
 def build_occupancy_maps(human_states, config={}):
-    """
-    :param human_states
-    :return: tensor of shape (# human - 1, self.cell_num ** 2)
+    """Builds an occupancy map for each human in human_states.
+
+    If `om_channel_size` is 1, each occupancy map is simply a grid centered on
+    a given human and an indication in each of the `cell_num**2` cells
+    of whether or not it is occupied.
+
+    If `om_channel_size` is 2, the final occupancy map is `2 * cell_num**2`
+    elements and each pair of elements is the average x and y velocities of
+    agents in that cell respectively.
+
+    If `om_channel_size` is 3, the final occupancy map is `3 * cell_num**2`
+    elements and each triplet is 1 if there's at least one agent in that cell
+    and the other two elements are the same as for if `om_channel_size` is 2
+    (i.e. the average velocities).
+
+    :param list human_states: State of all humans in the scene (Note, as we
+        are using it, this includes the robot itself and the points on any
+        obstacles which are closest to the robot. The format is
+        [x, y, vx, vy, rad, heading])
+    :param dict config: Configuration for the function to specify:
+        om_channel_size
+        cell_num
+        cell_size
+    :return: tensor of shape (# human, self.cell_num ** 2)
     """
     om_channel_size = config.get('om_channel_size', 3)
     cell_num = config.get('cell_num', 4)
@@ -317,10 +374,10 @@ def build_occupancy_maps(human_states, config={}):
                                         for other_human in human_states if other_human != human], axis=0)
         other_px = other_humans[:, 0] - human.px
         other_py = other_humans[:, 1] - human.py
-        # new x-axis is in the direction of human's velocity
-        human_velocity_angle = np.arctan2(human.vy, human.vx)
+        # new x-axis is in the direction of human's heading
+        human_heading = human.heading
         other_human_orientation = np.arctan2(other_py, other_px)
-        rotation = other_human_orientation - human_velocity_angle
+        rotation = other_human_orientation - human_heading
         distance = np.linalg.norm([other_px, other_py], axis=0)
         other_px = np.cos(rotation) * distance
         other_py = np.sin(rotation) * distance
@@ -339,7 +396,7 @@ def build_occupancy_maps(human_states, config={}):
         else:
             # calculate relative velocity for other agents
             other_human_velocity_angles = np.arctan2(other_humans[:, 3], other_humans[:, 2])
-            rotation = other_human_velocity_angles - human_velocity_angle
+            rotation = other_human_velocity_angles - human_heading
             speed = np.linalg.norm(other_humans[:, 2:4], axis=1)
             other_vx = np.cos(rotation) * speed
             other_vy = np.sin(rotation) * speed

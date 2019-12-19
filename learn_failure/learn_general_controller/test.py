@@ -114,8 +114,10 @@ def main():
                     occupancy_map = build_occupancy_maps(build_humans(cur_states[b]))
                     batch_occupancy_map.append(occupancy_map)
 
-                batch_occupancy_map = torch.stack(batch_occupancy_map)[:, 1:, :]
+                batch_occupancy_map = torch.stack(batch_occupancy_map)#[:,
+                # 1:, :]
                 state_t = torch.cat([cur_rotated_states, batch_occupancy_map], dim=-1) # Size([8, 6, 61])
+                print(state_t.size())
                 # print("state_t.shape", state_t.shape)
                 # print("cur_rotated_states.shape", cur_rotated_states.shape)
                 # print("batch_occupancy_map.shape", batch_occupancy_map.shape)

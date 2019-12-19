@@ -70,6 +70,8 @@ const float M_PI = 3.14159265358979323846f;
 
 /* Store the goals of the agents. */
 std::vector<RVO::Vector2> goals;
+// Store the headings of the agents
+std::vector<double> headings;
 
 float randomize(float LO=0.0f, float HI=1.0f)
 {
@@ -83,6 +85,7 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
 	/* Specify the global time step of the simulation. */
 	sim->setTimeStep(0.25f);
 	//sim->setTimeStep(0.f);
+    double heading_range = M_PI/8.0;
 
 	/*
 	 * Add agents, specifying their start position, and store their goals on the
@@ -116,6 +119,7 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
 
         sim->addAgent(robot_pos, 1.0f, 10, 5.0f, 5.0f, randomize(0.15f, 0.22f), randomize(1.5f, 2.0f));
         goals.push_back(robot_goal);
+        headings.push_back(randomize(-heading_range, heading_range));
         
         RVO::Vector2 human_pos1(randomize(wall_width + 0.1f, wall_width + wall_dist / NUM_PEOPLE - 0.1f), 
                                 randomize(wall_length + 0.2f, wall_length + 0.7f));
@@ -139,15 +143,19 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
         
         sim->addAgent(human_pos1, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.3f));
         goals.push_back(human_goal1);
+        headings.push_back(randomize(-heading_range, heading_range));
 
         sim->addAgent(human_pos2, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.3f));
         goals.push_back(human_goal2);
+        headings.push_back(randomize(-heading_range, heading_range));
 
         sim->addAgent(human_pos3, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.3f));
         goals.push_back(human_goal3);
+        headings.push_back(randomize(-heading_range, heading_range));
 
         sim->addAgent(human_pos4, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.3f));
         goals.push_back(human_goal4);
+        headings.push_back(randomize(-heading_range, heading_range));
     }
     else {
         std::vector<RVO::Vector2> up_wall_vertices, down_wall_vertices;
@@ -199,15 +207,23 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
 
         sim->addAgent(robot_pos, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(1.5f, 2.0f));
         goals.push_back(robot_goal);
+        headings.push_back(randomize(-heading_range, heading_range));
 
         sim->addAgent(human_pos1, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
         goals.push_back(human_goal1);
+        headings.push_back(randomize(-heading_range, heading_range));
 
         sim->addAgent(human_pos2, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
+        goals.push_back(human_goal2);
+        headings.push_back(randomize(-heading_range, heading_range));
 
         sim->addAgent(human_pos3, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
+        goals.push_back(human_goal3);
+        headings.push_back(randomize(-heading_range, heading_range));
 
         sim->addAgent(human_pos4, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
+        goals.push_back(human_goal4);
+        headings.push_back(randomize(-heading_range, heading_range));
     }
     
 
@@ -250,7 +266,8 @@ void updateVisualization(RVO::RVOSimulator *sim, std::ofstream * file)
         RVO::Vector2 position(sim->getAgentPosition(i));
         RVO::Vector2 velocity = sim->getAgentVelocity(i);
         float radius = sim->getAgentRadius(i);
-        *file << " " << position << " " << velocity << " " << radius;
+        *file << " " << position << " " << velocity << " " << radius <<
+            " " << headings[i];
         if (i == 0) {
             current_y = position.y();
             current_x = position.x();
@@ -275,9 +292,9 @@ void updateVisualization(RVO::RVOSimulator *sim, std::ofstream * file)
         *file << " " << right_closest_point << " " << static_vel << " " << WALL_WIDTH;
         */
         *file << " " << left_closest_point << " " << static_vel << " "
-            << 0.001f << 0.0f;
+            << 0.001f << " " << headings[0];
         *file << " " << right_closest_point << " " << static_vel << " "
-            << 0.001f << 0.0f;
+            << 0.001f << " " << headings[0];
     }
     else {
         /*
@@ -296,9 +313,9 @@ void updateVisualization(RVO::RVOSimulator *sim, std::ofstream * file)
         *file << " " << down_closest_point << " " << static_vel << " " << WALL_WIDTH;
         */
         *file << " " << up_closest_point << " " << static_vel << " "
-            << 0.001f;
+            << 0.001f << " " << headings[0];
         *file << " " << down_closest_point << " " << static_vel << " "
-            << 0.001f;
+            << 0.001f << " " << headings[0];
     }
     
 	// std::cout << std::endl;
@@ -380,7 +397,8 @@ int main(int argc, char ** argv)
         *file << "]" << std::endl;
         *file << "timestamp";
         for (size_t i = 0; i < sim->getNumAgents(); ++i) {
-            *file << " position" << i << " velocity" << i << " radius" << i;
+            *file << " position" << i << " velocity" << i << " radius" << i <<
+                " heading" << i;
             if (i == 0) {
                 *file << " goal pref_speed theta";
             }
