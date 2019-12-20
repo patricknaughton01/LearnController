@@ -185,11 +185,13 @@ class Simulator(object):
 
         :return: None
         """
+        desired_robot_vel = (0, 0)
+        ts = self.sim.getTimeStep()
         # Move all the agents towards their goals
         for agent in self.agents:
             p = self.sim.getAgentPosition(agent)
             g = self.goals[agent]
-            vec = (g[0] - p[0], g[1] - p[1])
+            vec = ((g[0] - p[0])/ts, (g[1] - p[1])/ts)
             """mag_mul = (vec[0]**2 + vec[1]**2)**0.5
             # check for division by 0/reaching the goal
             if mag_mul > 1e-5:
@@ -208,8 +210,13 @@ class Simulator(object):
             self.sim.setAgentPrefVelocity(agent, vec)
             if agent == self.robot_num:
                 self.sim.setAgentVelocity(self.robot_num, vec)
+                desired_robot_vel = vec
                 #print(vec)
         self.sim.doStep()
+        # rvel = self.sim.getAgentVelocity(self.robot_num)
+        # print("{}, ({}, {})".format(desired_robot_vel,
+        #                             rvel[0]-desired_robot_vel[0],
+        #                             rvel[1]-desired_robot_vel[1]))
         if self.file is not None:
             self.update_visualization()
 

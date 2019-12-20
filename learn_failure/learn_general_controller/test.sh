@@ -3,6 +3,6 @@ python test.py \
 --num_epochs 10 \
 --print_every 1 \
 --M 1 \
---train_data_name simulate_barge_in_heading \
---test_data_name simulate_barge_in_heading \
+--train_data_name simulate_dynamic_barge_in_test \
+--test_data_name simulate_dynamic_barge_in_test \
 --seed 3456
