@@ -219,10 +219,10 @@ def main():
     fig = plt.figure(figsize=(15, 10))
     ax = fig.add_subplot(111)
     ax.axis('equal')
-    top = 3
+    top = 8
     bottom = -1
     left = -1
-    right = 8
+    right = 15
     plt.xlim((left, right))
     plt.ylim((bottom, top))
     T = episode.shape[0]

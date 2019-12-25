@@ -1,4 +1,4 @@
-# Install script for directory: /home/yashoza/Downloads/LearnControllers/RVO2/src
+# Install script for directory: /home/patricknaughton01/Documents/RISS/LearnController/RVO2/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,14 +34,14 @@ endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include" TYPE FILE FILES
-    "/home/yashoza/Downloads/LearnControllers/RVO2/src/RVO.h"
-    "/home/yashoza/Downloads/LearnControllers/RVO2/src/RVOSimulator.h"
-    "/home/yashoza/Downloads/LearnControllers/RVO2/src/Vector2.h"
+    "/home/patricknaughton01/Documents/RISS/LearnController/RVO2/src/RVO.h"
+    "/home/patricknaughton01/Documents/RISS/LearnController/RVO2/src/RVOSimulator.h"
+    "/home/patricknaughton01/Documents/RISS/LearnController/RVO2/src/Vector2.h"
     )
 endif()
 
 if(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/home/yashoza/Downloads/LearnControllers/RVO2/build/libRVO.a")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/home/patricknaughton01/Documents/RISS/LearnController/RVO2/build/libRVO.a")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -52,5 +52,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/yashoza/Downloads/LearnControllers/RVO2/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/patricknaughton01/Documents/RISS/LearnController/RVO2/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

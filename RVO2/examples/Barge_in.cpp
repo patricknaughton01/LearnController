@@ -59,12 +59,12 @@
 const float M_PI = 3.14159265358979323846f;
 #endif
 
-#define START_EXP 50
-#define MAX_NUM_EXPS 10
+#define START_EXP 0
+#define MAX_NUM_EXPS 100
 
-#define WALL_WIDTH 0.3f
-#define WALL_DIST 1.5f
-#define WALL_LENGTH 2.0f
+#define WALL_WIDTH 1.0f
+#define WALL_DIST 4.0f
+#define WALL_LENGTH 7.0f
 #define VERTICAL_WALL false
 #define NUM_PEOPLE 4.0f
 
@@ -83,7 +83,8 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
 	// std::srand(static_cast<unsigned int>(std::time(NULL)));
 
 	/* Specify the global time step of the simulation. */
-	sim->setTimeStep(0.25f);
+	sim->setTimeStep(1.0f);
+	//sim->setTimeStep(0.25f);
 	//sim->setTimeStep(0.f);
     double heading_range = M_PI/8.0;
 
@@ -159,10 +160,12 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
     }
     else {
         std::vector<RVO::Vector2> up_wall_vertices, down_wall_vertices;
-        up_wall_vertices.push_back(RVO::Vector2(wall_length, 2 * wall_width + wall_dist));
-        up_wall_vertices.push_back(RVO::Vector2(0, 2 * wall_width + wall_dist));  
-        up_wall_vertices.push_back(RVO::Vector2(0, wall_dist + wall_width));  
-        up_wall_vertices.push_back(RVO::Vector2(wall_length, wall_dist + wall_width));
+        up_wall_vertices.push_back(RVO::Vector2(wall_length, 2 * wall_width +
+        wall_dist));
+        up_wall_vertices.push_back(RVO::Vector2(0, 2 * wall_width + wall_dist));
+        up_wall_vertices.push_back(RVO::Vector2(0, wall_dist + wall_width));
+        up_wall_vertices.push_back(RVO::Vector2(wall_length, wall_dist +
+        wall_width));
 
         down_wall_vertices.push_back(RVO::Vector2(wall_length, wall_width));
         down_wall_vertices.push_back(RVO::Vector2(0, wall_width)); 
@@ -176,52 +179,54 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
         obstacles.push_back(up_wall_vertices);
         obstacles.push_back(down_wall_vertices);
 
-        RVO::Vector2 robot_pos(randomize(1.0f, 1.5f),
-                               randomize(-0.15f + wall_width + wall_dist / 2.0, wall_width + wall_dist / 2.0 + 0.15f));
-        RVO::Vector2 robot_goal(robot_pos.x() + randomize(4.0f, 5.0f),
-            robot_pos.y() + randomize(-1.0f, 1.0f));
+//        RVO::Vector2 robot_pos(randomize(1.0f, 1.5f),
+//                               randomize(-0.15f + wall_width + wall_dist / 2.0, wall_width + wall_dist / 2.0 + 0.15f));
+        RVO::Vector2 robot_pos(wall_length-1.0f, wall_width + wall_dist/2.0
+            + randomize(-0.5, 0.5));
+        RVO::Vector2 robot_goal(wall_length + 4.0, wall_width + wall_dist/2.0
+            + randomize(-0.5, 0.5));
 
-        RVO::Vector2 human_pos1(randomize(wall_length + 0.2f, wall_length + 0.4f),
-                                randomize(wall_width + 0.1f, wall_width + wall_dist / NUM_PEOPLE - 0.1f));
-        RVO::Vector2 human_goal1(human_pos1.x() + randomize(1.0f, 2.0f),
-                                 human_pos1.y() - randomize(0.3f, 0.5f)); 
+        RVO::Vector2 human_pos1(randomize(wall_length, wall_length + 0.5f),
+                                wall_width + (wall_dist/NUM_PEOPLE)/2.0f);
+        RVO::Vector2 human_goal1(human_pos1.x() + randomize(wall_length+3-0.2f, wall_length+3+0.2f),
+                                 human_pos1.y() - 1.0f);
 
-        RVO::Vector2 human_pos2(randomize(wall_length + 0.2f, wall_length + 0.4f),
-                                randomize(wall_width + wall_dist / NUM_PEOPLE + 0.1f, wall_width + wall_dist / NUM_PEOPLE * 2 - 0.1f));
+        RVO::Vector2 human_pos2(randomize(wall_length+1.0f, wall_length + 1.5f),
+                                human_pos1.y()+1.0f);
 
-        RVO::Vector2 human_goal2(human_pos2.x() + randomize(1.2f, 2.2f),
-                                 human_pos2.y() - randomize(0.4f, 0.8f));   
+        RVO::Vector2 human_goal2(human_pos2.x() + randomize(wall_length+3-0.2f, wall_length+3+0.2f),
+                                 human_pos2.y() - 0.5f);
+
+        RVO::Vector2 human_pos3(randomize(wall_length, wall_length + 0.5f),
+                                human_pos2.y()+1.0f);
+
+        RVO::Vector2 human_goal3(human_pos3.x() + randomize(wall_length+3-0.2f, wall_length+3+0.2f),
+                                 human_pos3.y() + 0.5f);
+
+        RVO::Vector2 human_pos4(randomize(wall_length+1.0f, wall_length + 1.5f),
+                                 human_pos3.y()+1.0f);
+
+        RVO::Vector2 human_goal4(human_pos4.x() + randomize(wall_length+3-0.2f, wall_length+3+0.2f),
+                                human_pos4.y() + 1.0f);
         
-        RVO::Vector2 human_pos3(randomize(wall_length + 0.2f, wall_length + 0.4f),
-                                randomize(wall_width + wall_dist / NUM_PEOPLE * 2 + 0.1f, wall_width + wall_dist / NUM_PEOPLE * 3 - 0.1f));
 
-        RVO::Vector2 human_goal3(human_pos3.x() + randomize(1.2f, 2.2f),
-                                 human_pos3.y() + randomize(0.4f, 0.8f));   
-        
-        RVO::Vector2 human_pos4(randomize(wall_length + 0.2f, wall_length + 0.4f),
-                                randomize(wall_width + wall_dist / NUM_PEOPLE * 3 + 0.1f, wall_width + wall_dist - 0.1f));
-
-        RVO::Vector2 human_goal4(human_pos4.x() + randomize(1.0f, 2.0f),
-                                human_pos4.y() + randomize(0.3f, 0.5f));   
-        
-
-        sim->addAgent(robot_pos, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(1.5f, 2.0f));
+        sim->addAgent(robot_pos, 1.0f, 10, 1.0f, 5.0f, 0.5f, 3.0f);
         goals.push_back(robot_goal);
         headings.push_back(randomize(-heading_range, heading_range));
 
-        sim->addAgent(human_pos1, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
+        sim->addAgent(human_pos1, 1.0f, 10, 1.0f, 5.0f, 0.5f, 0.7f);
         goals.push_back(human_goal1);
         headings.push_back(randomize(-heading_range, heading_range));
 
-        sim->addAgent(human_pos2, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
+        sim->addAgent(human_pos2, 1.0f, 10, 1.0f, 5.0f, 0.5f, 0.7f);
         goals.push_back(human_goal2);
         headings.push_back(randomize(-heading_range, heading_range));
 
-        sim->addAgent(human_pos3, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
+        sim->addAgent(human_pos3, 1.0f, 10, 1.0f, 5.0f, 0.5f, 0.7f);
         goals.push_back(human_goal3);
         headings.push_back(randomize(-heading_range, heading_range));
 
-        sim->addAgent(human_pos4, 1.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f), randomize(0.1f, 0.4f));
+        sim->addAgent(human_pos4, 1.0f, 10, 1.0f, 5.0f, 0.5f, 0.7f);
         goals.push_back(human_goal4);
         headings.push_back(randomize(-heading_range, heading_range));
     }
@@ -419,11 +424,11 @@ int main(int argc, char ** argv)
         }
         while (!reachedGoal(sim));
         // Do 10 more steps
-        for(int i = 0; i<10; i++){
-            updateVisualization(sim, file);
-            setPreferredVelocities(sim);
-            sim->doStep();
-        }
+//        for(int i = 0; i<10; i++){
+//            updateVisualization(sim, file);
+//            setPreferredVelocities(sim);
+//            sim->doStep();
+//        }
         file->close();
         delete sim;
 
