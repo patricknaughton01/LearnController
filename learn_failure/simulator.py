@@ -633,9 +633,9 @@ class Simulator(object):
             self.goals.append(robot_pos)
             self.headings.append(randomize(-math.pi/8, math.pi/8))
             # Used to determine if success controller has failed
-            # self.overall_robot_goal = (robot_pos[0] + randomize(4, 5),
-            #                            robot_pos[1])
-            self.overall_robot_goal = (5.99563,1.71825)
+            self.overall_robot_goal = (robot_pos[0] + randomize(4, 5),
+                                       robot_pos[1])
+            #self.overall_robot_goal = (5.99563,1.71825)
 
             hum_perb = 0.1  # Random perturbation to add to human positions
             if scene.startswith("barge_in"):
