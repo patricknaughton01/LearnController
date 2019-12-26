@@ -1,7 +1,6 @@
 import torch
 import learn_general_controller.model
 import configparser
-import argparse
 import random
 import time
 
@@ -34,7 +33,7 @@ def main():
                            model_type=args.model_type)  # model_type = crossing
         model.load_state_dict(torch.load(model_path)["state_dict"])
         model.eval()
-        sim = Simulator(scene=scene, file=out_file)
+        sim = Simulator(scene=scene, file=out_file, reverse=args.reverse)
         success_model = None
         if args.success_path != "":
             try:

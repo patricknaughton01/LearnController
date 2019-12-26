@@ -19,7 +19,7 @@ from shapely.ops import nearest_points
 
 class Simulator(object):
 
-    def __init__(self, scene=None, file=None, max_dim=4):
+    def __init__(self, scene=None, file=None, max_dim=4, reverse=False):
         self.sim = rvo2.PyRVOSimulator(1.0, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
         self.robot_num = None
@@ -41,7 +41,7 @@ class Simulator(object):
         # has no effect.
         self.overall_robot_goal = (0, 0)
         self.last_dist = 10**6      # last distance to goal, starts huge
-        self.build_scene(self.scene)
+        self.build_scene(self.scene, reverse=reverse)
         self.rot_speed = (self.sim.getAgentMaxSpeed(self.robot_num) *
                           math.pi / 16)
         self.uncertainties = [0.0]
@@ -573,7 +573,7 @@ class Simulator(object):
                               self.headings[self.robot_num]])
         return state
 
-    def build_scene(self, scene):
+    def build_scene(self, scene, reverse=False):
         """Build up a scene.
 
         :param string scene: String representing what type of scene to build.
@@ -592,58 +592,34 @@ class Simulator(object):
                 or scene.startswith("dynamic_barge_in")):
             num_people = 4
             # Walls
-            wall_perturbation = 0.01 # Random range to add to wall verticies
             wall_width = 1.0
             wall_length = 7.0
             wall_dist = 4.0
+            human_goal_dist = 3.0
             up_wall_vertices = [
-                (wall_length + wall_perturbation * random.random(),
-                    2 * wall_width + wall_dist
-                        + wall_perturbation * random.random()),
-                (wall_perturbation * random.random(),
-                    2 * wall_width + wall_dist
-                        + wall_perturbation * random.random()),
-                (wall_perturbation * random.random(), wall_dist + wall_width
-                    + wall_perturbation * random.random()),
-                (wall_length + wall_perturbation * random.random(),
-                    wall_dist + wall_width
-                        + wall_perturbation * random.random())
+                (wall_length, 2*wall_width + wall_dist),
+                (0, 2*wall_width + wall_dist),
+                (0, wall_width + wall_dist),
+                (wall_length, wall_width + wall_dist)
             ]
             down_wall_vertices = [
-                (wall_length + wall_perturbation * random.random(),
-                    wall_width + wall_perturbation * random.random()),
-                (wall_perturbation * random.random(),
-                    wall_width + wall_perturbation * random.random()),
-                (wall_perturbation * random.random(),
-                    wall_perturbation * random.random()),
-                (wall_length + wall_perturbation * random.random(),
-                    wall_perturbation * random.random())
+                (wall_length, wall_width),
+                (0, wall_width),
+                (0, 0),
+                (wall_length, 0)
             ]
-            if success_trial:
-                up_wall_vertices = [
-                    (wall_length, 2*wall_width + wall_dist),
-                    (0, 2*wall_width + wall_dist),
-                    (0, wall_width + wall_dist),
-                    (wall_length, wall_width + wall_dist)
-                ]
-                down_wall_vertices = [
-                    (wall_length, wall_width),
-                    (0, wall_width),
-                    (0, 0),
-                    (wall_length, 0)
-                ]
             self.obstacles.append(up_wall_vertices)
             self.obstacles.append(down_wall_vertices)
 
             # Add the robot
-            robot_pos = (
-                #wall_length + x_offset + randomize(-0.1, 0.1),
-                randomize(1.0, 1.5),
-                -0.15 + wall_width +  wall_dist / 2.0 + randomize(-0.1, 0.1)
-            )
-            if success_trial:
-                robot_pos = (wall_length - 1.0, wall_width + wall_dist/2.0 +
-                             randomize(-0.5, 0.5))
+            robot_pos = (wall_length - 1.0, wall_width + wall_dist/2.0 +
+                         randomize(-0.5, 0.5))
+            self.overall_robot_goal = (wall_length + 4.0, wall_width +
+                                       wall_dist/2.0 + randomize(-0.5, 0.5))
+            if reverse:
+                tmp = robot_pos
+                robot_pos = self.overall_robot_goal
+                self.overall_robot_goal = tmp
             self.robot_num = self.sim.addAgent(
                 robot_pos,
                 1.0, 10, 1.0, 5.0, 0.5, 3.0, (0, 0)
@@ -651,10 +627,6 @@ class Simulator(object):
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
             self.headings.append(randomize(-math.pi/8, math.pi/8))
-            # Used to determine if success controller has failed
-            self.overall_robot_goal = (wall_length + 4.0, wall_width +
-                                       wall_dist/2.0 + randomize(-0.5, 0.5))
-            #self.overall_robot_goal = (5.99563,1.71825)
 
             hum_perb = 0.1  # Random perturbation to add to human positions
             if scene.startswith("barge_in"):
@@ -704,24 +676,27 @@ class Simulator(object):
                     num_people = 4
                     pos1 = (wall_length + randomize(0, 0.5),
                         wall_width + (wall_dist / num_people) / 2.0)
-                    goal1 = (pos1[0] + wall_length + 3 +
+                    goal1 = (pos1[0] + human_goal_dist +
                              randomize(-0.2, 0.2), pos1[1] - 1.0)
 
                     pos2 = (wall_length + randomize(1.0, 1.5), pos1[1] + 1.0)
-                    goal2 = (pos2[0] + wall_length + 3 +
+                    goal2 = (pos2[0] + human_goal_dist +
                              randomize(-0.2, 0.2), pos1[1] - 0.5)
 
                     pos3 = (wall_length + randomize(0, 0.5),
                             pos2[1] + 1.0)
-                    goal3 = (pos3[0] + wall_length + 3 +
+                    goal3 = (pos3[0] + human_goal_dist +
                              randomize(-0.2, 0.2), pos3[1] + 0.5)
 
                     pos4 = (wall_length + randomize(1.0, 1.5), pos3[1] + 1.0)
-                    goal4 = (pos4[0] + wall_length + 3 +
+                    goal4 = (pos4[0] + human_goal_dist +
                              randomize(-0.2, 0.2), pos4[1] + 1.0)
 
                     poses = [pos1, pos2, pos3, pos4]
                     gs = [goal1, goal2, goal3, goal4]
+                    if reverse:
+                        poses = [goal1, goal2, goal3, goal4]
+                        gs = [pos1, pos2, pos3, pos4]
                     for p in poses:
                         self.agents.append(self.sim.addAgent(
                             p, 1.0, 10, 1.0, 5.0,

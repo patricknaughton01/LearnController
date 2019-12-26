@@ -21,11 +21,11 @@ def main():
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
 
-    log_path = "log/%s/seed_%d_bootstrap_%s_M_%d" % (
+    log_path = "log/%s/seed_%d_bootstrap_%s_M_%d_reverse_%s" % (
                 args.train_data_name,
                 args.seed,
                 str(args.bootstrap), 
-                args.M) 
+                args.M, str(args.reverse))
 
     if not os.path.exists(log_path):
         os.makedirs(log_path)
@@ -44,14 +44,18 @@ def main():
     # print('train_num_humans')
     # print(train_num_humans.shape)
     # print('Total train data size: %d' % len(train_seq_lengths))
-    train_loader = lambda: dataloader((train_states, train_seq_lengths, train_num_humans), config, shuffle=True)
+    train_loader = lambda: dataloader((train_states, train_seq_lengths,
+                                       train_num_humans), config,
+                                      shuffle=True, reverse=args.reverse)
 
     test_data_path = args.data_path + '/' + args.test_data_name
     test_states = np.load(test_data_path + '/states.npy', allow_pickle=True)
     test_seq_lengths = np.load(test_data_path + '/seq_lengths.npy', allow_pickle=True)
     test_num_humans = np.load(test_data_path + '/num_humans.npy', allow_pickle=True)
     print('Total test data size: %d' % len(test_seq_lengths))
-    val_loader = lambda: dataloader((test_states, test_seq_lengths, test_num_humans), config, shuffle=False)
+    val_loader = lambda: dataloader((test_states, test_seq_lengths,
+                                     test_num_humans), config,
+                                    shuffle=False, reverse=args.reverse)
 
     model_config = configparser.RawConfigParser()
     model_config.read(args.model_config)

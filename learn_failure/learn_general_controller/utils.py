@@ -35,6 +35,7 @@ def parse_args():
     parser.add_argument("--video_name", type=str, default="")
     parser.add_argument("--scene", type=str, default="random")
     parser.add_argument("--model_path", type=str, default="")
+    parser.add_argument("--reverse", action="store_true")
     return parser.parse_args()
 
 def get_weight_decay(tao, length_scale, N, dropout):
@@ -144,7 +145,7 @@ def ensemble(preds, pred_xs):
     return mean_pred_x, var_pred_x, data_uncertainty, model_uncertainty
 
 
-def dataloader(data, config, is_train=True, shuffle=True):
+def dataloader(data, config, is_train=True, shuffle=True, reverse=False):
     assert len(data) == 3, 'You should provide states, sequence lengths, and number of humans!'
     batch_size = config.get('batch_size', 16)
     bootstrap = config.get('bootstrap', False)
@@ -208,12 +209,12 @@ def dataloader(data, config, is_train=True, shuffle=True):
                 for i, state in enumerate(cur_states):
                     seq_len = batch_seq_lengths[i]
                     batch_states[0:seq_len, i, :] = state[0:-1, :]
-
-                    batch_future_states[0:seq_len, i, :] = state[1:, :] 
-                    #notice that here we are not giving
+                    batch_future_states[0:seq_len, i, :] = state[1:, :]
                     target = state[1:, 0:2] - state[0:-1, 0:2]
-                    # print("state[1:, 0:2]", state[1:, 0:2].shape)
-                    # print("state[0:-1, 0:2]", state[0:-1, 0:2].shape)
+                    if reverse:
+                        batch_states[:seq_len, i, :] = state[1:, :]
+                        batch_future_states[:seq_len, i, :] = state[:-1, :]
+                        target = state[:-1, :2] - state[1:, :2]
 
                     batch_targets[0:seq_len, i, :] = target
 

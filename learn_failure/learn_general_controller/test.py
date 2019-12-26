@@ -5,6 +5,7 @@ from model import *
 import os
 from utils import *
 import configparser
+import torch
 from time import time
 
 def main():
