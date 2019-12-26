@@ -17,7 +17,7 @@ class Trainer(object):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.optimizer = optim.Adam(model.parameters(), 
-                                    lr=config.get('learning_rate', 0.0005),
+                                    lr=config.get('learning_rate', 0.0001),
                                     weight_decay=config.get('weight_decay', 0))
         self.config = config
     
