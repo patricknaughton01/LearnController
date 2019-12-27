@@ -1,0 +1,2 @@
+Changed simulation so that robot stays still when its movement results in a
+collision. Also decreased maximum success timesteps to 6.

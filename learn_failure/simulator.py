@@ -141,6 +141,10 @@ class Simulator(object):
                 # f.write("{} {} {} {} {} {}\n".format(sx, sy, rho, d_sx,
                 #                                      d_sy, d_corr))
                 rpos = self.sim.getAgentPosition(self.robot_num)
+                if math.isnan(mx):
+                    mx = 0
+                if math.isnan(my):
+                    my = 0
                 self.goals[self.robot_num] = (rpos[0] + mx, rpos[1] + my)
                 self.advance_simulation()
                 new_r_pos = self.sim.getAgentPosition(self.robot_num)
@@ -198,38 +202,24 @@ class Simulator(object):
 
         :return: None
         """
-        desired_robot_vel = (0, 0)
         ts = self.sim.getTimeStep()
+        old_rpos = self.sim.getAgentPosition(self.robot_num)
         # Move all the agents towards their goals
         for agent in self.agents:
             p = self.sim.getAgentPosition(agent)
             g = self.goals[agent]
             vec = ((g[0] - p[0])/ts, (g[1] - p[1])/ts)
-            """mag_mul = (vec[0]**2 + vec[1]**2)**0.5
-            # check for division by 0/reaching the goal
-            if mag_mul > 1e-5:
-                vec = (vec[0] / mag_mul, vec[1] / mag_mul)
-            # We've reached the goal (and this isn't the robot) so generate
-            # a new one
-            """"""elif agent != self.robot_num:
-                self.goals[agent] = (
-                    self.max_dim * random.random(),
-                    self.max_dim * random.random()
-                )"""
-            #print(mag_mul)
-            #scale = min(mag_mul, self.sim.getAgentMaxSpeed(agent))
-            #scale = self.sim.getAgentMaxSpeed(agent)
-            #vec = (vec[0] * scale, vec[1] * scale)
             self.sim.setAgentPrefVelocity(agent, vec)
-            if agent == self.robot_num:
-                self.sim.setAgentVelocity(self.robot_num, vec)
-                desired_robot_vel = vec
-                #print(vec)
         self.sim.doStep()
-        # rvel = self.sim.getAgentVelocity(self.robot_num)
-        # print("{}, ({}, {})".format(desired_robot_vel,
-        #                             rvel[0]-desired_robot_vel[0],
-        #                             rvel[1]-desired_robot_vel[1]))
+        # Check and see if the robot is in collision and reset to old position
+        # if so (backtrack on this step)
+        for agent in self.agents:
+            if (agent != self.robot_num
+                and utils.dist(self.sim.getAgentPosition(self.robot_num),
+                self.sim.getAgentPosition(agent)) < (
+                            self.sim.getAgentRadius(self.robot_num) +
+                            self.sim.getAgentRadius(agent))):
+                self.sim.setAgentPosition(self.robot_num, old_rpos)
         if self.file is not None:
             self.update_visualization()
 
@@ -721,9 +711,9 @@ class Simulator(object):
                 else:
                     # Make humans actual agents that move either towards or
                     # away from the robot
-                    min_hum = 3
+                    min_hum = 6
                     max_hum = 6
-                    max_hum_rad = 0.2
+                    max_hum_rad = 0.5
                     num_hum = random.randint(min_hum, max_hum)
                     for i in range(num_hum):
                         # Stack humans in front of the passage
@@ -736,14 +726,14 @@ class Simulator(object):
                                 * (max_hum/num_hum) * i
                         )
                         self.agents.append(self.sim.addAgent(
-                            pos, 1.0, 10, 5.0, 5.0, randomize(0.12, 0.22),
-                            randomize(0.1, 0.4), (0, 0)
+                            pos, 1.0, 10, 1.0, 5.0, 0.5,
+                            0.7, (0, 0)
                         ))
-                        goal_min = -0.2
-                        goal_max = -0.5
+                        goal_min = -4.0
+                        goal_max = -5.0
                         self.goals.append((
                             pos[0] + randomize(goal_min, goal_max),
-                            pos[1] + randomize(-hum_perb, hum_perb)
+                            wall_width + wall_dist/(num_hum+1) * (i+1)
                         ))
                         self.headings.append(
                             normalize(randomize(7*math.pi/8, 9*math.pi/8))

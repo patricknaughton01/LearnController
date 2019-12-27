@@ -256,7 +256,7 @@ def main():
     #             plt.plot(obstacles[j, [k * 2, (k * 2 + 2) % obstacles.shape[1]]],
     #                      obstacles[j, [1 + 2 * k, (3 + 2 * k) % obstacles.shape[1]]], 'k-')
     if args.animate:
-        ani = animation.FuncAnimation(fig, animate, interval=100,
+        ani = animation.FuncAnimation(fig, animate, interval=200,
                                       fargs=(fig, episode, colors,
                                              left, right, top, bottom),
                                       repeat=True,
