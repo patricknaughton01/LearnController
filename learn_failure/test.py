@@ -35,6 +35,7 @@ def main():
         model.eval()
         sim = Simulator(scene=scene, file=out_file, reverse=args.reverse)
         success_model = None
+        reverse_model = None
         if args.success_path != "":
             try:
                 success_model_config = configparser.RawConfigParser()
@@ -46,12 +47,28 @@ def main():
                 success_model.load_state_dict(
                     torch.load(args.success_path)["state_dict"])
                 success_model.eval()
+                try:
+                    reverse_model_config = configparser.RawConfigParser()
+                    reverse_model_config.read(
+                        "learn_general_controller/configs/model.config")
+                    reverse_model = learn_general_controller.model.Controller(
+                        reverse_model_config, model_type=args.model_type
+                    )
+                    reverse_model.load_state_dict(
+                        torch.load(args.reverse_path)["state_dict"]
+                    )
+                    reverse_model.eval()
+                except Exception as e:
+                    print("Tried to open reverse model at {}. Needed if "
+                          "using a success model".format(args.reverse_path))
+                    print(str(e))
+                    exit()
             except IOError:
                 success_model = None
                 print("Couldn't open file at {}".format(args.success_path))
         success_ts = 0
         if success_model is not None:
-            success_ts = sim.forward_simulate(success_model,
+            success_ts = sim.forward_simulate(success_model, reverse_model,
                 max_ts=args.success_max_ts, key=str(i), samples=2)
         if success_ts < args.success_max_ts:
             # We failed at some point

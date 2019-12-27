@@ -99,8 +99,8 @@ class Simulator(object):
         )
         self.advance_simulation()
 
-    def forward_simulate(self, success_model, samples=20, max_ts=100,
-                         failure_func=None, key="0"):
+    def forward_simulate(self, success_model, reverse_model, samples=20,
+                         max_ts=100, failure_func=None, key="0"):
         """Simulates the beginning of the scenario by using the predictions of
         the success_model (a neural network which takes in the state of the
         robot and predicts a mux, muy, sx, sy, and correlation for the
@@ -126,23 +126,36 @@ class Simulator(object):
             # train mode so that dropout layers still work
             success_model.eval()
             pred, h_t = None, None
+            r_pred, r_h_t = None, None
             uncertainty = 0.0
             if failure_func is None:
                 failure_func = self.base_failure
             i = 0
-            f = open("std_devs_{}.txt".format(key), "w")
+            #f = open("std_devs_{}.txt".format(key), "w")
+            c = open("consistency_{}.txt".format(key), "w")
             while not failure_func(uncertainty) and i < max_ts:
                 mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
                     self.get_succ_prediction(
                     success_model, self.success_state(), h_t, samples)
-                uncertainty = (sx+d_sx)**2 + (sy+d_sy)**2
-                f.write("{} {} {} {} {} {}\n".format(sx, sy, rho, d_sx,
-                                                     d_sy, d_corr))
+                # uncertainty = (sx+d_sx)**2 + (sy+d_sy)**2
+                # f.write("{} {} {} {} {} {}\n".format(sx, sy, rho, d_sx,
+                #                                      d_sy, d_corr))
                 rpos = self.sim.getAgentPosition(self.robot_num)
                 self.goals[self.robot_num] = (rpos[0] + mx, rpos[1] + my)
                 self.advance_simulation()
+                new_r_pos = self.sim.getAgentPosition(self.robot_num)
+                r_pred, r_h_t = reverse_model(self.success_state(), r_h_t)
+                r_pred = utils.get_coefs(r_pred.unsqueeze(0))
+                clean_r_pred = [round(r_pred[i].item(), 3)
+                                for i in range(len(r_pred))]
+                c.write("{}\t{}\t{}\t{}\t{}\n".format(
+                    round(rpos[0] - (clean_r_pred[0] + new_r_pos[0]), 3),
+                    round(rpos[1] - (clean_r_pred[1] + new_r_pos[1]), 3),
+                    clean_r_pred[2], clean_r_pred[3], clean_r_pred[4]
+                ))
                 i += 1
-            f.close()
+            #f.close()
+            c.close()
             print("Finished success simulation after {} steps".format(i))
             return i
 
