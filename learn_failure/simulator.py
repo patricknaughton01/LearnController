@@ -213,13 +213,13 @@ class Simulator(object):
         self.sim.doStep()
         # Check and see if the robot is in collision and reset to old position
         # if so (backtrack on this step)
-        for agent in self.agents:
-            if (agent != self.robot_num
-                and utils.dist(self.sim.getAgentPosition(self.robot_num),
-                self.sim.getAgentPosition(agent)) < (
-                            self.sim.getAgentRadius(self.robot_num) +
-                            self.sim.getAgentRadius(agent))):
-                self.sim.setAgentPosition(self.robot_num, old_rpos)
+        # for agent in self.agents:
+        #     if (agent != self.robot_num
+        #         and utils.dist(self.sim.getAgentPosition(self.robot_num),
+        #         self.sim.getAgentPosition(agent)) < (
+        #                     self.sim.getAgentRadius(self.robot_num) +
+        #                     self.sim.getAgentRadius(agent))):
+        #         self.sim.setAgentPosition(self.robot_num, old_rpos)
         if self.file is not None:
             self.update_visualization()
 
@@ -625,7 +625,7 @@ class Simulator(object):
                 self.overall_robot_goal = tmp
             self.robot_num = self.sim.addAgent(
                 robot_pos,
-                1.0, 10, 1.0, 5.0, 0.5, 3.0, (0, 0)
+                10.0, 10, 1.0, 5.0, 0.5, 3.0, (0, 0)
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
@@ -702,7 +702,7 @@ class Simulator(object):
                         gs = [pos1, pos2, pos3, pos4]
                     for p in poses:
                         self.agents.append(self.sim.addAgent(
-                            p, 1.0, 10, 1.0, 5.0,
+                            p, 10.0, 10, 1.0, 5.0,
                             0.5, 0.7, (0, 0)
                         ))
                         self.headings.append(randomize(-math.pi/8, math.pi/8))
@@ -726,7 +726,7 @@ class Simulator(object):
                                 * (max_hum/num_hum) * i
                         )
                         self.agents.append(self.sim.addAgent(
-                            pos, 1.0, 10, 1.0, 5.0, 0.5,
+                            pos, 10.0, 10, 1.0, 5.0, 0.5,
                             0.7, (0, 0)
                         ))
                         goal_min = -4.0
