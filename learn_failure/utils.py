@@ -280,8 +280,8 @@ def rotate(state, kinematics='unicycle'):
                    (state[:, 1] - state[:, 11]).reshape((batch, -1))], dim=1),
         2, dim=1, keepdim=True)
     #print(dg)
-    new_state = torch.cat([dg, v_pref, theta, radius, vx, vy, px1, py1, vx1,
-                           vy1, radius1, da, radius_sum], dim=1)
+    new_state = torch.cat([dx, dy, v_pref, theta, radius, vx, vy, px1, py1,
+                           vx1, vy1, radius1, da, radius_sum], dim=1)
     return new_state
 
 def transform_and_rotate(raw_states):

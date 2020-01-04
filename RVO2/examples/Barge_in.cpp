@@ -183,7 +183,7 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
 //                               randomize(-0.15f + wall_width + wall_dist / 2.0, wall_width + wall_dist / 2.0 + 0.15f));
         RVO::Vector2 robot_pos(wall_length-1.0f, wall_width + wall_dist/2.0
             + randomize(-0.5, 0.5));
-        RVO::Vector2 robot_goal(wall_length + 4.0, wall_width + wall_dist/2.0
+        RVO::Vector2 robot_goal(wall_length + 3.0, wall_width + wall_dist/2.0
             + randomize(-0.5, 0.5));
 
         RVO::Vector2 human_pos1(randomize(wall_length, wall_length + 0.5f),
@@ -423,6 +423,7 @@ int main(int argc, char ** argv)
             sim->doStep();
         }
         while (!reachedGoal(sim));
+        updateVisualization(sim, file);
         // Do 10 more steps
 //        for(int i = 0; i<10; i++){
 //            updateVisualization(sim, file);

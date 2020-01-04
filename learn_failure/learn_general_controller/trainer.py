@@ -5,7 +5,8 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from time import time
-from utils import neg_2d_gaussian_likelihood, transform_and_rotate, build_occupancy_maps, build_humans
+from utils import neg_2d_gaussian_likelihood, transform_and_rotate, \
+    build_occupancy_maps, build_humans
 
 class Trainer(object):
     def __init__(self, model, train_loader, val_loader, config):
@@ -17,7 +18,7 @@ class Trainer(object):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.optimizer = optim.Adam(model.parameters(), 
-                                    lr=config.get('learning_rate', 0.0001),
+                                    lr=config.get('learning_rate', 0.01),
                                     weight_decay=config.get('weight_decay', 0))
         self.config = config
     

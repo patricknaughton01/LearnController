@@ -238,6 +238,8 @@ class Simulator(object):
         if ((rpos[0]-gpos[0])**2 + (rpos[1]-gpos[1])**2)**0.5 <= \
                 self.sim.getAgentRadius(self.robot_num):
             return True
+        elif (rpos[0] > gpos[0]):
+            return True
         else:
             return False
         self.uncertainties[self.uncertainty_ind] = uncertainty
@@ -617,7 +619,7 @@ class Simulator(object):
             # Add the robot
             robot_pos = (wall_length - 1.0, wall_width + wall_dist/2.0 +
                          randomize(-0.5, 0.5))
-            self.overall_robot_goal = (wall_length + 4.0, wall_width +
+            self.overall_robot_goal = (wall_length + 3.0, wall_width +
                                        wall_dist/2.0 + randomize(-0.5, 0.5))
             if reverse:
                 tmp = robot_pos
