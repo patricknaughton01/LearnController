@@ -150,13 +150,27 @@ class Simulator(object):
                 new_r_pos = self.sim.getAgentPosition(self.robot_num)
                 r_pred, r_h_t = reverse_model(self.success_state(), r_h_t)
                 r_pred = utils.get_coefs(r_pred.unsqueeze(0))
-                clean_r_pred = [round(r_pred[i].item(), 3)
-                                for i in range(len(r_pred))]
-                c.write("{}\t{}\t{}\t{}\t{}\n".format(
-                    round(rpos[0] - (clean_r_pred[0] + new_r_pos[0]), 3),
-                    round(rpos[1] - (clean_r_pred[1] + new_r_pos[1]), 3),
-                    clean_r_pred[2], clean_r_pred[3], clean_r_pred[4]
-                ))
+                # clean_r_pred = [round(r_pred[i].item(), 3)
+                #                 for i in range(len(r_pred))]
+                # c.write("{}\t{}\t{}\t{}\t{}\n".format(
+                #     round(rpos[0] - (clean_r_pred[0] + new_r_pos[0]), 3),
+                #     round(rpos[1] - (clean_r_pred[1] + new_r_pos[1]), 3),
+                #     clean_r_pred[2], clean_r_pred[3], clean_r_pred[4]
+                # ))
+                # Compute the likelihood of observing this previous position
+                # given the distribution from the reverse model
+                obs = np.matrix([[rpos[0] - new_r_pos[0]],
+                                  [rpos[1] - new_r_pos[1]]])
+                means = np.matrix([[r_pred[0]], [r_pred[1]]])
+                # Compute cov = corr*sy*sx
+                cov = r_pred[4]*r_pred[3]*r_pred[2]
+                cov_mat = np.matrix([[r_pred[2]**2, cov],
+                                     [cov, r_pred[3]**2]])
+                diff = obs - means
+                transpose = np.transpose(diff)
+                num = np.exp(-0.5 * transpose * np.linalg.inv(cov_mat) * diff)
+                dem = np.sqrt((2*np.pi)**2 * np.linalg.det(cov_mat))
+                c.write("{}\n".format(np.log(num/dem).item()))
                 i += 1
             #f.close()
             c.close()
