@@ -132,7 +132,7 @@ class Simulator(object):
                 failure_func = self.base_failure
             i = 0
             #f = open("std_devs_{}.txt".format(key), "w")
-            c = open("consistency_{}.txt".format(key), "w")
+            #conf = open("conf_{}.txt".format(key), "w")
             while not failure_func(uncertainty) and i < max_ts:
                 mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
                     self.get_succ_prediction(
@@ -148,33 +148,55 @@ class Simulator(object):
                 self.goals[self.robot_num] = (rpos[0] + mx, rpos[1] + my)
                 self.advance_simulation()
                 new_r_pos = self.sim.getAgentPosition(self.robot_num)
-                r_pred, r_h_t = reverse_model(self.success_state(), r_h_t)
-                r_pred = utils.get_coefs(r_pred.unsqueeze(0))
-                # clean_r_pred = [round(r_pred[i].item(), 3)
-                #                 for i in range(len(r_pred))]
-                # c.write("{}\t{}\t{}\t{}\t{}\n".format(
-                #     round(rpos[0] - (clean_r_pred[0] + new_r_pos[0]), 3),
-                #     round(rpos[1] - (clean_r_pred[1] + new_r_pos[1]), 3),
-                #     clean_r_pred[2], clean_r_pred[3], clean_r_pred[4]
-                # ))
-                # Compute the likelihood of observing this previous position
-                # given the distribution from the reverse model
-                obs = np.matrix([[rpos[0] - new_r_pos[0]],
-                                  [rpos[1] - new_r_pos[1]]])
-                means = np.matrix([[r_pred[0]], [r_pred[1]]])
-                # Compute cov = corr*sy*sx
-                cov = r_pred[4]*r_pred[3]*r_pred[2]
-                cov_mat = np.matrix([[r_pred[2]**2, cov],
-                                     [cov, r_pred[3]**2]])
-                diff = obs - means
-                transpose = np.transpose(diff)
-                num = np.exp(-0.5 * transpose * np.linalg.inv(cov_mat) * diff)
-                dem = np.sqrt((2*np.pi)**2 * np.linalg.det(cov_mat))
-                c.write("{}\n".format(np.log(num/dem).item()))
+                stats = None
+                for j in range(20):
+                    with torch.no_grad():
+                        reverse_model.train()
+                        r_pred, next_r_h_t = reverse_model(
+                            self.success_state(), r_h_t
+                        )
+                    r_pred = utils.get_coefs(r_pred.unsqueeze(0))
+                    if stats is None:
+                        stats = [[] for _ in range(len(r_pred))]
+                    for k in range(len(r_pred)):
+                        stats[k].append(r_pred[k])
+                mx = utils.avg(stats[0])
+                my = utils.avg(stats[1])
+                #print(utils.std_dev(stats[0]))
+                sx = utils.avg(stats[2])# + utils.std_dev(stats[0])
+                sy = utils.avg(stats[3])# + utils.std_dev(stats[1])
+                # cov = (utils.avg(stats[4]) * utils.avg(stats[2]) *
+                #        utils.avg(stats[3])) + utils.cov(stats[0], stats[1])
+                cov = utils.avg(stats[4]) * utils.avg(stats[2]) * utils.avg(
+                    stats[3])
+                # See if observed point is outside 50% ellipse predicted by
+                # the reverse model. If so, we failed.
+                conf_lvl = 0.90
+                s = -2.0 * np.log(1-conf_lvl)
+                cov_mat = np.matrix([[sx**2, cov],
+                                     [cov, sy**2]])
+                vals, vecs = np.linalg.eig(cov_mat)
+                maj, min = vals.max(), vals.min()
+                a, b = np.sqrt(s*maj), np.sqrt(s*min)
+                # c is distance from center of ellipse to each focus
+                c = np.sqrt(a**2 - b**2)
+                maj_vec = vecs[vals.argmax()]
+                alpha = np.arctan2(maj_vec[0, 1], maj_vec[0, 0])
+                foc_vec = np.array([c*np.cos(alpha), c*np.sin(alpha)])
+                center = np.array([new_r_pos[0] + mx,
+                                   new_r_pos[1] + my])
+                f1, f2 = center + foc_vec, center - foc_vec
+                obs = np.array([rpos[0], rpos[1]])
+                # Outside of ellipse if sum of distances to foci is
+                # > 2 sqrt(b**2 + c**2)
+                d = np.linalg.norm(f1-obs) + np.linalg.norm(f2-obs)
+                # if d > 2*a:
+                #     print("Failure")
+                # conf.write("{} {} {} {} {}\n".format(center[0], center[1], a,
+                #                                     b, alpha))
                 i += 1
-            #f.close()
-            c.close()
-            print("Finished success simulation after {} steps".format(i))
+            #conf.close()
+            #print("Finished success simulation after {} steps".format(i))
             return i
 
     @staticmethod
@@ -727,8 +749,8 @@ class Simulator(object):
                 else:
                     # Make humans actual agents that move either towards or
                     # away from the robot
-                    min_hum = 6
-                    max_hum = 6
+                    min_hum = 4
+                    max_hum = 4
                     max_hum_rad = 0.5
                     num_hum = random.randint(min_hum, max_hum)
                     for i in range(num_hum):
@@ -745,11 +767,11 @@ class Simulator(object):
                             pos, 10.0, 10, 1.0, 5.0, 0.5,
                             0.7, (0, 0)
                         ))
-                        goal_min = -4.0
-                        goal_max = -5.0
+                        goal_min = -2.0
+                        goal_max = -1.0
                         self.goals.append((
                             pos[0] + randomize(goal_min, goal_max),
-                            wall_width + wall_dist/(num_hum+1) * (i+1)
+                            wall_width + wall_dist/2.0
                         ))
                         self.headings.append(
                             normalize(randomize(7*math.pi/8, 9*math.pi/8))

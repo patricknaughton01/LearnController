@@ -3,7 +3,9 @@ import learn_general_controller.model
 import configparser
 import random
 import time
+import os
 
+from tqdm import tqdm
 from rl_model import Controller
 from utils import *
 from simulator import Simulator
@@ -11,7 +13,10 @@ from simulator import Simulator
 
 def main():
     args = parse_args()
-    with open("command.txt", "w") as cfile:
+    prefix = "output/"
+    if not os.path.isdir(prefix):
+       os.mkdir(prefix)
+    with open(prefix + "command.txt", "w") as cfile:
         cfile.write(str(args) + "\n")
     model_path = args.model_path
     if model_path == "":
@@ -23,9 +28,9 @@ def main():
     scene = args.scene
     timesteps = args.max_timesteps
     epsilon = args.epsilon
-    reward_file = open("rewards_{}.txt".format(args.scene), "w")
-    for i in range(args.num_episodes):
-        out_path = args.scene + "_{}.txt".format(i)
+    reward_file = open(prefix + "rewards_{}.txt".format(args.scene), "w")
+    for i in tqdm(range(args.num_episodes)):
+        out_path = prefix + args.scene + "_{}.txt".format(i)
         out_file = open(out_path, "w")
         model_config = configparser.RawConfigParser()
         model_config.read(args.model_config)
@@ -84,11 +89,11 @@ def main():
                 if action.item() != 0:
                     reward -= 0.01
                 total_reward += reward
-            print("Reward: ", total_reward.item())
+            #print("Reward: ", total_reward.item())
             reward_file.write(str(total_reward.item()) + "\n")
         else:
             # We succeeded
-            print("Success")
+            #print("Success")
             reward_file.write("-" + "\n")
         out_file.close()
     reward_file.close()

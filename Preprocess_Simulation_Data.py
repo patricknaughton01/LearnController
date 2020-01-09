@@ -47,6 +47,9 @@ def main():
         "timestamps?")
     parser.add_argument("--heading", action="store_true", help="the input "
         "file contains heading information")
+    parser.add_argument("--conf", type=str, default="", help="directory of "
+                                                             "confidence "
+                                                             "data to use")
     args = parser.parse_args()
     if args.heading:
         terms_per_agent = 6
@@ -267,6 +270,19 @@ def main():
         for t in range(0, T, args.stride):
             add_patches(t, n, episode, colors, ax, numbers=args.n)
         add_patches(T-1, n, episode, colors, ax, numbers=args.n)
+        if args.conf != "":
+            conf_files = glob(args.conf + "/conf_*.txt")
+            conf_files.sort(key=lambda x: int(
+                x.split('/')[-1].split('.')[-2].split('_')[-1]))
+            with open(conf_files[idx]) as cf:
+                lines = cf.readlines()
+                for line in lines:
+                    line = line.split(" ")
+                    ax.add_patch(patches.Ellipse(
+                        (float(line[0]), float(line[1])), 2*float(line[2]),
+                        2*float(line[3]), angle=float(line[4]), fill=False,
+                        linestyle="--", color=[0.1, 1.0, 0.6]
+                    ))
 
     legends = ['agent %d' % i for i in range(n)]
     # max_lim = np.max(episode)
