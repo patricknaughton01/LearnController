@@ -132,7 +132,7 @@ class Simulator(object):
                 failure_func = self.base_failure
             i = 0
             #f = open("std_devs_{}.txt".format(key), "w")
-            #conf = open("conf_{}.txt".format(key), "w")
+            conf = open("conf_{}.txt".format(key), "w")
             while not failure_func(uncertainty) and i < max_ts:
                 mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
                     self.get_succ_prediction(
@@ -171,7 +171,7 @@ class Simulator(object):
                     stats[3])
                 # See if observed point is outside 50% ellipse predicted by
                 # the reverse model. If so, we failed.
-                conf_lvl = 0.90
+                conf_lvl = 0.95
                 s = -2.0 * np.log(1-conf_lvl)
                 cov_mat = np.matrix([[sx**2, cov],
                                      [cov, sy**2]])
@@ -190,13 +190,13 @@ class Simulator(object):
                 # Outside of ellipse if sum of distances to foci is
                 # > 2 sqrt(b**2 + c**2)
                 d = np.linalg.norm(f1-obs) + np.linalg.norm(f2-obs)
-                # if d > 2*a:
-                #     print("Failure")
-                # conf.write("{} {} {} {} {}\n".format(center[0], center[1], a,
-                #                                     b, alpha))
+                if d > 2*a:
+                    print("Failure")
+                conf.write("{} {} {} {} {}\n".format(center[0], center[1], a,
+                                                    b, alpha))
                 i += 1
-            #conf.close()
-            #print("Finished success simulation after {} steps".format(i))
+            conf.close()
+            print("Finished success simulation after {} steps".format(i))
             return i
 
     @staticmethod

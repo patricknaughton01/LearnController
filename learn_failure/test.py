@@ -29,7 +29,7 @@ def main():
     timesteps = args.max_timesteps
     epsilon = args.epsilon
     reward_file = open(prefix + "rewards_{}.txt".format(args.scene), "w")
-    for i in tqdm(range(args.num_episodes)):
+    for i in range(args.num_episodes):
         out_path = prefix + args.scene + "_{}.txt".format(i)
         out_file = open(out_path, "w")
         model_config = configparser.RawConfigParser()
