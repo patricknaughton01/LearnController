@@ -49,6 +49,7 @@ def parse_args():
     parser.add_argument("--name", type=str, default="")
     parser.add_argument("--reverse", action="store_true")
     parser.add_argument("--reverse_path", type=str, default="")
+    parser.add_argument("--single", action="store_true")
     return parser.parse_args()
 
 def get_weight_decay(tao, length_scale, N, dropout):

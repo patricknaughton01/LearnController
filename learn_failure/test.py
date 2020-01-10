@@ -38,7 +38,8 @@ def main():
                            model_type=args.model_type)  # model_type = crossing
         model.load_state_dict(torch.load(model_path)["state_dict"])
         model.eval()
-        sim = Simulator(scene=scene, file=out_file, reverse=args.reverse)
+        sim = Simulator(scene=scene, file=out_file, reverse=args.reverse,
+                        single=args.single)
         success_model = None
         reverse_model = None
         if args.success_path != "":

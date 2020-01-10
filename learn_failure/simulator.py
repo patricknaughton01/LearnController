@@ -19,7 +19,9 @@ from shapely.ops import nearest_points
 
 class Simulator(object):
 
-    def __init__(self, scene=None, file=None, max_dim=4, reverse=False):
+    def __init__(self, scene=None, file=None, max_dim=4, reverse=False,
+                 single=False):
+        self.single = single
         self.sim = rvo2.PyRVOSimulator(1.0, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
         self.robot_num = None
@@ -153,7 +155,7 @@ class Simulator(object):
                     with torch.no_grad():
                         reverse_model.train()
                         r_pred, next_r_h_t = reverse_model(
-                            self.success_state(), r_h_t
+                            self.reverse_state(), r_h_t
                         )
                     r_pred = utils.get_coefs(r_pred.unsqueeze(0))
                     if stats is None:
@@ -459,15 +461,16 @@ class Simulator(object):
                        + "," + str(self.overall_robot_goal[1]) + ") ")
         return_str += str(v_pref) + " "
         return_str += str(theta) + " "
-        for agent in self.agents:
-            if agent != self.robot_num: # We already wrote out the robot
-                pos = self.sim.getAgentPosition(agent)
-                vel = self.sim.getAgentVelocity(agent)
-                rad = self.sim.getAgentRadius(agent)
-                return_str += "(" + str(pos[0]) + "," + str(pos[1]) + ") "
-                return_str += "(" + str(vel[0]) + "," + str(vel[1]) + ") "
-                return_str += str(rad) + " "
-                return_str += str(self.headings[agent]) + " "
+        if not self.single:
+            for agent in self.agents:
+                if agent != self.robot_num: # We already wrote out the robot
+                    pos = self.sim.getAgentPosition(agent)
+                    vel = self.sim.getAgentVelocity(agent)
+                    rad = self.sim.getAgentRadius(agent)
+                    return_str += "(" + str(pos[0]) + "," + str(pos[1]) + ") "
+                    return_str += "(" + str(vel[0]) + "," + str(vel[1]) + ") "
+                    return_str += str(rad) + " "
+                    return_str += str(self.headings[agent]) + " "
         for obs in self.obstacles:
             if len(obs) > 1:
                 # Polygonal obstacle
@@ -598,6 +601,70 @@ class Simulator(object):
                 rad = self.sim.getAgentRadius(agent)
                 state.extend([pos[0], pos[1], vel[0], vel[1], rad,
                               self.headings[agent]])
+        for obs in self.obstacles:
+            if len(obs) > 1:
+                # Polygonal obstacle
+                o = Polygon(obs)
+                p = Point(rpos)
+                p1, p2 = nearest_points(o, p)
+                # Velocity is always 0 for obstacles
+                # Heading is same as robot's
+                state.extend([p1.x, p2.y, 0, 0, self.obs_width,
+                              self.headings[self.robot_num]])
+            else:
+                # Point obstacle
+                state.extend([obs[0][0], obs[0][1], 0, 0, self.obs_width,
+                              self.headings[self.robot_num]])
+        return state
+
+    def reverse_state(self):
+        """Computes the state that will be fed to the success model. This is
+        composed of the robot's rotated and transformed state (see utils.py
+        / ask Yash for what that does) and the occupancy map (same advice
+        for how this is built).
+
+        :return: Tensor of state values for the robot relative to its
+            velocity and the occupancy maps for every agent.
+            :rtype: Tensor
+        """
+        state = np.array(self.get_reverse_state_arr())
+        om = utils.build_occupancy_maps(utils.build_humans(state))
+        # print("OM: ", om.size())
+        # We only have a batch of one so just get the first element of
+        # transform and rotate
+        state = utils.transform_and_rotate(state.reshape((1, -1)))[0]
+        # print("State: ", state.size())
+        return torch.cat((state, om), dim=1).unsqueeze(0)
+
+    def get_reverse_state_arr(self):
+        """Calculate the state of the robot and all the obstacles in the
+        scene such that the success controller can interpret it.
+        Takes the form of
+        [
+            robot pos, robot vel, robot rad, robot goal, robot v_pref,
+            robot theta,
+            obs1 position, obs1 vel, obs1 rad,
+            obs2...
+            ...
+        ]
+        Note that none of these are tuples, if the value is a vector (like
+        position) its elements are just listed out.
+
+        :return: Array with the state of all the obstacles in the scene plus
+            the robot.
+            :rtype: list
+        """
+        rpos = self.sim.getAgentPosition(self.robot_num)
+        rvel = self.sim.getAgentVelocity(self.robot_num)
+        rrad = self.sim.getAgentRadius(self.robot_num)
+        v_pref = self.sim.getAgentMaxSpeed(self.robot_num)
+        theta = math.atan2(rvel[1], rvel[0])
+        # Robot's state entry.
+        state = [
+            rpos[0], rpos[1], rvel[0], rvel[1], rrad,
+            self.headings[self.robot_num], self.overall_robot_goal[0],
+            self.overall_robot_goal[1], v_pref, theta
+        ]
         for obs in self.obstacles:
             if len(obs) > 1:
                 # Polygonal obstacle
