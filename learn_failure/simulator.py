@@ -102,7 +102,7 @@ class Simulator(object):
         self.advance_simulation()
 
     def forward_simulate(self, success_model, reverse_model, samples=20,
-                         max_ts=100, failure_func=None, key="0"):
+                         max_ts=100, failure_func=None, key="0", conf_val=0.9):
         """Simulates the beginning of the scenario by using the predictions of
         the success_model (a neural network which takes in the state of the
         robot and predicts a mux, muy, sx, sy, and correlation for the
@@ -134,7 +134,7 @@ class Simulator(object):
                 failure_func = self.base_failure
             i = 0
             #f = open("std_devs_{}.txt".format(key), "w")
-            conf = open("conf_{}.txt".format(key), "w")
+            #conf = open("conf_{}.txt".format(key), "w")
             while not failure_func(uncertainty) and i < max_ts:
                 mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
                     self.get_succ_prediction(
@@ -173,7 +173,7 @@ class Simulator(object):
                     stats[3])
                 # See if observed point is outside 50% ellipse predicted by
                 # the reverse model. If so, we failed.
-                conf_lvl = 0.95
+                conf_lvl = conf_val
                 s = -2.0 * np.log(1-conf_lvl)
                 cov_mat = np.matrix([[sx**2, cov],
                                      [cov, sy**2]])
@@ -193,12 +193,13 @@ class Simulator(object):
                 # > 2 sqrt(b**2 + c**2)
                 d = np.linalg.norm(f1-obs) + np.linalg.norm(f2-obs)
                 if d > 2*a:
-                    print("Failure")
-                conf.write("{} {} {} {} {}\n".format(center[0], center[1], a,
-                                                    b, alpha))
+                    return -1
+                #     print("Failure")
+                # conf.write("{} {} {} {} {}\n".format(center[0], center[1], a,
+                #                                     b, alpha))
                 i += 1
-            conf.close()
-            print("Finished success simulation after {} steps".format(i))
+            # conf.close()
+            #print("Finished success simulation after {} steps".format(i))
             return i
 
     @staticmethod

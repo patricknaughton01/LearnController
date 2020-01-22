@@ -24,14 +24,7 @@ def main():
     config['log_path'] = log_path
 
     scenes = [
-        "dynamic_barge_in",
-        #"dynamic_barge_in_left",
-        #"dynamic_barge_in_top",
-        #"dynamic_barge_in_bottom",
-        "barge_in",
-        #"barge_in_left",
-        #"barge_in_top",
-        #"barge_in_bottom",
+        "dynamic_barge_in"
     ]
 
     if args.success_path != "":
@@ -44,6 +37,16 @@ def main():
             success_model.load_state_dict(
                 torch.load(args.success_path)["state_dict"])
             success_model.eval()
+
+            reverse_model_config = configparser.RawConfigParser()
+            reverse_model_config.read(
+                "learn_general_controller/configs/model.config")
+            reverse_model = learn_general_controller.model.Controller(
+                reverse_model_config, model_type=args.model_type
+            )
+            reverse_model.load_state_dict(
+                torch.load(args.reverse_path)["state_dict"])
+            reverse_model.train()
         except IOError:
             success_model = None
             print("Couldn't open file {}".format(args.success_path))
@@ -63,7 +66,8 @@ def main():
             print("Couldn't open file {}".format(args.model_path))
     model.train()
     print(model)
-    trainer = Trainer(model, config, success_model=success_model)
+    trainer = Trainer(model, config, success_model=success_model,
+                      reverse_model=reverse_model)
     path = log_path
     file_name = "model_" + args.name + ".tar"
     with open("command_" + args.name, "w") as cfile:

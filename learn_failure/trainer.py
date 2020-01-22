@@ -13,7 +13,7 @@ from collections import namedtuple
 from utils import neg_2d_gaussian_likelihood, transform_and_rotate, build_occupancy_maps, build_humans
 
 class Trainer(object):
-    def __init__(self, model, config, success_model=None):
+    def __init__(self, model, config, success_model=None, reverse_model=None):
         """Train the trainable model of a policy
 
         """
@@ -23,6 +23,7 @@ class Trainer(object):
         self.policy_model = model
         self.target_model = copy.deepcopy(model)
         self.success_model = success_model
+        self.reverse_model = reverse_model
         self.criterion = neg_2d_gaussian_likelihood
         self.optimizer = optim.Adam(
             self.policy_model.parameters(), lr=0.001
@@ -89,8 +90,10 @@ class Trainer(object):
         sim = simulator.Simulator(scene=scene, file=out_file)
         # Try to execute success controller until it fails
         if self.success_model is not None:
-            sim.forward_simulate(self.success_model, max_ts=self.config[
-                'success_max_ts'])
+            sim.forward_simulate(self.success_model,
+                self.reverse_model, max_ts=self.config['success_max_ts'],
+                conf_val=0.98, key=str(key)
+            )
         h_t = None
         curr_state = sim.state()
         total_reward = torch.zeros((1, 1), dtype=torch.float)
