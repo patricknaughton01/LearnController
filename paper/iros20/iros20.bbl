@@ -1,0 +1,57 @@
+\begin{thebibliography}{1}
+\providecommand{\url}[1]{#1}
+\csname url@rmstyle\endcsname
+\providecommand{\newblock}{\relax}
+\providecommand{\bibinfo}[2]{#2}
+\providecommand\BIBentrySTDinterwordspacing{\spaceskip=0pt\relax}
+\providecommand\BIBentryALTinterwordstretchfactor{4}
+\providecommand\BIBentryALTinterwordspacing{\spaceskip=\fontdimen2\font plus
+\BIBentryALTinterwordstretchfactor\fontdimen3\font minus
+  \fontdimen4\font\relax}
+\providecommand\BIBforeignlanguage[2]{{%
+\expandafter\ifx\csname l@#1\endcsname\relax
+\typeout{** WARNING: IEEEtran.bst: No hyphenation pattern has been}%
+\typeout{** loaded for the language `#1'. Using the pattern for}%
+\typeout{** the default language instead.}%
+\else
+\language=\csname l@#1\endcsname
+\fi
+#2}}
+
+\bibitem{caseforcoop}
+P.~Trautman, J.~Ma, R.~Murray, and A.~Krause, ``Robot navigation in dense human
+  crowds: the case for cooperation in: Robotics and automation (icra),'' in
+  \emph{2013 IEEE International Conference On}, 2013, pp. 2153--2160.
+
+\bibitem{sfm}
+G.~Ferrer, A.~Garrell, and A.~Sanfeliu, ``Social-aware robot navigation in
+  urban environments,'' in \emph{2013 European Conference on Mobile
+  Robots}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE, 2013, pp. 331--336.
+
+\bibitem{socialirl}
+H.~Kretzschmar, M.~Spies, C.~Sprunk, and W.~Burgard, ``Socially compliant
+  mobile robot navigation via inverse reinforcement learning,'' \emph{The
+  International Journal of Robotics Research}, vol.~35, no.~11, pp. 1289--1307,
+  2016.
+
+\bibitem{sociallyawarerl}
+Y.~F. Chen, M.~Everett, M.~Liu, and J.~P. How, ``Socially aware motion planning
+  with deep reinforcement learning,'' in \emph{2017 IEEE/RSJ International
+  Conference on Intelligent Robots and Systems (IROS)}.\hskip 1em plus 0.5em
+  minus 0.4em\relax IEEE, 2017, pp. 1343--1350.
+
+\bibitem{crowdawarerl}
+C.~Chen, Y.~Liu, S.~Kreiss, and A.~Alahi, ``Crowd-robot interaction:
+  Crowd-aware robot navigation with attention-based deep reinforcement
+  learning,'' \emph{arXiv preprint arXiv:1809.08835}, 2018.
+
+\bibitem{rvo2}
+J.~van~den Berg, S.~J. Guy, J.~Snape, M.~C. Lin, and D.~Manocha, ``Rvo2
+  library: Reciprocal collision avoidance for real-time multi-agent
+  simulation,'' 2011.
+
+\bibitem{pyrvo2}
+S.~Stüvel, ``Python rvo2,''
+  \url{https://github.com/sybrenstuvel/Python-RVO2/}, 2017.
+
+\end{thebibliography}
