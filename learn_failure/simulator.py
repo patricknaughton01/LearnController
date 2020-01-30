@@ -134,7 +134,7 @@ class Simulator(object):
                 failure_func = self.base_failure
             i = 0
             #f = open("std_devs_{}.txt".format(key), "w")
-            #conf = open("conf_{}.txt".format(key), "w")
+            # conf = open("conf_{}.txt".format(key), "w")
             while not failure_func(uncertainty) and i < max_ts:
                 mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
                     self.get_succ_prediction(
@@ -165,12 +165,12 @@ class Simulator(object):
                 mx = utils.avg(stats[0])
                 my = utils.avg(stats[1])
                 #print(utils.std_dev(stats[0]))
-                sx = utils.avg(stats[2])# + utils.std_dev(stats[0])
-                sy = utils.avg(stats[3])# + utils.std_dev(stats[1])
-                # cov = (utils.avg(stats[4]) * utils.avg(stats[2]) *
-                #        utils.avg(stats[3])) + utils.cov(stats[0], stats[1])
-                cov = utils.avg(stats[4]) * utils.avg(stats[2]) * utils.avg(
-                    stats[3])
+                sx = utils.avg(stats[2]) + utils.std_dev(stats[0])
+                sy = utils.avg(stats[3]) + utils.std_dev(stats[1])
+                cov = (utils.avg(stats[4]) * utils.avg(stats[2]) *
+                       utils.avg(stats[3])) + utils.cov(stats[0], stats[1])
+                # cov = utils.avg(stats[4]) * utils.avg(stats[2]) * utils.avg(
+                #     stats[3])
                 # See if observed point is outside 50% ellipse predicted by
                 # the reverse model. If so, we failed.
                 conf_lvl = conf_val
@@ -192,11 +192,11 @@ class Simulator(object):
                 # Outside of ellipse if sum of distances to foci is
                 # > 2 sqrt(b**2 + c**2)
                 d = np.linalg.norm(f1-obs) + np.linalg.norm(f2-obs)
+                # conf.write("{} {} {} {} {}\n".format(center[0], center[1], a,
+                #                                      b, alpha))
                 if d > 2*a:
                     return -1
                 #     print("Failure")
-                # conf.write("{} {} {} {} {}\n".format(center[0], center[1], a,
-                #                                     b, alpha))
                 i += 1
             # conf.close()
             #print("Finished success simulation after {} steps".format(i))
@@ -731,7 +731,7 @@ class Simulator(object):
                 self.overall_robot_goal = tmp
             self.robot_num = self.sim.addAgent(
                 robot_pos,
-                10.0, 10, 1.0, 5.0, 0.5, 3.0, (0, 0)
+                10.0, 10, 2.0, 5.0, 0.5, 3.0, (0, 0)
             )
             self.agents.append(self.robot_num)
             self.goals.append(robot_pos)
@@ -808,7 +808,7 @@ class Simulator(object):
                         gs = [pos1, pos2, pos3, pos4]
                     for p in poses:
                         self.agents.append(self.sim.addAgent(
-                            p, 10.0, 10, 1.0, 5.0,
+                            p, 10.0, 10, 2.0, 5.0,
                             0.5, 0.7, (0, 0)
                         ))
                         self.headings.append(randomize(-math.pi/8, math.pi/8))
@@ -832,7 +832,7 @@ class Simulator(object):
                                 * (max_hum/num_hum) * i
                         )
                         self.agents.append(self.sim.addAgent(
-                            pos, 10.0, 10, 1.0, 5.0, 0.5,
+                            pos, 10.0, 10, 2.0, 5.0, 0.5,
                             0.7, (0, 0)
                         ))
                         goal_min = -2.0

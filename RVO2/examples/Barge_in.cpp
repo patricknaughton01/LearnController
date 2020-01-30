@@ -210,23 +210,23 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
                                 human_pos4.y() + 1.0f);
         
 
-        sim->addAgent(robot_pos, 10.0f, 10, 1.0f, 5.0f, 0.5f, 3.0f);
+        sim->addAgent(robot_pos, 10.0f, 10, 2.0f, 5.0f, 0.5f, 3.0f);
         goals.push_back(robot_goal);
         headings.push_back(randomize(-heading_range, heading_range));
 
-        sim->addAgent(human_pos1, 10.0f, 10, 1.0f, 5.0f, 0.5f, 0.7f);
+        sim->addAgent(human_pos1, 10.0f, 10, 2.0f, 5.0f, 0.5f, 0.7f);
         goals.push_back(human_goal1);
         headings.push_back(randomize(-heading_range, heading_range));
 
-        sim->addAgent(human_pos2, 10.0f, 10, 1.0f, 5.0f, 0.5f, 0.7f);
+        sim->addAgent(human_pos2, 10.0f, 10, 2.0f, 5.0f, 0.5f, 0.7f);
         goals.push_back(human_goal2);
         headings.push_back(randomize(-heading_range, heading_range));
 
-        sim->addAgent(human_pos3, 10.0f, 10, 1.0f, 5.0f, 0.5f, 0.7f);
+        sim->addAgent(human_pos3, 10.0f, 10, 2.0f, 5.0f, 0.5f, 0.7f);
         goals.push_back(human_goal3);
         headings.push_back(randomize(-heading_range, heading_range));
 
-        sim->addAgent(human_pos4, 10.0f, 10, 1.0f, 5.0f, 0.5f, 0.7f);
+        sim->addAgent(human_pos4, 10.0f, 10, 2.0f, 5.0f, 0.5f, 0.7f);
         goals.push_back(human_goal4);
         headings.push_back(randomize(-heading_range, heading_range));
     }
