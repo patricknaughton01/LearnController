@@ -1,4 +1,4 @@
-\begin{thebibliography}{1}
+\begin{thebibliography}{10}
 \providecommand{\url}[1]{#1}
 \csname url@rmstyle\endcsname
 \providecommand{\newblock}{\relax}
@@ -53,5 +53,22 @@ J.~van~den Berg, S.~J. Guy, J.~Snape, M.~C. Lin, and D.~Manocha, ``Rvo2
 \bibitem{pyrvo2}
 S.~Stüvel, ``Python rvo2,''
   \url{https://github.com/sybrenstuvel/Python-RVO2/}, 2017.
+
+\bibitem{suttonandbarto}
+R.~S. Sutton and A.~G. Barto, \emph{Introduction to Reinforcement Learning},
+  1st~ed.\hskip 1em plus 0.5em minus 0.4em\relax Cambridge, MA, USA: MIT Press,
+  1998.
+
+\bibitem{dqn}
+V.~Mnih, K.~Kavukcuoglu, D.~Silver, A.~Graves, I.~Antonoglou, D.~Wierstra, and
+  M.~Riedmiller, ``Playing atari with deep reinforcement learning,''
+  \emph{arXiv preprint arXiv:1312.5602}, 2013.
+
+\bibitem{metrics}
+D.~Vasquez, B.~Okal, and K.~O. Arras, ``Inverse reinforcement learning
+  algorithms and features for robot navigation in crowds: an experimental
+  comparison,'' in \emph{2014 IEEE/RSJ International Conference on Intelligent
+  Robots and Systems}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE, 2014, pp.
+  1341--1346.
 
 \end{thebibliography}

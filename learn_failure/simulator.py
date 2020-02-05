@@ -20,7 +20,7 @@ from shapely.ops import nearest_points
 class Simulator(object):
 
     def __init__(self, scene=None, file=None, max_dim=4, reverse=False,
-                 single=False):
+                 single=False, conf=False):
         self.single = single
         self.sim = rvo2.PyRVOSimulator(1.0, 1.0, 10, 5.0, 5.0, 0.22, 1.5)
         self.obstacles = []
@@ -31,6 +31,7 @@ class Simulator(object):
         self.scene = scene
         self.obs_width = 0.0000001
         self.file = file
+        self.conf = conf
         self.max_dim = max_dim
         if self.scene is None:
             self.scene = "random"
@@ -134,7 +135,9 @@ class Simulator(object):
                 failure_func = self.base_failure
             i = 0
             #f = open("std_devs_{}.txt".format(key), "w")
-            # conf = open("conf_{}.txt".format(key), "w")
+            conf = None
+            if self.conf:
+                conf = open("conf_{}.txt".format(key), "w")
             while not failure_func(uncertainty) and i < max_ts:
                 mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
                     self.get_succ_prediction(
@@ -151,7 +154,7 @@ class Simulator(object):
                 self.advance_simulation()
                 new_r_pos = self.sim.getAgentPosition(self.robot_num)
                 stats = None
-                for j in range(20):
+                for j in range(5):
                     with torch.no_grad():
                         reverse_model.train()
                         r_pred, next_r_h_t = reverse_model(
@@ -179,6 +182,7 @@ class Simulator(object):
                                      [cov, sy**2]])
                 vals, vecs = np.linalg.eig(cov_mat)
                 maj, min = vals.max(), vals.min()
+                # a = len of semi-major axis, b = len of semi minor axis
                 a, b = np.sqrt(s*maj), np.sqrt(s*min)
                 # c is distance from center of ellipse to each focus
                 c = np.sqrt(a**2 - b**2)
@@ -192,13 +196,16 @@ class Simulator(object):
                 # Outside of ellipse if sum of distances to foci is
                 # > 2 sqrt(b**2 + c**2)
                 d = np.linalg.norm(f1-obs) + np.linalg.norm(f2-obs)
-                # conf.write("{} {} {} {} {}\n".format(center[0], center[1], a,
-                #                                      b, alpha))
+                if conf is not None:
+                    conf.write("{} {} {} {} {}\n".format(center[0], center[1],
+                                                         a, b, alpha))
                 if d > 2*a:
+                    # print("d: ", d, "2a: ", 2*a)
                     return -1
                 #     print("Failure")
                 i += 1
-            # conf.close()
+            if conf is not None:
+                conf.close()
             #print("Finished success simulation after {} steps".format(i))
             return i
 
@@ -817,8 +824,8 @@ class Simulator(object):
                 else:
                     # Make humans actual agents that move either towards or
                     # away from the robot
-                    min_hum = 4
-                    max_hum = 4
+                    min_hum = 6
+                    max_hum = 6
                     max_hum_rad = 0.5
                     num_hum = random.randint(min_hum, max_hum)
                     for i in range(num_hum):

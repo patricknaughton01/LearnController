@@ -1,0 +1,2 @@
+train running loss, train running l2 error, val loss, val l2 error
+-0.1904, 0.2961, -1.0105, 0.2109
