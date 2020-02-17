@@ -18,9 +18,11 @@
 \usepackage{bm}
 \usepackage{float}
 \usepackage{subcaption}
+\usepackage{siunitx}
 
-\usepackage[ruled]{algorithm2e}
-\SetKwComment{Comment}{$\triangleright$ }{}
+%\usepackage[ruled]{algorithm2e}
+\usepackage{algorithm, algpseudocode}
+%\SetKwComment{Comment}{$\triangleright$ }{}
 \usepackage{tabu}
 \usepackage{booktabs}
 \usepackage{etoolbox}
@@ -30,6 +32,11 @@
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
 		T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \graphicspath{ {images/} }
+
+\newrobustcmd*{\bftabnum}{%
+	\bfseries
+	\sisetup{output-decimal-marker={\textmd{.}}}%
+}
 
 %In case you encounter the following error:
 %Error 1010 The PDF file may be corrupt (unable to open PDF file) OR
@@ -51,7 +58,7 @@
 %\usepackage{amssymb}  % assumes amsmath package installed
 
 \title{\LARGE \bf
-	Learning to Fail: Failure Plans and Predictions for Crowd Navigation
+	Learning When to Fail: Contingency Plans for Crowd Navigation
 }
 
 
@@ -66,6 +73,11 @@
 
 \begin{document}
 
+\newcolumntype{Z}{S[
+	table-format=1.2,% added
+	%tight-spacing=true,
+	round-mode=places,
+	round-precision=2]}
 
 
 \maketitle
@@ -81,15 +93,42 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{INTRODUCTION}
+	Pedestrian crowds present a challenging navigation environment for a mobile robot. The robot must comply with latent social rules governing its trajectory while simultaneously reaching its goal in a reasonable amount of time. As robots move into closer contact with humans, advanced methods for navigation in crowds will gain increased importance. Probabilistic planners, which make navigation plans in the belief space, show potential to make headway in this problem and have demonstrated success dealing with uncertainty \cite{ppcp} like that experienced navigating in a crowd. To form their plans, these planners rely on smaller atomic actions which are strung together to form an overall trajectory. Some of these actions are learned by presenting the robot with its starting pose and a waypoint pose and running simulations with pedestrians or other agents \cite{crowdawarerl}. In general, these controllers guiding each action deal with unexpected situations in which their original trajectory to their waypoint becomes infeasible by simply replanning or stopping altogether. Replanning in some cases may take too long to avoid an imminent collision. Additionally, when the waypoint becomes completely unreachable, replanning or stopping may result in a more costly trajectory than simply abandoning it and seeking a safe location from which the higher level planner can generate a new trajectory to the overall goal. We address this issue by developing a failure controller aimed explicitly at motion control for the robot when it has no goal.
+	
+	Developing such a controller is useful because it gives long term planners a contingency plan at planning time so they can more efficiently explore the search space. The failure controller itself also helps ensure that the robot obeys a safe policy even when it has no waypoint to navigate to. For example, in some situations like that in Figure \ref{fig:dnmotivation}, staying still will cause the robot to be a hindrance to the humans and it will likely intrude into their personal space. Moving away to a different area of the scene would give the robot a safer place to replan from.
+	
+	\begin{figure}
+		\centering
+		\begin{subfigure}{0.49\linewidth}
+			% \includegraphics{}
+			\includegraphics[width=\linewidth]{dnmotive}
+			\caption{}
+			\label{fig:dnmotivation}
+		\end{subfigure}
+		\begin{subfigure}{0.49\linewidth}
+			% \includegraphics{}
+			\includegraphics[width=\linewidth]{rlmotive}
+			\caption{}
+		\end{subfigure}
+		\caption{The green circle represents the robot, the blue circles represent different humans and the black polygons represent the walls of the corridor. The arrows indicate the heading of each agent. Only the initial and final locations of each object are shown. The numbers indicate the time step at which the snapshot was taken. This is an example of a situation in which the robot stopping (a) will cause more collisions and intrusions than following a failure controller which in this case simply moves the robot along the corridor out of the way of humans (b).}
+		\label{fig:motivation}
+	\end{figure}
+	
+	This work facilitates combining learning with planning for long term crowd navigation by providing a reinforcement learning based failure controller and a supervised learning based predictor for determining when to use it. Specifically, this paper assumes that an existing probabilistic planner uses a set of motion primitives and controllers to create navigation plans. The set of controllers includes some to execute complex behaviors that interact with pedestrians. Each of these controllers has some probability of success which is associated with one goal and trajectory, and some probability of failure which is associated with a different trajectory. Success cannot be guaranteed for the controllers because the surrounding humans may interact with the robot or each other in unexpected ways. Note that the failure controller's objective differs from that of a traditional navigation planner in that the failure controller is not given an explicit goal; rather, it attempts to extract the optimal goal and trajectory from its environment.
 
 	The contributions of this work are:
 	\begin{enumerate}
 		\item A classifier that determines whether or not a robot is likely to reach its goal in a given scene.
 		\item A failure controller that safely guides the robot to a stable position from which it can initiate replanning.
 	\end{enumerate}
+	The design philosophy taken by this approach separates controllers for individual actions from the long term planner. This means the results presented here could easily be adapted to work with any planner.
+	
+	The remainder of this paper is organized as follows. 
+	
+	The code of our approach is available here: \texttt{\url{https://github.com/patricknaughton01/LearnController}}.
 	
 
-\section{RELATED WORK}
+\section{RELATED WORK}\label{sec:relatedwork}
 	Several methods use explicit models of human behavior to achieve smooth, predictable robot navigation among pedestrians. Trautman et al. model the interaction between the robot and pedestrians as an extension of an interactive Gaussian process that accommodates multiple goals \cite{caseforcoop}. The social forces model treats humans and the robot in question as masses subject to Newtonian dynamics and applies fictitious forces to them to predict and plan trajectories \cite{sfm}. It recomputes these forces and their effects on robot motion at each time step to determine how the robot should move. These techniques however rely on hand-crafted models of human behavior to achieve their results and handle unexpected or uncooperative human actions by simply replanning using the same model. The social forces model in particular does not demonstrate robust navigation plans and will sometimes exhibit oscillatory behavior in more crowded or narrow areas \cite{sfm}.
 	
 	Another approach uses inverse reinforcement learning to learn latent, possibly stochastic social rules humans observe when navigating in crowds \cite{socialirl}. This method uses example trajectories recorded from humans or gathered from teleoperated runs. This approach however is extremely unlikely to observe failed trajectories where a human attempts to execute some navigation plan and is forced to completely abort their initial goal. If a human attempts to overtake someone else, for example, they have many contingency options in the case where the other person is either intentionally or unintentionally uncooperative. For example, they could use verbal communication or body language to more explicitly communicate their intentions, options which are not available to many mobile robots. For this reason, inverse reinforcement learning will likely be unable to formulate a useful model for navigation when situations such as these occur.
@@ -98,12 +137,12 @@
 	
 	The above methods all either deal with failure at execution time by simply replanning or do not consider failure to reach the goal at all. We depart from this paradigm by designing a controller specifically targeted at producing trajectories when the robot's original goal is no longer reachable.
 	
-\section{PROBLEM STATEMENT}
+\section{PROBLEM STATEMENT}\label{sec:problemstatement}
 	We consider a robot that strings together different motion primitives and controllers to generate a navigation policy to reach some overall goal. Motion primitives are basic actions the robot can take which are guaranteed to succeed, for example, drive forward one meter. Controllers are more complicated actions that may fail, for example, barging past a group of pedestrians. These controllers can be used by the robot in specific situations to navigate in a scene. We refer to the controller that guides the robot a \textit{success controller}. This work is concerned with detecting and handling the failure of these controllers. Specifically, we develop a \textit{failure controller} that corresponds to a given success controller. This failure controller directs the robot if it is determined at execution time that the success controller is unlikely to achieve its goal. 
 	
 	Additionally, we would like to rigorously determine at execution time whether or not the success controller is likely to succeed. In this framework, the robot can decide at each time step whether it should begin using the failure controller. Once it switches to the failure controller, it cannot switch back to the success controller until the planner generates a new plan. 
 		
-\section{APPROACH}
+\section{APPROACH}\label{sec:approach}
 	We begin with a fixed success controller. In this work, we consider one specific controller for barging into a group of people at the end of a corridor. While the experiments and results here only concern this controller, the framework can be extended to include other controllers as well, for example, to overtake or cross in front of pedestrians. In order to train this controller, we first generate example runs in which the robot can reach its goal using the RVO2 simulator \cite{rvo2}, \cite{pyrvo2}. We employ a neural network architecture based on the one presented in \cite{crowdawarerl} to allow the network to handle variable input sizes. The state of the robot is characterized by ... In addition, we include an LSTM at the end of our network so that the robot can learn the sequence of actions. Figure \ref{fig:model_arch} shows the overall architecture of the network. The output of the network has five nodes which are interpreted as the $x$ and $y$ coordinates of the mean, the $x$ and $y$ standard deviations, and the correlation between $x$ and $y$ of a Gaussian distribution of the next location of the robot conditioned on its current state. At execution time, we then feed this network its current state and attempt to move to the mean of this distribution in the next time step.
 	
 	\begin{figure}
@@ -113,7 +152,38 @@
 		\label{fig:model_arch}
 	\end{figure}
 	
-	We split the approach into two distinct parts: First, we consider just determining whether or not the robot should switch to its failure controller. Given this classifier, we then develop a failure controller that, starting from the state at which the classifier reports we have failed, attempts to learn a policy that guides the robot to a safe location from which to replan.
+	We split the approach into two distinct parts: First, we consider just determining whether or not the robot should switch to its failure controller. Given this classifier, we then develop a failure controller that, starting from the state at which the classifier reports we have failed, attempts to learn a policy that guides the robot to a safe location from which to replan. Algorithm \ref{algo:exec} outlines how the two models work together to direct the robot at execution time.
+	
+	\begin{algorithm}[H]
+		%\SetAlgoLined
+		%\DontPrintSemicolon
+		\caption{Detect And Handle Failure}
+		\label{algo:exec}
+		\begin{algorithmic}
+			\Function{Execute}{$t_m, S, c$}
+				\State Initialize $C_s$, $R_p$, and $C_f$
+				\State Initialize $F\leftarrow false$
+				\For{$t=1..t_m$}
+					\State Observe $s_t$
+					\State $m_x,m_y,ln(s_x),ln(s_y),tanh^{-1}(\rho)=C_s(s_t)$
+					\State Move towards $(m_x,m_y)$, observe $ss_{t+1}$
+					\State Sample $S$ times from $R_p$, compute $\mu$ and $\Sigma$
+					\State $G = \mathcal{N}(\mu, \Sigma)$
+					\If{$s_t$ outside $c$ confidence ellipse of $G$}
+						\State $F\leftarrow true$
+						\State \textbf{break}
+					\EndIf
+				\EndFor
+				\If{$F$}
+					\For{$t=1..t_m$}
+						\State Observe $s_t$
+						\State $m_x,m_y,ln(s_x),ln(s_y),tanh^{-1}(\rho)=C_s(s_t)$
+						\State Move towards $(m_x,m_y)$, land at $P$
+					\EndFor
+				\EndIf
+			\EndFunction
+		\end{algorithmic}
+	\end{algorithm}
 	
 	\subsection{Determining When To Switch}
 		In order to rigorously determine whether or not the success controller is likely to succeed (and thus, whether or not we should switch to the failure controller), we train an additional neural network that has the same architecture as the original. However, it attempts to learn a target function that predicts the distribution of previous locations of the robot given the robot's current state and the fact that the robot is on a trajectory that leads to its goal. It is trained on $10,000$ trajectories generated by the success controller in scenes where the success controller can reach its goal. This network however does not receive the robot's full state, rather, it only observes the robot's \textit{self state}, that is, its ... This was done so that we could train the network by only showing it successful trajectories without the uncertainty in its prediction exploding when it observes unsuccessful ones. 
@@ -158,15 +228,66 @@
 		
 		To train our agent, we ran $1000$ episodes in which the robot begins by executing its success controller. However, the humans in the scene move in such a way to prevent the robot from barging in. Namely, they move into the corridor towards the robot rather than dispersing to allow it through. Once the reverse predictor determines that the robot has failed, the robot begins executing an $\epsilon$-greedy policy and stores transitions in its replay buffer. At each time step, the reward achieved by the robot is computed and its policy is updated. After $10$ time steps, the current episode ends and another one is started. The failure controller moves for $10$ time steps regardless of how long the success controller moved. 
 		
-\section{EXPERIMENTS}
+\section{EXPERIMENTS}\label{sec:experiments}
 	To evaluate the effectiveness of our framework, we ran two sets of experiments. In one, the reverse predictor is completely disabled so that the robot continues to execute its success controller regardless of what the people in the scene do. The episode ends after $15$ time steps or after the robot reaches its goal, whichever comes first.
 	
-	In the other set, the robot begins by executing its success controller and only switches to the failure controller when the $p$-test performed by the reverse predictor fails. If the robot executes the success controller for $15$ time steps without triggering the reverse predictor's failure condition, it is cut off and the failure controller is allowed to run. If the robot reaches its goal, this episode is simply thrown out. After the failure controller initiates, it executes for $10$ time steps before the episode ends. 
+	In the other set, the robot begins by executing its success controller and only switches to the failure controller when the $p$-test performed by the reverse predictor fails. If the robot executes the success controller for $10$ time steps without triggering the reverse predictor's failure condition, it is cut off and the failure controller is allowed to run. If the robot reaches its goal, this episode is simply thrown out. After the failure controller initiates, it executes for $5$ time steps before the episode ends. 
+	
+	\begin{figure}
+		\centering
+		\begin{subfigure}{\linewidth}
+			\centering
+			\includegraphics[width=\linewidth]{failure_without_failure_controller}
+			\caption{ghftg iy f jthf jkgkj}
+		\end{subfigure}
+		\begin{subfigure}{\linewidth}
+			\centering
+			\includegraphics[width=\linewidth]{failure_with_failure_controller}
+			\caption{}
+		\end{subfigure}
+	\end{figure}
 
-\section{RESULTS}
+\section{RESULTS}\label{sec:results}
 	We used versions of the metrics presented in \cite{metrics}, which were designed to evaluate robot motion in crowds, to compare the two frameworks' effectiveness. These metrics are the length of the trajectory, time elapsed, angular distance traveled (computed as total change in heading between time steps), the number of collisions incurred and the number of intrusions incurred. Here, the robot is considered intruding on a human if it comes within $0.2m$ of the human. Similarly to how the reward function is computed, we count collisions (and intrusions) in each time step according to the number of humans or obstacles the robot is colliding with in that step. 
+	
+	%\begin{table}
+	%	\centering
+	%	\caption{}
+	%	\label{tab:eval}
+	%	\begin{tabu} to \linewidth{X[l, 0.6] ZZ }\toprule
+	%		&   \centering No Failure Controller   & Failure Controller  \\\midrule
+	%		Path Length  	&	3.92&         \\
+	%		Angular Dist    &	4.80&         \\
+	%		Time  			&	13.50&         \\
+	%		Collisions  	&&         \\
+	%		Intrusions  	&&         \\
+	%		\midrule
+	%	\end{tabu}
+	%\end{table}
+	
+	\sisetup{
+		detect-weight=true,
+		detect-inline-weight=math,
+		output-decimal-marker=\textnormal{.},
+	}
+	
+	\begin{table}
+		\centering
+		\small
+		\caption{Metrics comparing trajectories generated by a robot with no failure controller to a robot using the presented controller. The data here are averages across $1000$ runs for both cases.}\label{tab:results}
+		\begin{tabu}{X[m,l] ZZ}
+			\toprule
+			{}&	{No Failure Controller}   & {Failure Controller (Ours)}  \\\midrule
+			Path Length  	&	\bftabnum 3.92&		4.27\\
+			Angular Dist    &	\bftabnum 4.80&		6.08\\
+			Time  			&	13.50&				\bftabnum 8.30\\
+			Collisions  	&	0.857&				\bftabnum 0.18\\
+			Intrusions  	&	15.211&				\bftabnum 5.6\\
+			\midrule
+		\end{tabu}
+	\end{table}
 
-\section{CONCLUSIONS}
+\section{CONCLUSIONS}\label{sec:conclusion}
 
 
 

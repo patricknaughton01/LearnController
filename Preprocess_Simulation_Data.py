@@ -215,7 +215,7 @@ def main():
     print(n)
     colors = [np.array([0.2, 0.72, 0.0])]
     for i in range(n-1):
-        colors.append(np.array([0, 0, i/(n-1)]))
+        colors.append(np.array([1.0 - i/(n+2), 0, 1.0]))
     # colors = [np.random.rand(3)]
     print(colors)
 
@@ -270,19 +270,23 @@ def main():
         for t in range(0, T, args.stride):
             add_patches(t, n, episode, colors, ax, numbers=args.n)
         add_patches(T-1, n, episode, colors, ax, numbers=args.n)
-        if args.conf != "":
-            conf_files = glob(args.conf + "/conf_*.txt")
-            conf_files.sort(key=lambda x: int(
-                x.split('/')[-1].split('.')[-2].split('_')[-1]))
-            with open(conf_files[idx]) as cf:
-                lines = cf.readlines()
-                for line in lines:
-                    line = line.split(" ")
-                    ax.add_patch(patches.Ellipse(
-                        (float(line[0]), float(line[1])), 2*float(line[2]),
-                        2*float(line[3]), angle=float(line[4]), fill=False,
-                        linestyle="--", color=[0.1, 1.0, 0.6]
-                    ))
+        for i, fname in enumerate(['conf', 'succ_conf']):
+            if args.conf != "":
+                conf_files = glob(args.conf + "/{}_*.txt".format(fname))
+                conf_files.sort(key=lambda x: int(
+                    x.split('/')[-1].split('.')[-2].split('_')[-1]))
+                with open(conf_files[idx]) as cf:
+                    lines = cf.readlines()
+                    for line in lines:
+                        line = line.split(" ")
+                        ecolor = [0.1, 1.0, 0.6]
+                        if i > 0:
+                            ecolor = [0.1, 0.6, 1.0]
+                        ax.add_patch(patches.Ellipse(
+                            (float(line[0]), float(line[1])), 2*float(line[2]),
+                            2*float(line[3]), angle=(180/math.pi)*float(line[4]),
+                            fill=False, linestyle="--", color=ecolor
+                        ))
 
     legends = ['agent %d' % i for i in range(n)]
     # max_lim = np.max(episode)
@@ -296,19 +300,26 @@ def add_patches(t, n, episode, colors, ax, numbers=False):
     total_terms = initial_robot_terms + terms_per_agent
     for i in range(n):
         if i == 0:
+            lwidth = 2
             x_idx, y_idx = 0, 1
             radius = episode[0, 4]
+            goal = (5, 6)
             if use_heading:
                 heading = episode[t, 5]
-                ax.add_patch(patches.Ellipse(
-                    (episode[t, 6], episode[t, 7]), 0.1, 0.1, linewidth=2,
-                    fill=True, zorder=1000, color=(0,1.0, 0)
-                ))
-            else:
-                ax.add_patch(patches.Ellipse(
-                    (episode[t, 5], episode[t, 6]), 0.1, 0.1, linewidth=2,
-                    fill=True, zorder=1000, color=(0, 1.0, 0)
-                ))
+                goal = (6, 7)
+            ax.add_patch(patches.Ellipse(
+                (episode[t, goal[0]], episode[t, goal[1]]), 0.1, 0.1,
+                linewidth=lwidth,
+                fill=True, zorder=1000, color=(0, 1.0, 0)
+            ))
+            plt.text(
+                episode[t, goal[0]], episode[t, goal[1]]+0.1, "Goal",
+                horizontalalignment='center',
+                verticalalignment='bottom', fontsize=30, color=(0, 1.0, 0)
+            )
+            e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2,
+                                radius * 2, linewidth=5, fill=False, zorder=2,
+                                color=colors[i])
         else:
             x_idx, y_idx = total_terms + (i - 1)  * terms_per_agent, \
                            total_terms + (i - 1) * terms_per_agent + 1
@@ -317,18 +328,17 @@ def add_patches(t, n, episode, colors, ax, numbers=False):
             if use_heading:
                 heading = episode[t, total_terms + initial_robot_terms + 1
                                   + (i - 1) * terms_per_agent]
+            e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2,
+                                radius * 2, linewidth=2, fill=False, zorder=2,
+                                color=colors[i])
         # print('radius is %.4f' % radius)
-        plt.plot(episode[:, x_idx], episode[:, y_idx], '-.', color=colors[i])
-
-        e = patches.Ellipse((episode[t, x_idx], episode[t, y_idx]), radius * 2,
-                            radius * 2, linewidth=2, fill=False, zorder=2,
-                            color=colors[i])
+        plt.plot(episode[:, x_idx], episode[:, y_idx], '--', color=colors[i])
         if use_heading and numbers:
             plt.text(
                 episode[t, x_idx] + (radius/2)*math.cos(heading + math.pi),
                 episode[t, y_idx] + (radius/2)*math.sin(heading + math.pi),
-                str(t/10.0), horizontalalignment='center',
-                verticalalignment="center", fontsize=radius*80
+                str(t), horizontalalignment='center',
+                verticalalignment="center", fontsize=radius*50, color=colors[i]
             )
         ax.add_patch(e)
         if use_heading:

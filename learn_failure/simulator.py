@@ -135,16 +135,19 @@ class Simulator(object):
                 failure_func = self.base_failure
             i = 0
             #f = open("std_devs_{}.txt".format(key), "w")
+            succ_conf = None
             conf = None
             if self.conf:
                 conf = open("conf_{}.txt".format(key), "w")
+                succ_conf = open("succ_conf_{}.txt".format(key), "w")
             while not failure_func(uncertainty) and i < max_ts:
-                mx, my, sx, sy, rho, d_sx, d_sy, d_corr, h_t = \
+                mx, my, sx, sy, cov, d_sx, d_sy, d_corr, h_t = \
                     self.get_succ_prediction(
                     success_model, self.success_state(), h_t, samples)
                 # uncertainty = (sx+d_sx)**2 + (sy+d_sy)**2
                 # f.write("{} {} {} {} {} {}\n".format(sx, sy, rho, d_sx,
                 #                                      d_sy, d_corr))
+                #print(sx, sy, d_sx, d_sy)
                 rpos = self.sim.getAgentPosition(self.robot_num)
                 if math.isnan(mx):
                     mx = 0
@@ -153,61 +156,58 @@ class Simulator(object):
                 self.goals[self.robot_num] = (rpos[0] + mx, rpos[1] + my)
                 self.advance_simulation()
                 new_r_pos = self.sim.getAgentPosition(self.robot_num)
-                stats = None
-                for j in range(5):
-                    with torch.no_grad():
-                        reverse_model.train()
-                        r_pred, next_r_h_t = reverse_model(
-                            self.reverse_state(), r_h_t
-                        )
-                    r_pred = utils.get_coefs(r_pred.unsqueeze(0))
-                    if stats is None:
-                        stats = [[] for _ in range(len(r_pred))]
-                    for k in range(len(r_pred)):
-                        stats[k].append(r_pred[k])
-                mx = utils.avg(stats[0])
-                my = utils.avg(stats[1])
-                #print(utils.std_dev(stats[0]))
-                sx = utils.avg(stats[2]) + utils.std_dev(stats[0])
-                sy = utils.avg(stats[3]) + utils.std_dev(stats[1])
-                cov = (utils.avg(stats[4]) * utils.avg(stats[2]) *
-                       utils.avg(stats[3])) + utils.cov(stats[0], stats[1])
-                # cov = utils.avg(stats[4]) * utils.avg(stats[2]) * utils.avg(
-                #     stats[3])
-                # See if observed point is outside 50% ellipse predicted by
-                # the reverse model. If so, we failed.
-                conf_lvl = conf_val
-                s = -2.0 * np.log(1-conf_lvl)
-                cov_mat = np.matrix([[sx**2, cov],
-                                     [cov, sy**2]])
-                vals, vecs = np.linalg.eig(cov_mat)
-                maj, min = vals.max(), vals.min()
-                # a = len of semi-major axis, b = len of semi minor axis
-                a, b = np.sqrt(s*maj), np.sqrt(s*min)
-                # c is distance from center of ellipse to each focus
-                c = np.sqrt(a**2 - b**2)
-                maj_vec = vecs[vals.argmax()]
-                alpha = np.arctan2(maj_vec[0, 1], maj_vec[0, 0])
-                foc_vec = np.array([c*np.cos(alpha), c*np.sin(alpha)])
-                center = np.array([new_r_pos[0] + mx,
-                                   new_r_pos[1] + my])
-                f1, f2 = center + foc_vec, center - foc_vec
-                obs = np.array([rpos[0], rpos[1]])
-                # Outside of ellipse if sum of distances to foci is
-                # > 2 sqrt(b**2 + c**2)
-                d = np.linalg.norm(f1-obs) + np.linalg.norm(f2-obs)
-                if conf is not None:
-                    conf.write("{} {} {} {} {}\n".format(center[0], center[1],
-                                                         a, b, alpha))
-                if d > 2*a:
-                    # print("d: ", d, "2a: ", 2*a)
+                successful_move = self.inside_ellipse(
+                    rpos, new_r_pos, mx,  my, sx+d_sx, sy+d_sy,
+                    cov + d_corr*d_sx*d_sy, conf_val, conf_file=succ_conf
+                )
+                mx, my, sx, sy, cov, d_sx, d_sy, d_corr, r_h_t = \
+                    self.get_succ_prediction(
+                        reverse_model, self.reverse_state(), r_h_t, samples)
+                # Compute total uncertainties
+                sx += d_sx
+                sy += d_sy
+                cov += d_corr*d_sx*d_sy
+                if (not self.inside_ellipse(new_r_pos, rpos, mx, my, sx, sy,
+                                           cov, conf_val, conf)
+                    or not successful_move):
                     return -1
-                #     print("Failure")
                 i += 1
             if conf is not None:
                 conf.close()
+                succ_conf.close()
             #print("Finished success simulation after {} steps".format(i))
             return i
+
+    @staticmethod
+    def inside_ellipse(start, targ, mx, my, sx, sy, cov, conf_lvl,
+                       conf_file=None):
+        s = -2.0 * np.log(1-conf_lvl)
+        cov_mat = np.matrix([[sx**2, cov],
+                             [cov, sy**2]])
+        vals, vecs = np.linalg.eig(cov_mat)
+        maj, min = vals.max(), vals.min()
+        #print(maj, min)
+        # a = len of semi-major axis, b = len of semi minor axis
+        a, b = np.sqrt(s*maj), np.sqrt(s*min)
+        # c is distance from center of ellipse to each focus
+        c = np.sqrt(a**2 - b**2)
+        maj_vec = vecs[vals.argmax()]
+        alpha = np.arctan2(maj_vec[0, 1], maj_vec[0, 0])
+        foc_vec = np.array([c*np.cos(alpha), c*np.sin(alpha)])
+        center = np.array([start[0] + mx,
+                           start[1] + my])
+        f1, f2 = center + foc_vec, center - foc_vec
+        obs = np.array([targ[0], targ[1]])
+        # Outside of ellipse if sum of distances to foci is
+        # > 2 a
+        d = np.linalg.norm(f1-obs) + np.linalg.norm(f2-obs)
+        if conf_file is not None:
+            conf_file.write("{} {} {} {} {}\n".format(center[0], center[1],
+                                                 a, b, alpha))
+        if d > 2*a:
+            return True
+        return True
+
 
     @staticmethod
     def get_succ_prediction(model, state, h_t, samples):
@@ -218,10 +218,10 @@ class Simulator(object):
         corr_list = []
         model.train()
         next_h_t = None
-        model.eval()
+        model.train()
         #print(state.size())
         with torch.no_grad():
-            for i in range(1):
+            for i in range(samples):
                 pred, next_h_t = model(state, h_t)
                 pred = utils.get_coefs(pred.unsqueeze(0))
                 x.append(pred[0].item())
@@ -237,7 +237,7 @@ class Simulator(object):
             data_sx = utils.avg(sx_list)
             data_sy = utils.avg(sy_list)
             data_corr = utils.avg(corr_list)
-            return mx, my, sx, sy, cov / (sx * sy + 1e-6), data_sx, \
+            return mx, my, sx, sy, cov, data_sx, \
                    data_sy, \
                    data_corr, next_h_t
 
@@ -824,8 +824,8 @@ class Simulator(object):
                 else:
                     # Make humans actual agents that move either towards or
                     # away from the robot
-                    min_hum = 6
-                    max_hum = 6
+                    min_hum = 4
+                    max_hum = 4
                     max_hum_rad = 0.5
                     num_hum = random.randint(min_hum, max_hum)
                     for i in range(num_hum):

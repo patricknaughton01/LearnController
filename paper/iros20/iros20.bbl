@@ -18,6 +18,15 @@
 \fi
 #2}}
 
+\bibitem{ppcp}
+M.~Likhachev and A.~Stentz, ``Probabilistic planning with clear preferences on
+  missing information,'' \emph{Lab Papers (GRASP)}, p.~25, 2008.
+
+\bibitem{crowdawarerl}
+C.~Chen, Y.~Liu, S.~Kreiss, and A.~Alahi, ``Crowd-robot interaction:
+  Crowd-aware robot navigation with attention-based deep reinforcement
+  learning,'' \emph{arXiv preprint arXiv:1809.08835}, 2018.
+
 \bibitem{caseforcoop}
 P.~Trautman, J.~Ma, R.~Murray, and A.~Krause, ``Robot navigation in dense human
   crowds: the case for cooperation,'' in \emph{2013 IEEE International
@@ -39,11 +48,6 @@ Y.~F. Chen, M.~Everett, M.~Liu, and J.~P. How, ``Socially aware motion planning
   with deep reinforcement learning,'' in \emph{2017 IEEE/RSJ International
   Conference on Intelligent Robots and Systems (IROS)}.\hskip 1em plus 0.5em
   minus 0.4em\relax IEEE, 2017, pp. 1343--1350.
-
-\bibitem{crowdawarerl}
-C.~Chen, Y.~Liu, S.~Kreiss, and A.~Alahi, ``Crowd-robot interaction:
-  Crowd-aware robot navigation with attention-based deep reinforcement
-  learning,'' \emph{arXiv preprint arXiv:1809.08835}, 2018.
 
 \bibitem{rvo2}
 J.~van~den Berg, S.~J. Guy, J.~Snape, M.~C. Lin, and D.~Manocha, ``Rvo2

@@ -40,7 +40,7 @@ def main():
 
             reverse_model_config = configparser.RawConfigParser()
             reverse_model_config.read(
-                "learn_general_controller/configs/model.config")
+                "learn_general_controller/configs/reverse_model.config")
             reverse_model = learn_general_controller.model.Controller(
                 reverse_model_config, model_type=args.model_type
             )

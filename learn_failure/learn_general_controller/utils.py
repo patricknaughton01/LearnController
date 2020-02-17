@@ -1,6 +1,7 @@
 import numpy as np 
 import torch 
 import argparse
+import sys
 from functools import reduce
 from operator import mul
 from state import ObservableState
@@ -110,8 +111,10 @@ def get_coefs(preds):
     # a = input('').split(" ")[0]
     # print(a)
 
-    sigma_x = torch.exp(sigma_x)
-    sigma_y = torch.exp(sigma_y)
+    #sigma_x = torch.exp(sigma_x)
+    #sigma_y = torch.exp(sigma_y)
+    sigma_x = torch.abs(sigma_x)
+    sigma_y = torch.abs(sigma_y)
     corr = torch.tanh(corr)
     return mu_x, mu_y, sigma_x, sigma_y, corr
 

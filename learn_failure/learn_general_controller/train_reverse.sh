@@ -1,12 +1,13 @@
 #!/bin/sh
 
 python train.py \
---num_epochs 1 \
+--num_epochs 50 \
 --print_every 1 \
 --M 1 \
---train_data_name sbi_small_10000_rev \
---test_data_name sbi_small_10000_rev_val \
+--train_data_name sbi_10000_final_rev \
+--test_data_name sbi_10000_final_rev_val \
 --dropout 0.5 \
---seed 2 \
---batch_size 128 \
---reverse
+--seed 100 \
+--batch_size 64 \
+--model_config configs/reverse_model.config \
+--reverse \

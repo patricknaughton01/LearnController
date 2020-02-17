@@ -60,7 +60,8 @@ def main():
                     try:
                         reverse_model_config = configparser.RawConfigParser()
                         reverse_model_config.read(
-                            "learn_general_controller/configs/model.config")
+                            "learn_general_controller/configs/reverse_model"
+                            ".config")
                         reverse_model = learn_general_controller.model.Controller(
                             reverse_model_config, model_type=args.model_type
                         )
@@ -79,7 +80,7 @@ def main():
             success_ts = 0
             if success_model is not None:
                 success_ts = sim.forward_simulate(success_model, reverse_model,
-                    max_ts=args.success_max_ts, key=str(i), samples=2,
+                    max_ts=args.success_max_ts, key=str(i), samples=20,
                                                   conf_val=c)
                 if success_ts < 0:
                     #print("Failed on run {}".format(i))
