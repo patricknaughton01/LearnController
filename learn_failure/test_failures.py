@@ -29,7 +29,7 @@ def main():
     timesteps = args.max_timesteps
     epsilon = args.epsilon
     reward_file = open(prefix + "rewards_{}.txt".format(args.scene), "w")
-    for c in [0.9 + j/100.0 for j in range(5, 10)]:
+    for c in [0.9 + j/100.0 for j in range(5, 6)]:
         failures = 0
         for i in tqdm(range(args.num_episodes)):
             out_path = prefix + args.scene + "_{}.txt".format(i)

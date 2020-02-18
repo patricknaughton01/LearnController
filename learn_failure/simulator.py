@@ -205,7 +205,7 @@ class Simulator(object):
             conf_file.write("{} {} {} {} {}\n".format(center[0], center[1],
                                                  a, b, alpha))
         if d > 2*a:
-            return True
+            return False
         return True
 
 

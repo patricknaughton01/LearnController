@@ -99,13 +99,12 @@
 	
 	\begin{figure}
 		\centering
-		\begin{subfigure}{0.49\linewidth}
-			% \includegraphics{}
+		\begin{subfigure}[t]{0.49\linewidth}
 			\includegraphics[width=\linewidth]{dnmotive}
 			\caption{}
 			\label{fig:dnmotivation}
 		\end{subfigure}
-		\begin{subfigure}{0.49\linewidth}
+		\begin{subfigure}[t]{0.49\linewidth}
 			% \includegraphics{}
 			\includegraphics[width=\linewidth]{rlmotive}
 			\caption{}
@@ -143,52 +142,49 @@
 	Additionally, we would like to rigorously determine at execution time whether or not the success controller is likely to succeed. In this framework, the robot can decide at each time step whether it should begin using the failure controller. Once it switches to the failure controller, it cannot switch back to the success controller until the planner generates a new plan. 
 		
 \section{APPROACH}\label{sec:approach}
-	We begin with a fixed success controller. In this work, we consider one specific controller for barging into a group of people at the end of a corridor. While the experiments and results here only concern this controller, the framework can be extended to include other controllers as well, for example, to overtake or cross in front of pedestrians. In order to train this controller, we first generate example runs in which the robot can reach its goal using the RVO2 simulator \cite{rvo2}, \cite{pyrvo2}. We employ a neural network architecture based on the one presented in \cite{crowdawarerl} to allow the network to handle variable input sizes. The state of the robot is characterized by ... In addition, we include an LSTM at the end of our network so that the robot can learn the sequence of actions. Figure \ref{fig:model_arch} shows the overall architecture of the network. The output of the network has five nodes which are interpreted as the $x$ and $y$ coordinates of the mean, the $x$ and $y$ standard deviations, and the correlation between $x$ and $y$ of a Gaussian distribution of the next location of the robot conditioned on its current state. At execution time, we then feed this network its current state and attempt to move to the mean of this distribution in the next time step.
+	We begin with a fixed success controller. In this work, we consider one specific controller for barging into a group of people at the end of a corridor. While the experiments and results here only concern this controller, the framework can be extended to include other controllers as well, for example, to overtake or cross in front of pedestrians. To characterize the state of the robot, an initial matrix is constructed with the same number of rows as there are agents and obstacles in the scene (including the robot). Each row of the matrix takes the form $(d_x, d_y, s_\text{pref}, h, r, v_x, v_y, p'_x, p'_y, v'_x, v'_y, r', d, r_\text{sum})$ where 
+	
+	\begin{itemize}
+		\item $d_x$ and $d_y$ are the $x$ and $y$ distances from the robot to the goal.
+		\item $s_\text{pref}$ is the preferred speed of the robot.
+		\item $h$ is the heading of the robot w.r.t. the global coordinate frame.
+		\item $r$ is the radius of the robot.
+		\item $v_x$ and $v_y$ are the x and y velocities of the robot w.r.t. the robot's coordinate frame.
+		\item $p'_x$ and $p'_y$ are the x and y coordinates of the other agent w.r.t. the robot's coordinate frame.
+		\item $v'_x$ and $v'_y$ are the x and y velocities of the other agent w.r.t. the robot's coordinate frame (note, this is not relative to the robot's velocity, just relative to its rotation).
+		\item $r'$ is the radius of the other agent.
+		\item $d$ is the Euclidean distance between the robot and the other agent.
+		\item $r_\text{sum}$ is the sum of the radii of the robot and the other agent.
+	\end{itemize}
+
+	The first five components of each row are referred to as the robot's \verb|self_state| because they pertain specifically to the robot.
+	
+	This is augmented by a series of occupancy maps, one for each human and obstacle in the scene and one for the robot itself. Each occupancy map is centered on and aligned with its respective agent and their heading and is discretized into a number of squares. Each square indicates in a binary fashion whether or not it contains an object. Each square also contains the average velocity of all the objects within that square (simply set to 0 if the square is unoccupied). In our case, each occupancy map is discretized into 16 (4x4) 1 unit squares. This collection of occupancy maps and information about the robot's dynamics form the robot's \textit{state}. Note that the dimensions of the state matrix will vary depending on the number of humans and obstacles in the scene.
+	
+	This combined state is used as the input to a neural network. We model our architecture off of that presented in \cite{crowdawarerl} in order to handle the variable input sizes, as the input matrix changes size based on the number of people and obstacles in the scene. This architecture was shown to produce good results for robotic navigation in the presence of pedestrians in \cite{crowdawarerl}. In addition, we include an LSTM at the end of our network so that the robot can learn relationships between successive states. Figure \ref{fig:model_arch} shows the overall architecture of the model. The output of the network has five nodes which are interpreted as the $x$ and $y$ coordinates of the mean, the $x$ and $y$ standard deviations, and the correlation between $x$ and $y$ of a Gaussian distribution of the next location of the robot conditioned on its current state. At execution time, we then feed this network its current state and attempt to move to the mean of this distribution in the next time step.
 	
 	\begin{figure}
 		\centering
 		\includegraphics[height=\linewidth, angle=270]{model_arch.pdf}
-		\caption{Model architecture}
+		\caption{Model architecture of the neural network used to control the robot. Variable sized inputs are handled by summing a weighted vector across the people and obstacles.}
 		\label{fig:model_arch}
 	\end{figure}
+
+	We trained this neural network on $1000$ successful trajectories in which the robot can feasibly reach its goal. These trajectories were generated using the RVO2 library \cite{rvo2}\cite{pyrvo2}. We trained using an Adam optimizer with a learning rate of $0.005$ and the negative 2D log-likelihood loss for $500$ epochs. This controller was trained with a very high dropout percentage of $0.5$ in each MLP. Because the success controller is not the focus of this work, we only used scenes containing four people and two obstacles. Figure \ref{fig:success} shows an example of a trajectory generated by the final controller. 
+
+	\begin{figure}
+		\centering
+		\includegraphics[width=\linewidth]{success_without_ellipses}
+		\caption{Example of a successful trajectory. When executing the barge in success controller, the robot expects the humans in the scene to disperse to let it through.}
+		\label{fig:success}
+	\end{figure}
 	
-	We split the approach into two distinct parts: First, we consider just determining whether or not the robot should switch to its failure controller. Given this classifier, we then develop a failure controller that, starting from the state at which the classifier reports we have failed, attempts to learn a policy that guides the robot to a safe location from which to replan. Algorithm \ref{algo:exec} outlines how the two models work together to direct the robot at execution time.
-	
-	\begin{algorithm}[H]
-		%\SetAlgoLined
-		%\DontPrintSemicolon
-		\caption{Detect And Handle Failure}
-		\label{algo:exec}
-		\begin{algorithmic}
-			\Function{Execute}{$t_m, S, c$}
-				\State Initialize $C_s$, $R_p$, and $C_f$
-				\State Initialize $F\leftarrow false$
-				\For{$t=1..t_m$}
-					\State Observe $s_t$
-					\State $m_x,m_y,ln(s_x),ln(s_y),tanh^{-1}(\rho)=C_s(s_t)$
-					\State Move towards $(m_x,m_y)$, observe $ss_{t+1}$
-					\State Sample $S$ times from $R_p$, compute $\mu$ and $\Sigma$
-					\State $G = \mathcal{N}(\mu, \Sigma)$
-					\If{$s_t$ outside $c$ confidence ellipse of $G$}
-						\State $F\leftarrow true$
-						\State \textbf{break}
-					\EndIf
-				\EndFor
-				\If{$F$}
-					\For{$t=1..t_m$}
-						\State Observe $s_t$
-						\State $m_x,m_y,ln(s_x),ln(s_y),tanh^{-1}(\rho)=C_s(s_t)$
-						\State Move towards $(m_x,m_y)$, land at $P$
-					\EndFor
-				\EndIf
-			\EndFunction
-		\end{algorithmic}
-	\end{algorithm}
+	We split the remaining approach into two distinct parts: First, we consider just determining whether or not the robot should switch to its failure controller. Given this classifier, we then develop a failure controller that, starting from the state at which the classifier reports we have failed, attempts to learn a policy that guides the robot to a safe location from which to replan.
 	
 	\subsection{Determining When To Switch}
-		In order to rigorously determine whether or not the success controller is likely to succeed (and thus, whether or not we should switch to the failure controller), we train an additional neural network that has the same architecture as the original. However, it attempts to learn a target function that predicts the distribution of previous locations of the robot given the robot's current state and the fact that the robot is on a trajectory that leads to its goal. It is trained on $10,000$ trajectories generated by the success controller in scenes where the success controller can reach its goal. This network however does not receive the robot's full state, rather, it only observes the robot's \textit{self state}, that is, its ... This was done so that we could train the network by only showing it successful trajectories without the uncertainty in its prediction exploding when it observes unsuccessful ones. 
+		In order to rigorously determine whether or not the success controller is likely to succeed (and thus, whether or not we should switch to the failure controller), we train an additional neural network that has the same architecture as the original. However, it attempts to learn a target function that predicts the distribution of previous locations of the robot given the robot's current state and the fact that the robot is on a trajectory that leads to its goal. It is trained on $10,000$ trajectories generated by the success controller in scenes where the success controller can reach its goal. This network however does not receive the robot's full state, rather, it only observes the robot's \textit{self state}. This was done so that we could train the network by only showing it successful trajectories without the uncertainty in its prediction exploding when it observes unsuccessful ones. 
 		
-		At execution time, we utilize this network's prediction to perform a statistical $p$-test with an $\alpha$ value of $0.02$. At each time step we construct the error ellipse given by the Gaussian distribution represented by the reverse predictor that contains $1-\alpha$ of the distribution's probability mass. By default, we assume that the trajectory will be successful and switch to the failure controller only if the robot's previous position falls outside the predicted error ellipse.
+		At execution time, we utilize this network's prediction to perform a statistical $p$-test with an $\alpha$ value of $0.05$. At each time step we construct the error ellipse given by the Gaussian distribution represented by the reverse predictor that contains $1-\alpha$ of the distribution's probability mass. We perform this same test on the robot's current position given the distribution predicted by the success controller in the previous time step. By default, we assume that the trajectory will be successful and switch to the failure controller only if one of these tests fails.
 	
 	\subsection{Failure Controller}
 		For the failure controller, we need to address a somewhat novel formulation of the navigation problem in that the robot now has no specific goal it is trying to reach. Once the failure controller gets invoked, the robot has determined that it is unlikely to reach its goal. Because it is impossible to explicitly define optimality in this framework, we formulate this as a reinforcement learning problem $\langle\mathcal{S}, \mathcal{A}, \mathcal{R}, \mathcal{P}, \gamma\rangle$ with an infinite set of states $\mathcal{S}$, a finite set of actions $\mathcal{A}$, state transition matrix $\mathcal{P}(s_t, a_t, s_{t+1})$, reward function $\mathcal{R}(s_t, a_t, s_{t+1})$ and discount factor $\gamma \in (0, 1)$ \cite{suttonandbarto} and model the robot as a Markovian agent. Rather than define a set of states constituting a goal, we define a reward function that punishes actions we determine to be undesirable. 
@@ -228,6 +224,40 @@
 		
 		To train our agent, we ran $1000$ episodes in which the robot begins by executing its success controller. However, the humans in the scene move in such a way to prevent the robot from barging in. Namely, they move into the corridor towards the robot rather than dispersing to allow it through. Once the reverse predictor determines that the robot has failed, the robot begins executing an $\epsilon$-greedy policy and stores transitions in its replay buffer. At each time step, the reward achieved by the robot is computed and its policy is updated. After $10$ time steps, the current episode ends and another one is started. The failure controller moves for $10$ time steps regardless of how long the success controller moved. 
 		
+		Algorithm \ref{algo:exec} summarizes the overall navigation policy of the robot. $t_s$ is the maximum number of time steps the success controller can run for, and $t_f$ is the same for the failure controller. Note that dropout remains on for both the success controller and reverse predictor at inference time. This is so that we can sample the networks' outputs multiple time to find the variance of their predictions and thereby estimate the network's epistemic uncertainty. This is then added to the data uncertainty which the model directly outputs \cite{gal2016uncertainty}. $S$ is the number of samples to draw from these networks when deciding where to move to next. $c$ is the confidence value to use when performing the $p$-test to determine whether or not the robot has failed. Here, $G^{(c)}(\mu, \Sigma)$ denotes an error ellipse that contains $c$ fraction of the probability mass of $\mathcal{N}(\mu, \Sigma)$. 
+		
+		\begin{algorithm}[H]
+			%\SetAlgoLined
+			%\DontPrintSemicolon
+			\caption{Detect And Handle Failure}
+			\label{algo:exec}
+			\begin{algorithmic}
+				\Function{Execute}{$t_s, t_f, S, c$}
+				\State Initialize $C_s$, $P_r$, and $C_f$
+				\State Initialize $F\leftarrow false$
+				\For{$t=1..t_m$}
+				\State Observe $s_t$
+				\State Sample $S$ times from $C_s$, compute $\mu_s$ and $\Sigma_s$
+				\State $G_s = \mathcal{N}(\mu_s, \Sigma_s)$
+				\State Move towards $\mu_s$, observe $s_{t+1}$
+				\State Sample $S$ times from $P_r$, compute $\mu_r$ and $\Sigma_r$
+				\State $G_r = \mathcal{N}(\mu_r, \Sigma_r)$
+				\If{$s_{t+1}\notin G^{(c)}_s \wedge s_t \notin G^{(c)}_r$}
+				\State $F\leftarrow true$
+				\State \textbf{break}
+				\EndIf
+				\EndFor
+				\If{$F$}
+				\For{$t=1..t_f$}
+				\State Observe $s_t$
+				\State Compute $\mu_f$ and $\Sigma_f$ from $C_f(s_t)$
+				\State Move towards $\mu_f$
+				\EndFor
+				\EndIf
+				\EndFunction
+			\end{algorithmic}
+		\end{algorithm}
+		
 \section{EXPERIMENTS}\label{sec:experiments}
 	To evaluate the effectiveness of our framework, we ran two sets of experiments. In one, the reverse predictor is completely disabled so that the robot continues to execute its success controller regardless of what the people in the scene do. The episode ends after $15$ time steps or after the robot reaches its goal, whichever comes first.
 	
@@ -235,12 +265,12 @@
 	
 	\begin{figure}
 		\centering
-		\begin{subfigure}{\linewidth}
+		\begin{subfigure}[t]{0.49\linewidth}
 			\centering
 			\includegraphics[width=\linewidth]{failure_without_failure_controller}
-			\caption{ghftg iy f jthf jkgkj}
+			\caption{}
 		\end{subfigure}
-		\begin{subfigure}{\linewidth}
+		\begin{subfigure}[t]{0.49\linewidth}
 			\centering
 			\includegraphics[width=\linewidth]{failure_with_failure_controller}
 			\caption{}
@@ -249,21 +279,6 @@
 
 \section{RESULTS}\label{sec:results}
 	We used versions of the metrics presented in \cite{metrics}, which were designed to evaluate robot motion in crowds, to compare the two frameworks' effectiveness. These metrics are the length of the trajectory, time elapsed, angular distance traveled (computed as total change in heading between time steps), the number of collisions incurred and the number of intrusions incurred. Here, the robot is considered intruding on a human if it comes within $0.2m$ of the human. Similarly to how the reward function is computed, we count collisions (and intrusions) in each time step according to the number of humans or obstacles the robot is colliding with in that step. 
-	
-	%\begin{table}
-	%	\centering
-	%	\caption{}
-	%	\label{tab:eval}
-	%	\begin{tabu} to \linewidth{X[l, 0.6] ZZ }\toprule
-	%		&   \centering No Failure Controller   & Failure Controller  \\\midrule
-	%		Path Length  	&	3.92&         \\
-	%		Angular Dist    &	4.80&         \\
-	%		Time  			&	13.50&         \\
-	%		Collisions  	&&         \\
-	%		Intrusions  	&&         \\
-	%		\midrule
-	%	\end{tabu}
-	%\end{table}
 	
 	\sisetup{
 		detect-weight=true,
@@ -275,11 +290,11 @@
 		\centering
 		\small
 		\caption{Metrics comparing trajectories generated by a robot with no failure controller to a robot using the presented controller. The data here are averages across $1000$ runs for both cases.}\label{tab:results}
-		\begin{tabu}{X[m,l] ZZ}
+		\begin{tabu}{X[m, l] ZZ}
 			\toprule
 			{}&	{No Failure Controller}   & {Failure Controller (Ours)}  \\\midrule
-			Path Length  	&	\bftabnum 3.92&		4.27\\
-			Angular Dist    &	\bftabnum 4.80&		6.08\\
+			Length		  	&	\bftabnum 3.92&		4.27\\
+			Angle		    &	\bftabnum 4.80&		6.08\\
 			Time  			&	13.50&				\bftabnum 8.30\\
 			Collisions  	&	0.857&				\bftabnum 0.18\\
 			Intrusions  	&	15.211&				\bftabnum 5.6\\

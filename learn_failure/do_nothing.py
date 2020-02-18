@@ -22,6 +22,7 @@ def main():
         if args.record:
             file = open("do_nothing_" + str(episode) + ".txt", "w")
         sim = simulator.Simulator(scene=scene, file=file)
+        sim.sim.setAgentMaxSpeed(0, 0)
         for t in range(max_timesteps):
             # Just to be safe, always set robot goal to its current position
             sim.goals[sim.robot_num] = sim.sim.getAgentPosition(sim.robot_num)

@@ -68,6 +68,10 @@ V.~Mnih, K.~Kavukcuoglu, D.~Silver, A.~Graves, I.~Antonoglou, D.~Wierstra, and
   M.~Riedmiller, ``Playing atari with deep reinforcement learning,''
   \emph{arXiv preprint arXiv:1312.5602}, 2013.
 
+\bibitem{gal2016uncertainty}
+Y.~Gal, ``Uncertainty in deep learning,'' \emph{University of Cambridge},
+  vol.~1, p.~3, 2016.
+
 \bibitem{metrics}
 D.~Vasquez, B.~Okal, and K.~O. Arras, ``Inverse reinforcement learning
   algorithms and features for robot navigation in crowds: an experimental
