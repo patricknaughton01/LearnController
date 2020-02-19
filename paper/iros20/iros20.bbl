@@ -72,6 +72,11 @@ V.~Mnih, K.~Kavukcuoglu, D.~Silver, A.~Graves, I.~Antonoglou, D.~Wierstra, and
 Y.~Gal, ``Uncertainty in deep learning,'' \emph{University of Cambridge},
   vol.~1, p.~3, 2016.
 
+\bibitem{orca}
+J.~Van Den~Berg, S.~J. Guy, M.~Lin, and D.~Manocha, ``Reciprocal n-body
+  collision avoidance,'' in \emph{Robotics research}.\hskip 1em plus 0.5em
+  minus 0.4em\relax Springer, 2011, pp. 3--19.
+
 \bibitem{metrics}
 D.~Vasquez, B.~Okal, and K.~O. Arras, ``Inverse reinforcement learning
   algorithms and features for robot navigation in crowds: an experimental
