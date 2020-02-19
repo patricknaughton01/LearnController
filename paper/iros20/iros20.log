@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2020.1.21)  18 FEB 2020 20:25
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2020.1.21)  18 FEB 2020 22:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1299,79 +1299,91 @@ LaTeX Font Info:    Try loading font information for OT1+pcr on input line 84.
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-<images/dnmotive.png, id=48, 894.34125pt x 744.7825pt>
+LaTeX Font Info:    Try loading font information for OMS+pcr on input line 84.
+
+(/usr/share/texlive/texmf-dist/tex/latex/psnfss/omspcr.fd
+File: omspcr.fd 
+)
+LaTeX Font Info:    Font shape `OMS/pcr/m/n' in size <9> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 84.
+
+Underfull \hbox (badness 1394) in paragraph at lines 84--84
+[][][]$[]$\OT1/ptm/m/n/8 The re-main-ing au-thors are with the Carnegie Mel-lon
+ Uni-ver-sity
+ []
+
+<images/dnmotive.png, id=49, 894.34125pt x 744.7825pt>
 File: images/dnmotive.png Graphic file (type png)
 <use images/dnmotive.png>
 Package pdftex.def Info: images/dnmotive.png  used on input line 103.
 (pdftex.def)             Requested size: 120.40321pt x 100.26854pt.
-<images/rlmotive.png, id=50, 1299.85625pt x 745.78625pt>
+<images/rlmotive.png, id=51, 1299.85625pt x 745.78625pt>
 File: images/rlmotive.png Graphic file (type png)
 <use images/rlmotive.png>
 Package pdftex.def Info: images/rlmotive.png  used on input line 109.
 (pdftex.def)             Requested size: 120.40321pt x 69.07518pt.
- [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
+[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
 
 
  <./images/dnmotive.png> <./images/rlmotive.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 127--128
+Underfull \hbox (badness 10000) in paragraph at lines 128--129
 []\OT1/ptm/m/n/10 The code of our ap-proach is avail-able here:
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 127--128
+Underfull \hbox (badness 10000) in paragraph at lines 128--129
 []$\OT1/pcr/m/n/10 https : / / github . com / patricknaughton01 /
  []
 
 [2]
-<images/model_arch.pdf, id=85, 417.56pt x 699.61375pt>
+<images/model_arch.pdf, id=83, 417.56pt x 699.61375pt>
 File: images/model_arch.pdf Graphic file (type pdf)
 <use images/model_arch.pdf>
-Package pdftex.def Info: images/model_arch.pdf  used on input line 168.
+Package pdftex.def Info: images/model_arch.pdf  used on input line 169.
 (pdftex.def)             Requested size: 146.65152pt x 245.71811pt.
-<images/success_without_ellipses.png, id=87, 959.585pt x 702.625pt>
+<images/success_without_ellipses.png, id=85, 959.585pt x 702.625pt>
 File: images/success_without_ellipses.png Graphic file (type png)
 <use images/success_without_ellipses.png>
 Package pdftex.def Info: images/success_without_ellipses.png  used on input lin
-e 177.
+e 178.
 (pdftex.def)             Requested size: 245.71811pt x 179.91212pt.
  [3 <./images/model_arch.pdf> <./images/success_without_ellipses.png>]
-<images/success_ellipses.pdf, id=102, 275.30885pt x 124.28163pt>
+<images/success_ellipses.pdf, id=105, 275.30885pt x 124.28163pt>
 File: images/success_ellipses.pdf Graphic file (type pdf)
 <use images/success_ellipses.pdf>
-Package pdftex.def Info: images/success_ellipses.pdf  used on input line 191.
+Package pdftex.def Info: images/success_ellipses.pdf  used on input line 192.
 (pdftex.def)             Requested size: 245.71811pt x 110.92699pt.
 
 [4 <./images/success_ellipses.pdf>]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 240.
-<images/failure_without_failure_controller.png, id=125, 932.48375pt x 745.78625
+put line 244.
+ [5]
+<images/failure_without_failure_controller.png, id=133, 932.48375pt x 745.78625
 pt>
 File: images/failure_without_failure_controller.png Graphic file (type png)
 <use images/failure_without_failure_controller.png>
 Package pdftex.def Info: images/failure_without_failure_controller.png  used on
- input line 282.
+ input line 286.
 (pdftex.def)             Requested size: 117.94363pt x 94.32689pt.
-<images/failure_with_failure_controller.png, id=126, 987.69pt x 726.715pt>
+<images/failure_with_failure_controller.png, id=134, 1275.76625pt x 744.7825pt>
+
 File: images/failure_with_failure_controller.png Graphic file (type png)
 <use images/failure_with_failure_controller.png>
 Package pdftex.def Info: images/failure_with_failure_controller.png  used on in
-put line 288.
-(pdftex.def)             Requested size: 117.94363pt x 86.76956pt.
+put line 292.
+(pdftex.def)             Requested size: 117.94363pt x 68.84584pt.
 
-Underfull \vbox (badness 10000) has occurred while \output is active []
-
- [5 <./images/failure_without_failure_controller.png> <./images/failure_with_fa
-ilure_controller.png>]
-Overfull \hbox (4.62497pt too wide) detected at line 320
+Overfull \hbox (4.62497pt too wide) detected at line 324
  
  []
 
 
-Overfull \hbox (4.62497pt too wide) detected at line 320
+Overfull \hbox (4.62497pt too wide) detected at line 324
  
  []
 
-(./iros20.bbl
+[6 <./images/failure_without_failure_controller.png> <./images/failure_with_fai
+lure_controller.png>] (./iros20.bbl
 Missing character: There is no Ã in font ptmr7t!
 Missing character: There is no ¼ in font ptmr7t!
 
@@ -1380,7 +1392,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 58--60
 nstuvel /
  []
 
-[6])
+)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -1392,24 +1404,24 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the US letter (8.5in X 11in) paper size.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 359.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 359.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 363.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 363.
 [7
 
 ] (./iros20.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 359.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 359.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 363.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 363.
 Package rerunfilecheck Info: File `iros20.out' has not changed.
 (rerunfilecheck)             Checksum: 97B5C3E9ABCD1E75BBF14F296F5A3D29;512.
  ) 
 Here is how much of TeX's memory you used:
- 31673 strings out of 494847
- 623347 string characters out of 6179080
- 668975 words of memory out of 5000000
- 34508 multiletter control sequences out of 15000+600000
- 585257 words of font info for 154 fonts, out of 8000000 for 9000
+ 31698 strings out of 494847
+ 623776 string characters out of 6179080
+ 668774 words of memory out of 5000000
+ 34529 multiletter control sequences out of 15000+600000
+ 586335 words of font info for 155 fonts, out of 8000000 for 9000
  59 hyphenation exceptions out of 8191
- 62i,19n,77p,10357b,856s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 62i,19n,77p,10357b,715s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
 e/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></usr/share/texlive/texmf
 -dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/
@@ -1421,14 +1433,15 @@ cm/cmr7.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.
 pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texli
-ve/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texlive/texmf-dist
-/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/ur
-w/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmr8a
-.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on iros20.pdf (7 pages, 480975 bytes).
+ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/share/texlive/texm
+f-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/
+type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times
+/utmbi8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></
+usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on iros20.pdf (7 pages, 497812 bytes).
 PDF statistics:
- 231 PDF objects out of 1000 (max. 8388607)
- 190 compressed objects within 2 object streams
+ 237 PDF objects out of 1000 (max. 8388607)
+ 195 compressed objects within 2 object streams
  45 named destinations out of 1000 (max. 500000)
  128 words of extra memory for PDF output out of 10000 (max. 10000000)
 
