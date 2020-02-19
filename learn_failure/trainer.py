@@ -92,7 +92,7 @@ class Trainer(object):
         if self.success_model is not None:
             sim.forward_simulate(self.success_model,
                 self.reverse_model, max_ts=self.config['success_max_ts'],
-                conf_val=0.98, key=str(key)
+                conf_val=0.95, key=str(key)
             )
         h_t = None
         curr_state = sim.state()
@@ -113,7 +113,7 @@ class Trainer(object):
                 )
             else:
                 self.memory.push(
-                    curr_state, torch.zeros((1, 256)), torch.zeros((1, 256)),
+                    curr_state, torch.zeros((1, 128)), torch.zeros((1, 128)),
                     action, next_state, reward
                 )
             curr_state = next_state
