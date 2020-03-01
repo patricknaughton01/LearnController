@@ -25,8 +25,8 @@
 \newlabel{sub@fig:dnmotivation}{{a}{1}{\relax }{figure.caption.1}{}}
 \newlabel{fig:rlmotivation}{{1b}{1}{\relax }{figure.caption.1}{}}
 \newlabel{sub@fig:rlmotivation}{{b}{1}{\relax }{figure.caption.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces The green circle represents the robot, the purple circles represent different humans and the black rectangles represent the walls of the corridor. The arrows indicate the heading of each agent. Only the initial and final locations of each object are shown. The numbers indicate the time step at which the snapshot was taken. This is an example of a situation in which the robot stopping (a) will cause more collisions and intrusions than following a failure controller which in this case simply moves the robot along the corridor out of the way of humans (b).\relax }}{1}{figure.caption.1}}
-\newlabel{fig:motivation}{{1}{1}{The green circle represents the robot, the purple circles represent different humans and the black rectangles represent the walls of the corridor. The arrows indicate the heading of each agent. Only the initial and final locations of each object are shown. The numbers indicate the time step at which the snapshot was taken. This is an example of a situation in which the robot stopping (a) will cause more collisions and intrusions than following a failure controller which in this case simply moves the robot along the corridor out of the way of humans (b).\relax }{figure.caption.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces The green circle represents the robot, the purple circles different humans and the black rectangles the walls of the corridor. The arrows indicate the heading of each agent. Only the initial and final locations of each object are shown. The numbers indicate the time step at which the snapshot was taken. This is an example of a situation in which the robot stopping (a) will cause more collisions and intrusions than following a failure controller (b).\relax }}{1}{figure.caption.1}}
+\newlabel{fig:motivation}{{1}{1}{The green circle represents the robot, the purple circles different humans and the black rectangles the walls of the corridor. The arrows indicate the heading of each agent. Only the initial and final locations of each object are shown. The numbers indicate the time step at which the snapshot was taken. This is an example of a situation in which the robot stopping (a) will cause more collisions and intrusions than following a failure controller (b).\relax }{figure.caption.1}{}}
 \citation{caseforcoop}
 \citation{sfm}
 \citation{sfm}
@@ -44,29 +44,33 @@
 \citation{crowdawarerl}
 \citation{rvo2}
 \citation{pyrvo2}
+\citation{gal2016uncertainty}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Model architecture of the neural network used to control the robot. Variable sized inputs are handled by summing a weighted vector across the people and obstacles.\relax }}{3}{figure.caption.2}}
 \newlabel{fig:model_arch}{{2}{3}{Model architecture of the neural network used to control the robot. Variable sized inputs are handled by summing a weighted vector across the people and obstacles.\relax }{figure.caption.2}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Example of a successful trajectory. When executing the barge in success controller, the robot expects the humans in the scene to disperse to let it through.\relax }}{3}{figure.caption.3}}
 \newlabel{fig:success}{{3}{3}{Example of a successful trajectory. When executing the barge in success controller, the robot expects the humans in the scene to disperse to let it through.\relax }{figure.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {IV-A}Determining When To Switch}{3}{subsection.4.1}}
 \citation{suttonandbarto}
-\@writefile{toc}{\contentsline {subsection}{\numberline {IV-A}Determining When To Switch}{4}{subsection.4.1}}
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Example of the error ellipses used to classify trajectories as successes or failures. The robot is represented by a solid circle in each time step and the error ellipses are dashed. Each shade of green is a different time step and the ellipses associated with a given time step are the same color as the robot in that step. Note that in the first and last states there are no previous or next states so these two positions only need to satisfy one test.\relax }}{4}{figure.caption.4}}
 \newlabel{fig:success_ellipses}{{4}{4}{Example of the error ellipses used to classify trajectories as successes or failures. The robot is represented by a solid circle in each time step and the error ellipses are dashed. Each shade of green is a different time step and the ellipses associated with a given time step are the same color as the robot in that step. Note that in the first and last states there are no previous or next states so these two positions only need to satisfy one test.\relax }{figure.caption.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {IV-B}Failure Controller}{4}{subsection.4.2}}
 \newlabel{eq:rcollision}{{1}{4}{Failure Controller}{equation.4.1}{}}
+\newlabel{eq:rmovement}{{2}{4}{Failure Controller}{equation.4.2}{}}
+\newlabel{eq:rsmoothness}{{3}{4}{Failure Controller}{equation.4.3}{}}
 \citation{dqn}
 \citation{gal2016uncertainty}
 \citation{orca}
-\newlabel{eq:rmovement}{{2}{5}{Failure Controller}{equation.4.2}{}}
-\newlabel{eq:rsmoothness}{{3}{5}{Failure Controller}{equation.4.3}{}}
 \newlabel{eq:q}{{4}{5}{Failure Controller}{equation.4.4}{}}
 \@writefile{loa}{\contentsline {algorithm}{\numberline {1}{\ignorespaces Detect And Handle Failure\relax }}{5}{algorithm.1}}
 \newlabel{algo:exec}{{1}{5}{Detect And Handle Failure\relax }{algorithm.1}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {V}EXPERIMENTS}{5}{section.5}}
 \newlabel{sec:experiments}{{V}{5}{EXPERIMENTS}{section.5}{}}
 \citation{metrics}
-\newlabel{fig:failure_without_failure_controller}{{5a}{6}{Trajectory in which the robot continues to execute its success controller even though it incurs a very high cost to reach its goal.\relax }{figure.caption.5}{}}
-\newlabel{sub@fig:failure_without_failure_controller}{{a}{6}{Trajectory in which the robot continues to execute its success controller even though it incurs a very high cost to reach its goal.\relax }{figure.caption.5}{}}
+\bibstyle{IEEEtran}
+\bibdata{ref}
+\bibcite{ppcp}{1}
+\newlabel{fig:failure_without_failure_controller}{{5a}{6}{\relax }{figure.caption.5}{}}
+\newlabel{sub@fig:failure_without_failure_controller}{{a}{6}{\relax }{figure.caption.5}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Comparison between trajectories generated by simply executing the success controller (a) versus using the failure controller when a failure is detected (b).\relax }}{6}{figure.caption.5}}
 \newlabel{fig:experimentscomparison}{{5}{6}{Comparison between trajectories generated by simply executing the success controller (a) versus using the failure controller when a failure is detected (b).\relax }{figure.caption.5}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {VI}RESULTS}{6}{section.6}}
@@ -75,9 +79,6 @@
 \newlabel{tab:results}{{I}{6}{Metrics comparing trajectories generated by a robot with no failure controller to a robot using the presented controller. The data here are averages across $1000$ runs for both cases.\relax }{table.caption.6}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {VII}CONCLUSIONS}{6}{section.7}}
 \newlabel{sec:conclusion}{{VII}{6}{CONCLUSIONS}{section.7}{}}
-\bibstyle{IEEEtran}
-\bibdata{ref}
-\bibcite{ppcp}{1}
 \bibcite{crowdawarerl}{2}
 \bibcite{caseforcoop}{3}
 \bibcite{sfm}{4}
