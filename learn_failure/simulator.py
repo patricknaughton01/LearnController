@@ -157,15 +157,18 @@ class Simulator(object):
                 self.advance_simulation()
                 new_r_pos = self.sim.getAgentPosition(self.robot_num)
                 successful_move = self.inside_ellipse(
-                    rpos, new_r_pos, mx,  my, sx+d_sx, sy+d_sy,
+                    rpos, new_r_pos, mx,  my, math.sqrt(sx**2+d_sx**2),
+                    math.sqrt(sy**2+d_sy**2),
                     cov + d_corr*d_sx*d_sy, conf_val, conf_file=succ_conf
                 )
                 mx, my, sx, sy, cov, d_sx, d_sy, d_corr, r_h_t = \
                     self.get_succ_prediction(
                         reverse_model, self.reverse_state(), r_h_t, samples)
                 # Compute total uncertainties
-                sx += d_sx
-                sy += d_sy
+                sx *= sx
+                sy *= sy
+                sx += d_sx**2
+                sy += d_sy**2
                 cov += d_corr*d_sx*d_sy
                 if (not self.inside_ellipse(new_r_pos, rpos, mx, my, sx, sy,
                                            cov, conf_val, conf)
