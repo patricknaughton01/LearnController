@@ -222,10 +222,11 @@ def main():
     fig = plt.figure(figsize=(15, 10))
     ax = fig.add_subplot(111)
     ax.axis('equal')
-    top = 8
-    bottom = -1
-    left = -1
-    right = 15
+    # top = 8
+    # bottom = -1
+    # left = -1
+    # right = 15
+    top, bottom, left, right = 20, -5, -6, 6
     plt.xlim((left, right))
     plt.ylim((bottom, top))
     T = episode.shape[0]
@@ -339,6 +340,14 @@ def add_patches(t, n, episode, colors, ax, numbers=False):
                 episode[t, y_idx] + (radius/2)*math.sin(heading + math.pi),
                 str(t), horizontalalignment='center',
                 verticalalignment="center", fontsize=radius*50, color=colors[i]
+            )
+        elif numbers:
+            plt.text(
+                episode[t, x_idx],
+                episode[t, y_idx],
+                str(t), horizontalalignment='center',
+                verticalalignment="center", fontsize=radius * 50,
+                color=colors[i]
             )
         ax.add_patch(e)
         if use_heading:

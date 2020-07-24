@@ -73,53 +73,60 @@ std::vector<std::vector<RVO::Vector2> > setupScenario(RVO::RVOSimulator *sim)
 
 	/* Specify the global time step of the simulation. */
 	//sim->setTimeStep(0.25f);
-	sim->setTimeStep(0.1f);
+	sim->setTimeStep(1.0f);
 
 	/*
 	 * Add agents, specifying their start position, and store their goals on the
 	 * opposite side of the environment.
 	 */
 
-    RVO::Vector2 robot_pos(randomize(-2.0f, -1.5f), randomize(-2.0f, -1.5f));
-    RVO::Vector2 robot_goal(randomize(2.0f, 3.0f), randomize(2.0f, 3.0f));
+    float neighbor_dist = 10.0f;
+    int max_neighbors = 10;
+    float time_horizon = 2.0f;
+    float time_horizon_obst = 5.0f;
+    float radius = 0.5f;
+    float robot_max_speed = 3.0f;
+    float slow_human_max_speed = 0.4f;
+    float human_max_speed = 0.7f;
+    RVO::Vector2 robot_pos(randomize(-2.0f, 2.0f), randomize(-3.0f, -2.0f));
+    RVO::Vector2 robot_goal(randomize(-2.0f, 2.0f), randomize(10.0f, 11.0f));
 
-    sim->addAgent(robot_pos, 15.0f, 10, 5.0f, 5.0f, randomize(0.15f, 0.22f),
-    randomize(1.5f, 2.0f));
+    sim->addAgent(robot_pos, neighbor_dist, max_neighbors, time_horizon,
+    time_horizon_obst, radius, robot_max_speed);
     goals.push_back(robot_goal);
 
     // Human to overtake
-    RVO::Vector2 human_pos1(randomize(-1.0f, -0.5f), randomize(-1.0f, -0.5f));
+    RVO::Vector2 human_pos1(randomize(-1.0f, 1.0f), randomize(-0.5f, 0.0f));
     RVO::Vector2 human_goal1(robot_goal);
 
-    // Another human going opposite way
-    RVO::Vector2 human_pos2(robot_goal);
-    RVO::Vector2 human_goal2(robot_pos);
-
-    RVO::Vector2 human_pos3(robot_goal + RVO::Vector2(
-        randomize(0.5f, 0.7f), randomize(0.5f, 0.7f)));
-    RVO::Vector2 human_goal3(robot_pos + RVO::Vector2(
-        randomize(0.5f, 0.7f), randomize(0.5f, 0.7f)));
-
-    RVO::Vector2 human_pos4(robot_pos + RVO::Vector2(
-        randomize(0.5f, 0.7f), randomize(0.5f, 0.7f)));
-    RVO::Vector2 human_goal4(robot_goal + RVO::Vector2(
-        randomize(0.5f, 0.7f), randomize(0.5f, 0.7f)));
-
-    sim->addAgent(human_pos1, 15.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f),
-        randomize(0.1f, 0.3f));
+    sim->addAgent(human_pos1, neighbor_dist, max_neighbors, time_horizon,
+        time_horizon_obst, radius, slow_human_max_speed);
     goals.push_back(human_goal1);
 
-    sim->addAgent(human_pos2, 15.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f),
-        randomize(0.1f, 0.3f));
-    goals.push_back(human_goal2);
-
-    sim->addAgent(human_pos3, 15.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f),
-        randomize(0.1f, 0.3f));
-    goals.push_back(human_goal3);
-
-    sim->addAgent(human_pos4, 15.0f, 10, 5.0f, 5.0f, randomize(0.12f, 0.22f),
-        randomize(0.1f, 0.3f));
-    goals.push_back(human_goal4);
+    // Other humans switching places in the vicinity
+    int num_rows = 3;
+    int num_same = 5;
+    float width = 10.0f;
+    float init_height[num_rows] = {1.5f, 3.0f, -5.0f};
+    float final_height[num_rows] = {13.0f, 14.5f, 16.0f};
+    float perturb = 0.5f;
+    for(int r = 0; r < num_rows; r++){
+        for(int i = 0; i < num_same; i++){
+            float x = -(width/2.0f) + i * (width/((float)(num_same-1)));
+            float y1 = init_height[r];
+            float y2 = final_height[r];
+            RVO::Vector2 pos1(x + randomize(-perturb, perturb),
+                y1 + randomize(-perturb, perturb));
+            RVO::Vector2 pos2(x + randomize(-perturb, perturb),
+                y2 + randomize(-perturb, perturb));
+            sim->addAgent(pos1, neighbor_dist, max_neighbors, time_horizon,
+                time_horizon_obst, radius, human_max_speed);
+            goals.push_back(pos2);
+            sim->addAgent(pos2, neighbor_dist, max_neighbors, time_horizon,
+                time_horizon_obst, radius, human_max_speed);
+            goals.push_back(pos1);
+        }
+    }
 
     std::vector<std::vector<RVO::Vector2>> empty;
     return empty;
@@ -206,7 +213,7 @@ void setPreferredVelocities(RVO::RVOSimulator *sim)
 
 bool reachedGoal(RVO::RVOSimulator *sim)
 {
-	/* Check if all agents have reached their goals. */
+	/* Check if robot has reached its goal. */
 	if (RVO::absSq(sim->getAgentPosition(0) - goals[0]) <= sim->getAgentRadius(0)) {
         return true;
     }
@@ -270,6 +277,7 @@ int main(int argc, char ** argv)
             sim->doStep();
         }
         while (!reachedGoal(sim));
+        updateVisualization(sim, file);
         file->close();
         delete sim;
 
