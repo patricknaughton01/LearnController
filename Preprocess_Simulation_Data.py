@@ -211,6 +211,7 @@ def main():
     obs_str = obstacle_strs[idx]
 
     episode = states_array[idx]
+    print(episode.shape)
     n = int((episode.shape[1] - initial_robot_terms) / terms_per_agent)
     print(n)
     colors = [np.array([0.2, 0.72, 0.0])]
@@ -226,7 +227,7 @@ def main():
     # bottom = -1
     # left = -1
     # right = 15
-    top, bottom, left, right = 20, -5, -6, 6
+    top, bottom, left, right = 20, -20, -6, 6
     plt.xlim((left, right))
     plt.ylim((bottom, top))
     T = episode.shape[0]

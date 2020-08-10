@@ -1,12 +1,7 @@
-import numpy as np
-import torch 
-import torch.nn as nn
-import os 
+import os
 from utils import *
 from model import *
 from trainer import Trainer
-from torch import optim
-from glob import glob
 import configparser
 
 def main():

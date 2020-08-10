@@ -1,0 +1,7 @@
+Taken from the BIWI dataset.
+
+test_0-2 taken from eth, 3-7 from hotel
+eth: ~22.35 fps, 780 frame offset
+hotel: ~23.30 fps, 1 frame offset
+
+Can use this to find approximate frame IDs.

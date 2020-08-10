@@ -1,1 +1,0 @@
-/usr/bin/c++   -fPIC   CMakeFiles/Blocks.dir/Blocks.cpp.o  -o Blocks -rdynamic ../src/libRVO.a 

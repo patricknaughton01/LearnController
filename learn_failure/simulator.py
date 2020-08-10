@@ -4,7 +4,6 @@ RISS 2019
 
 """
 
-import pyrvo2.rvo2 as rvo2
 import math
 import utils
 import torch
@@ -15,6 +14,7 @@ import learn_general_controller.utils as old_utils
 # Used to conveniently find the nearest point on a polygon to the robot
 from shapely.geometry import Point, Polygon
 from shapely.ops import nearest_points
+from pyrvo2 import rvo2
 
 
 class Simulator(object):
@@ -170,10 +170,10 @@ class Simulator(object):
                 sx += d_sx**2
                 sy += d_sy**2
                 cov += d_corr*d_sx*d_sy
-                if (not self.inside_ellipse(new_r_pos, rpos, mx, my, sx, sy,
+                """if (not self.inside_ellipse(new_r_pos, rpos, mx, my, sx, sy,
                                            cov, conf_val, conf)
                     or not successful_move):
-                    return -1
+                    return -1"""
                 i += 1
             if conf is not None:
                 conf.close()
@@ -282,6 +282,7 @@ class Simulator(object):
         :return: whether or not the prediction has failed
             :rtype: bool
         """
+        return False
         rpos = self.sim.getAgentPosition(self.robot_num)
         gpos = self.overall_robot_goal
         if ((rpos[0]-gpos[0])**2 + (rpos[1]-gpos[1])**2)**0.5 <= \
@@ -639,6 +640,7 @@ class Simulator(object):
             :rtype: Tensor
         """
         state = np.array(self.get_reverse_state_arr())
+        print(state)
         om = utils.build_occupancy_maps(utils.build_humans(state))
         # print("OM: ", om.size())
         # We only have a batch of one so just get the first element of
@@ -700,7 +702,7 @@ class Simulator(object):
                 `dynamic_barge_in<_left|_top|_bottom>`,
                 `barge_in<_left|_top|_bottom>`,
                 `crossing`,
-                `overtaking`,
+                `overtake`,
             If the argument is none of these, a random scene is built
         :return:
             :rtype: None
@@ -922,36 +924,45 @@ class Simulator(object):
             self.headings.append(normalize(randomize(7 * math.pi/8,
                                                      9 * math.pi/8)))
         elif scene.startswith("overtake"):     # overtaking scene
-            pos1 = (randomize(-2.0, -1.5), randomize(-2.0, -1.5))  # Robot
+            neighbor_dist = 10.0
+            max_neighbors = 10
+            time_horizon = 2.0
+            time_horizon_obst = 5.0
+            radius = 0.3
+            robot_max_speed = 3.0
+            slow_human_max_speed = 0.4
+            human_max_speed = 0.7
+
+            pos1 = (randomize(-1.0, 1.0), randomize(-2.0, -1.5))  # Robot
             # Human to overtake
-            pos2 = (randomize(-1.0, -0.5), randomize(-1.0, -0.5))
-            hum_goal = (randomize(2.0, 3.0), randomize(2.0, 3.0))
+            pos2 = (randomize(-1.0, 1.0), randomize(-1.0, -0.5))
+            hum_goal = (randomize(-1.0, 1.0), randomize(5.0, 6.0))
             # Robot
-            self.robot_num = self.sim.addAgent(pos1, 15.0, 10, 5.0, 5.0,
-                                               randomize(0.15, 0.25),
-                                               randomize(1.5, 2.0), (0, 0))
+            self.robot_num = self.sim.addAgent(pos1, neighbor_dist,
+                max_neighbors, time_horizon, time_horizon_obst,
+                radius, robot_max_speed, (0, 0))
             self.goals.append(pos1)  # Robot has no explicit goal at first
             # Used to determine if success controller has failed.
             self.overall_robot_goal = hum_goal
             self.agents.append(self.robot_num)
             self.headings.append(
-                normalize(math.pi / 4 + randomize(-math.pi / 8,
+                normalize(math.pi / 2 + randomize(-math.pi / 8,
                                                   math.pi / 8)))
             # Human to overtake
-            self.agents.append(self.sim.addAgent(pos2, 15.0, 10, 5.0, 5.0,
-                                                 randomize(0.15, 0.25),
-                                                 randomize(0.2, 0.4), (0, 0)))
+            self.agents.append(self.sim.addAgent(pos2, neighbor_dist,
+                max_neighbors, time_horizon, time_horizon_obst,
+                radius, slow_human_max_speed, (0, 0)))
             self.goals.append(hum_goal)
             self.headings.append(
-                normalize(math.pi / 4 + randomize(-math.pi / 8,
+                normalize(math.pi / 2 + randomize(-math.pi / 8,
                                                   math.pi / 8)))
             # Another human going the opposite way
-            self.agents.append(self.sim.addAgent(hum_goal, 15.0, 10, 5.0, 5.0,
-                                                 randomize(0.15, 0.25),
-                                                 randomize(0.2, 0.4), (0, 0)))
+            self.agents.append(self.sim.addAgent(hum_goal, neighbor_dist,
+                max_neighbors, time_horizon, time_horizon_obst,
+                radius, human_max_speed, (0, 0)))
             self.goals.append(pos2)
             self.headings.append(
-                normalize(5 * math.pi / 4 + randomize(-math.pi / 8,
+                normalize(3 * math.pi / 2 + randomize(-math.pi / 8,
                                                       math.pi / 8)))
             if not success_trial:
                 # Add other humans walking around in the middle of the path...
@@ -983,7 +994,7 @@ class Simulator(object):
                 self.headings.append(
                     normalize(-math.pi / 4 + randomize(-math.pi / 8,
                                                        math.pi / 8)))
-            else:
+            """else:
                 self.agents.append(self.sim.addAgent(
                     (hum_goal[0] + randomize(0.5, 0.7),
                      hum_goal[1] + randomize(0.5, 0.7)), 15.0, 10, 5.0, 5.0,
@@ -1000,7 +1011,7 @@ class Simulator(object):
                 ))
                 self.goals.append((hum_goal[0] + randomize(0.5, 0.7),
                                    hum_goal[1] + randomize(0.5, 0.7)))
-                self.headings.append(normalize(randomize(-math.pi, math.pi)))
+                self.headings.append(normalize(randomize(-math.pi, math.pi)))"""
 
         else:       # Build a random scene
             max_dim = self.max_dim    # Maximum x and y start/goal locations

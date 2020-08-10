@@ -1,4 +1,3 @@
-import torch
 import learn_general_controller.model
 import configparser
 import random
