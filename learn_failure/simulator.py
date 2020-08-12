@@ -208,7 +208,7 @@ class Simulator(object):
             conf_file.write("{} {} {} {} {}\n".format(center[0], center[1],
                                                  a, b, alpha))
         if d > 2*a:
-            return False
+            return True
         return True
 
 
@@ -640,7 +640,6 @@ class Simulator(object):
             :rtype: Tensor
         """
         state = np.array(self.get_reverse_state_arr())
-        print(state)
         om = utils.build_occupancy_maps(utils.build_humans(state))
         # print("OM: ", om.size())
         # We only have a batch of one so just get the first element of
@@ -933,10 +932,10 @@ class Simulator(object):
             slow_human_max_speed = 0.4
             human_max_speed = 0.7
 
-            pos1 = (randomize(-1.0, 1.0), randomize(-2.0, -1.5))  # Robot
+            pos1 = (randomize(-2.0, 1.5), randomize(-1.0, 1.0))  # Robot
             # Human to overtake
-            pos2 = (randomize(-1.0, 1.0), randomize(-1.0, -0.5))
-            hum_goal = (randomize(-1.0, 1.0), randomize(5.0, 6.0))
+            pos2 = (randomize(-1.0, -0.5), randomize(-1.0, 1.0))
+            hum_goal = (randomize(5.0, 6.0), randomize(-1.0, 1.0))
             # Robot
             self.robot_num = self.sim.addAgent(pos1, neighbor_dist,
                 max_neighbors, time_horizon, time_horizon_obst,
@@ -946,23 +945,21 @@ class Simulator(object):
             self.overall_robot_goal = hum_goal
             self.agents.append(self.robot_num)
             self.headings.append(
-                normalize(math.pi / 2 + randomize(-math.pi / 8,
-                                                  math.pi / 8)))
+                normalize(randomize(-math.pi / 8, math.pi / 8)))
             # Human to overtake
             self.agents.append(self.sim.addAgent(pos2, neighbor_dist,
                 max_neighbors, time_horizon, time_horizon_obst,
                 radius, slow_human_max_speed, (0, 0)))
             self.goals.append(hum_goal)
             self.headings.append(
-                normalize(math.pi / 2 + randomize(-math.pi / 8,
-                                                  math.pi / 8)))
+                normalize(randomize(-math.pi / 8, math.pi / 8)))
             # Another human going the opposite way
             self.agents.append(self.sim.addAgent(hum_goal, neighbor_dist,
                 max_neighbors, time_horizon, time_horizon_obst,
                 radius, human_max_speed, (0, 0)))
             self.goals.append(pos2)
             self.headings.append(
-                normalize(3 * math.pi / 2 + randomize(-math.pi / 8,
+                normalize(math.pi + randomize(-math.pi / 8,
                                                       math.pi / 8)))
             if not success_trial:
                 # Add other humans walking around in the middle of the path...

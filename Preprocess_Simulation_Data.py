@@ -227,7 +227,7 @@ def main():
     # bottom = -1
     # left = -1
     # right = 15
-    top, bottom, left, right = 20, -20, -6, 6
+    top, bottom, left, right = 10, -10, -5, 10
     plt.xlim((left, right))
     plt.ylim((bottom, top))
     T = episode.shape[0]

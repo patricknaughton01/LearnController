@@ -5,3 +5,30 @@ eth: ~22.35 fps, 780 frame offset
 hotel: ~23.30 fps, 1 frame offset
 
 Can use this to find approximate frame IDs.
+
+test0
+python process.py seq_eth/obsmat.txt 5000 5280 103,104,105,106,108,110,111,112 22.35 -r 0.5 -s 3.0 > ../../LearnController/test_0.txt --robot 110
+
+test1
+python process.py seq_eth/obsmat.txt 4330 4500 0,365 22.35 -r 0.5 -s 3.0 > ../../LearnController/test_1.txt --robot 80
+
+test2
+python process.py seq_eth/obsmat.txt 6250 6610 0,128 22.35 -r 0.5 -s 3.0 > ../../LearnController/test_2.txt --robot 128
+
+test3
+python process.py seq_eth/obsmat.txt 12100 12350 0,365 22.35 -r 0.5 -s 3.0 > ../../LearnController/test_3.txt --robot 362
+
+test4
+python process.py seq_hotel/obsmat.txt 1750 2050 56,57,58,62,63,64 23.30 -r 0.5 -s 3.0 > ../../LearnController/test_4.txt --robot 63
+
+test5
+python process.py seq_hotel/obsmat.txt 6680 7000 128,120,131,132,133,134,136,137,139,140,141,143,144 23.30 -r 0.5 -s 3.0 > ../../LearnController/test_5.txt --robot 132
+
+test6
+python process.py seq_hotel/obsmat.txt 7000 7250 138,139,141,143,145,147,152,153 23.30 -r 0.5 -s 3.0 > ../../LearnController/test_6.txt --robot 145
+
+test7
+python process.py seq_hotel/obsmat.txt 9600 9900 180,181,182,183,184,185,186,187,188,189,190,191,192,193,194,196,200,202,203,205 23.30 -r 0.5 -s 3.0 > ../../LearnController/test_7.txt --robot 203
+
+test8
+python process.py seq_hotel/obsmat.txt 15800 16100 354,355,357,358,359,360,361,363,364,365,366 23.30 -r 0.5 -s 3.0 > ../../LearnController/test_8.txt --robot 355

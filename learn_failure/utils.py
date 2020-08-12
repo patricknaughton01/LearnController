@@ -432,54 +432,56 @@ def build_occupancy_maps(human_states, config={}):
     cell_num = config.get('cell_num', 4)
     cell_size = config.get('cell_size', 1.0)
     occupancy_maps = []
-    for human in human_states:
-        other_humans = np.concatenate([np.array([(other_human.px, other_human.py, other_human.vx, other_human.vy)])
-                                        for other_human in human_states if other_human != human], axis=0)
-        other_px = other_humans[:, 0] - human.px
-        other_py = other_humans[:, 1] - human.py
-        # new x-axis is in the direction of human's heading
-        human_heading = human.heading
-        other_human_orientation = np.arctan2(other_py, other_px)
-        rotation = other_human_orientation - human_heading
-        distance = np.linalg.norm([other_px, other_py], axis=0)
-        other_px = np.cos(rotation) * distance
-        other_py = np.sin(rotation) * distance
+    if len(human_states) > 1:
+        for human in human_states:
+            other_humans = np.concatenate([np.array([(other_human.px, other_human.py, other_human.vx, other_human.vy)])
+                                            for other_human in human_states if other_human != human], axis=0)
+            other_px = other_humans[:, 0] - human.px
+            other_py = other_humans[:, 1] - human.py
+            # new x-axis is in the direction of human's heading
+            human_heading = human.heading
+            other_human_orientation = np.arctan2(other_py, other_px)
+            rotation = other_human_orientation - human_heading
+            distance = np.linalg.norm([other_px, other_py], axis=0)
+            other_px = np.cos(rotation) * distance
+            other_py = np.sin(rotation) * distance
 
-        # compute indices of humans in the grid
-        other_x_index = np.floor(other_px / cell_size + cell_num / 2)
-        other_y_index = np.floor(other_py / cell_size + cell_num / 2)
-        other_x_index[other_x_index < 0] = float('-inf')
-        other_x_index[other_x_index >= cell_num] = float('-inf')
-        other_y_index[other_y_index < 0] = float('-inf')
-        other_y_index[other_y_index >= cell_num] = float('-inf')
-        grid_indices = cell_num * other_y_index + other_x_index
-        occupancy_map = np.isin(range(cell_num ** 2), grid_indices)
-        if om_channel_size == 1:
-            occupancy_maps.append([occupancy_map.astype(int)])
-        else:
-            # calculate relative velocity for other agents
-            other_human_velocity_angles = np.arctan2(other_humans[:, 3], other_humans[:, 2])
-            rotation = other_human_velocity_angles - human_heading
-            speed = np.linalg.norm(other_humans[:, 2:4], axis=1)
-            other_vx = np.cos(rotation) * speed
-            other_vy = np.sin(rotation) * speed
-            dm = [list() for _ in range(cell_num ** 2 * om_channel_size)]
-            for i, index in np.ndenumerate(grid_indices):
-                if index in range(cell_num ** 2):
-                    if om_channel_size == 2:
-                        dm[2 * int(index)].append(other_vx[i])
-                        dm[2 * int(index) + 1].append(other_vy[i])
-                    elif om_channel_size == 3:
-                        dm[2 * int(index)].append(1)
-                        dm[2 * int(index) + 1].append(other_vx[i])
-                        dm[2 * int(index) + 2].append(other_vy[i])
-                    else:
-                        raise NotImplementedError
-            for i, cell in enumerate(dm):
-                dm[i] = sum(dm[i]) / len(dm[i]) if len(dm[i]) != 0 else 0
-            occupancy_maps.append([dm])
+            # compute indices of humans in the grid
+            other_x_index = np.floor(other_px / cell_size + cell_num / 2)
+            other_y_index = np.floor(other_py / cell_size + cell_num / 2)
+            other_x_index[other_x_index < 0] = float('-inf')
+            other_x_index[other_x_index >= cell_num] = float('-inf')
+            other_y_index[other_y_index < 0] = float('-inf')
+            other_y_index[other_y_index >= cell_num] = float('-inf')
+            grid_indices = cell_num * other_y_index + other_x_index
+            occupancy_map = np.isin(range(cell_num ** 2), grid_indices)
+            if om_channel_size == 1:
+                occupancy_maps.append([occupancy_map.astype(int)])
+            else:
+                # calculate relative velocity for other agents
+                other_human_velocity_angles = np.arctan2(other_humans[:, 3], other_humans[:, 2])
+                rotation = other_human_velocity_angles - human_heading
+                speed = np.linalg.norm(other_humans[:, 2:4], axis=1)
+                other_vx = np.cos(rotation) * speed
+                other_vy = np.sin(rotation) * speed
+                dm = [list() for _ in range(cell_num ** 2 * om_channel_size)]
+                for i, index in np.ndenumerate(grid_indices):
+                    if index in range(cell_num ** 2):
+                        if om_channel_size == 2:
+                            dm[2 * int(index)].append(other_vx[i])
+                            dm[2 * int(index) + 1].append(other_vy[i])
+                        elif om_channel_size == 3:
+                            dm[2 * int(index)].append(1)
+                            dm[2 * int(index) + 1].append(other_vx[i])
+                            dm[2 * int(index) + 2].append(other_vy[i])
+                        else:
+                            raise NotImplementedError
+                for i, cell in enumerate(dm):
+                    dm[i] = sum(dm[i]) / len(dm[i]) if len(dm[i]) != 0 else 0
+                occupancy_maps.append([dm])
 
-    return torch.from_numpy(np.concatenate(occupancy_maps, axis=0)).float()
+        return torch.from_numpy(np.concatenate(occupancy_maps, axis=0)).float()
+    return torch.zeros((1,48))
 
 def neg_2d_gaussian_likelihood(outputs, targets, seq_lengths):
     # Extract mean, std devs and correlation
